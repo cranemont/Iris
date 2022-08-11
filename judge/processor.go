@@ -6,12 +6,12 @@ import (
 )
 
 type Processor struct {
-	compiler *compiler.Compiler
-	runner   *runner.Runner
+	compiler compiler.Interface
+	runner   runner.Interface
 }
 
-func NewProcessor(compiler *compiler.Compiler, runner *runner.Runner) *Processor {
-	return &Processor{compiler: compiler, runner: runner}
+func NewProcessor(compiler compiler.Interface, runner runner.Interface) *Processor {
+	return &Processor{compiler, runner}
 }
 
 func (p Processor) Judge() {
