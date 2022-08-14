@@ -1,4 +1,4 @@
-package dto
+package judge
 
 type Receive struct {
 }
@@ -18,3 +18,5 @@ type CompileResponseDto struct {
 
 type RunRequestDto struct {
 }
+
+type RunResponseDto struct{}
