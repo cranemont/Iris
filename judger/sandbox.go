@@ -1,8 +1,12 @@
-package judge
+package judger
 
 import (
 	"fmt"
 )
+
+type Sandbox interface {
+	Execute()
+}
 
 type sandbox struct {
 }

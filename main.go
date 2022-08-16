@@ -4,28 +4,42 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/constants/language"
-	"github.com/cranemont/judge-manager/judge"
-	"github.com/cranemont/judge-manager/judge/manager"
+	"github.com/cranemont/judge-manager/event"
+	"github.com/cranemont/judge-manager/judger"
+	"github.com/cranemont/judge-manager/judger/config"
+	"github.com/cranemont/judge-manager/manager"
 	"github.com/cranemont/judge-manager/mq"
+	"github.com/cranemont/judge-manager/task"
 )
 
 func main() {
 
-	sandbox := judge.NewSandbox()
-	compiler := judge.NewCompiler(sandbox)
-	runner := judge.NewRunner(sandbox)
-	submissionManager := manager.NewManager(compiler, runner)
+	eventMap := make(map[string](chan interface{}))
+	eventListener := event.NewTaskEventListener(eventMap)
+	eventEmitter := event.NewEventEmitter(eventMap)
+	eventManager := manager.NewEventManager(eventMap, eventListener, eventEmitter)
 
-	// submissionDto := mq.SubmissionDto{
-	// 	Code:      "#include <stdio.h>\n\nint main (void) {\nprintf('Hello world!');\nreturn 0;\n}\n",
-	// 	Language:  language.C,
-	// 	ProblemId: "1",
-	// }
-	// submissionManager.Judge(submissionDto)
+	eventManager.Listen(constants.TASK_EXITED, "PublishResult")
+
+	sandbox := judger.NewSandbox()
+
+	compileOption := config.CompileOption{}
+	runOption := config.RunOption{}
+
+	compiler := judger.NewCompiler(sandbox, &compileOption)
+	runner := judger.NewRunner(sandbox, &runOption)
+	grader := judger.NewGrader()
+
+	judger := judger.NewJudger(compiler, runner, grader)
+	judgeManager := manager.NewJudgeManager(judger, eventEmitter)
+
+	// go task event listener
+	// go global error hander
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for {
 		var input string
 		fmt.Scanln(&input)
 
@@ -38,11 +52,14 @@ func main() {
 				Memory: "MEMORYLIMIT",
 			},
 		}
-		// 큐는 여기서 관리해줘야지.. 아래는 그냥 일만 하고...
-		// 아래 고루틴 Judge에 채널 넘겨줘서 done으로 고루틴 관리? 혹은 group?
-		// 아니지 얘는 메소드 호출이라니까? 얘를 고루틴으로 돌리는건 별 문제가 아니다
-		wg.Add(1)
-		go submissionManager.Judge(submissionDto, &wg)
+
+		task := task.NewTask(submissionDto)
+		// register task to event manager
+		// 등록해두고 종료되었음을 감지
+
+		// 큐를 넣을거면 여기서 관리
+		wg.Add(1) // 필요할까? 위에서 register하고 거기서 관리하면?
+		go judgeManager.Exec(task, &wg)
 	}
 	// 여기서 rabbitMQ consumer가 돌고
 	// 메시지 수신시 채점자 호출
