@@ -2,7 +2,6 @@ package manager
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
@@ -30,12 +29,11 @@ func NewJudgeManager(
 	}
 }
 
-func (j *JudgeManager) Exec(task *task.Task, wg *sync.WaitGroup) {
+func (j *JudgeManager) Exec(task *task.Task) {
 	defer func() {
 		// 에러가 발생했다면? -> task error / error 이벤트 전송
 		fmt.Println("clean up directory... trigger event")
 		j.eventEmitter.Emit(constants.TASK_EXITED, task)
-		wg.Done()
 	}()
 
 	// 디렉토리 만들고

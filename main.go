@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/constants/language"
@@ -22,6 +21,7 @@ func main() {
 	eventManager := manager.NewEventManager(eventMap, eventListener, eventEmitter)
 
 	eventManager.Listen(constants.TASK_EXITED, "PublishResult")
+	// eventManager.Listen(constants.TASK_EXEC, "Exec")
 
 	sandbox := judger.NewSandbox()
 
@@ -38,7 +38,6 @@ func main() {
 	// go task event listener
 	// go global error hander
 
-	var wg sync.WaitGroup
 	for {
 		var input string
 		fmt.Scanln(&input)
@@ -53,13 +52,17 @@ func main() {
 			},
 		}
 
+		// 아래 과정을 event trigger로 넣어주면?
+		// eventManager.Listen(constants.TASK_EXEC, "Exec") 여기서 listen하고 있는 event를
+		// eventManager.Emit(constants.TASK_EXEC, submissionDto) 해주고
+		// taskManager에서 DTO로 task만든다음에 자기 map에 등록하고(관리용), go judgeManager.Exec(task) 해주거나 아니면 또 trigger해주면?
+		// 성능은 좀 떨어져도 일관될것같은데?
 		task := task.NewTask(submissionDto)
 		// register task to event manager
 		// 등록해두고 종료되었음을 감지
 
-		// 큐를 넣을거면 여기서 관리
-		wg.Add(1) // 필요할까? 위에서 register하고 거기서 관리하면?
-		go judgeManager.Exec(task, &wg)
+		// 큐를 넣을거면 여기서 관리(taskManager에서)
+		go judgeManager.Exec(task)
 	}
 	// 여기서 rabbitMQ consumer가 돌고
 	// 메시지 수신시 채점자 호출

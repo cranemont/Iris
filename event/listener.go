@@ -19,8 +19,8 @@ func NewTaskEventListener(eventMap map[string](chan interface{})) *taskEventList
 	return &taskEventListener{eventMap: eventMap}
 }
 
-// you should make each eventListener for specific type
-// this is because each listener has struct for the handlerFn
+// you should make EventListener for each specific channel data types
+// this is because eventListener has struct for the handlerFn
 // this is also for the preformance because type assertion is faster than reflection
 // https://stackoverflow.com/questions/28024884/does-a-type-assertion-type-switch-have-bad-performance-is-slow-in-go
 func (e *taskEventListener) On(eventCh <-chan interface{}, handlerFn string) {
