@@ -1,9 +1,8 @@
-package task
+package judge
 
 // Task가 여기있는게 맞나? Judger로 가야하는거 아닐까?
 import (
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/judger"
 	"github.com/cranemont/judge-manager/mq"
 	"github.com/cranemont/judge-manager/utils"
 )
@@ -13,8 +12,8 @@ type Task struct {
 	code      string
 	language  string
 	problemId string
-	limits    mq.Limits
-	testcases mq.Testcases
+	limit     mq.Limit
+	testcase  mq.Testcase
 }
 
 func NewTask(s mq.SubmissionDto) *Task {
@@ -23,8 +22,8 @@ func NewTask(s mq.SubmissionDto) *Task {
 		code:      s.Code,
 		language:  s.Language,
 		problemId: s.ProblemId,
-		limits:    s.Limits,
-		testcases: s.Testcases,
+		limit:     s.Limit,
+		testcase:  s.Testcase,
 	}
 }
 
@@ -32,11 +31,6 @@ func (t *Task) GetDir() string {
 	return t.dir
 }
 
-func (t *Task) ToCompileRequestDto() *judger.CompileRequestDto {
-	return &judger.CompileRequestDto{Code: t.code, Language: t.language}
-}
-
-func (t *Task) ToJudgeRequestDto() *judger.JudgeRequestDto {
-	runRequestDto := judger.RunRequestDto{}
-	return &judger.JudgeRequestDto{RunRequestDto: &runRequestDto, Testcases: &t.testcases}
+func (t *Task) GetTestcase() *mq.Testcase {
+	return &t.testcase
 }

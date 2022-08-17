@@ -1,8 +1,7 @@
-package manager
+package event
 
 import (
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/event"
 )
 
 // handler 관리
@@ -11,20 +10,16 @@ import (
 
 type EventManager struct {
 	eventMap map[string](chan interface{})
-	listener event.EventListener
-	emitter  event.EventEmitter
+	listener EventListener
+	emitter  EventEmitter
 }
 
 func NewEventManager(
 	eventMap map[string](chan interface{}),
-	listener event.EventListener,
-	emitter event.EventEmitter,
+	listener EventListener,
+	emitter EventEmitter,
 ) *EventManager {
-	return &EventManager{
-		eventMap: eventMap,
-		listener: listener,
-		emitter:  emitter,
-	}
+	return &EventManager{eventMap, listener, emitter}
 }
 
 // handlerFn?

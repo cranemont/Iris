@@ -1,10 +1,12 @@
-package judger
+package judge
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Judger interface {
-	Compile(dto *CompileRequestDto)
-	Judge(dto *JudgeRequestDto) // run and grade
+	Compile(task *Task)
+	Judge(task *Task) // run and grade
 }
 
 type judger struct {
@@ -14,25 +16,22 @@ type judger struct {
 }
 
 func NewJudger(compiler Compiler, runner Runner, grader Grader) *judger {
-	return &judger{
-		compiler: compiler,
-		runner:   runner,
-		grader:   grader,
-	}
+	return &judger{compiler, runner, grader}
 }
 
 // err 처리
-func (j *judger) Compile(dto *CompileRequestDto) {
-	j.compiler.Compile(dto)
+func (j *judger) Compile(task *Task) {
+	j.compiler.Compile(task)
 }
 
-// err 처리
-func (j *judger) Judge(dto *JudgeRequestDto) {
+// err 처리, Run이랑 Grade로 분리
+func (j *judger) Judge(task *Task) {
 	// run and grade
-	tcNum := dto.Testcases.GetTotal()
+	tcNum := task.GetTestcase().GetTotal()
+
 	ch := make(chan string, tcNum)
 	for i := 0; i < tcNum; i++ {
-		go j.runner.Run(dto.RunRequestDto)
+		go j.runner.Run(task)
 	}
 	for i := 0; i < tcNum; i++ {
 		result := <-ch
