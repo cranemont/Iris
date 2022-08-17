@@ -66,8 +66,8 @@ func main() {
 		// 등록해두고 종료되었음을 감지
 
 		task := judge.NewTask(submissionDto)
-		// go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
-		go judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
+		go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
+		// go judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
 	}
 	// 여기서 rabbitMQ consumer가 돌고
 	// 메시지 수신시 채점자 호출

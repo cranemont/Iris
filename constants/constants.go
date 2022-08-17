@@ -11,3 +11,6 @@ const EVENT_CHAN_SIZE = 10
 const TASK_EXEC = "Execute"
 const TASK_EXITED = "Exited"
 const PUBLISH_RESULT = "Publish"
+
+const BASE_DIR = "./results"
+const BASE_FILE_MODE = 0522

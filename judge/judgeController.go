@@ -23,7 +23,7 @@ func NewJudgeController(
 func (j *JudgeController) Judge(task *Task) {
 	defer func() {
 		// 에러가 발생했다면? -> task error / error 이벤트 전송
-		fmt.Println("clean up directory... trigger event")
+		fmt.Println("triggerring event")
 		j.eventEmitter.Emit(constants.TASK_EXITED, task)
 	}()
 
