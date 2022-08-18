@@ -24,6 +24,8 @@ func (j *judger) Compile(task *Task) {
 	j.compiler.Compile(task)
 }
 
+// func (j *judger) Run(task *Task, out chan<- string)
+
 // err 처리, Run이랑 Grade로 분리
 func (j *judger) Judge(task *Task) {
 	// run and grade

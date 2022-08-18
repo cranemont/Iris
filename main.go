@@ -34,7 +34,7 @@ func main() {
 	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeController, fileManager, eventEmitter)
 	judgeEventHander.RegisterFn()
 
-	judgeEventListener := judgeEvent.NewJudgeEventListener(eventMap, judgeEventHander)
+	judgeEventListener := event.NewEventListener(eventMap, judgeEventHander)
 
 	judgeEventManager := event.NewEventManager(eventMap, judgeEventListener, eventEmitter)
 
