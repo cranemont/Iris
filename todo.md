@@ -1,5 +1,6 @@
 
-- [ ] handler에서 함수 reflection 따서 string map으로 register 할수 있는 함수 구현
+- [x] handler에서 함수 reflection 따서 string map으로 register 할수 있는 함수 구현
+  - reflection성능 문제때문에 사용 안함. 직접 mapping
 - [ ] judger.Judge에서 run/grader 고루틴 관리
 - [ ] testcase Manager 구현
   - [ ] cache manager
