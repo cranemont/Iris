@@ -1,6 +1,7 @@
 package fileManager
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cranemont/judge-manager/constants"
@@ -15,7 +16,10 @@ func NewFileManager() *FileManager {
 }
 
 func (f *FileManager) CreateDir(name string) {
-	os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
+	err := os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func (f *FileManager) RemoveDir(name string) {
