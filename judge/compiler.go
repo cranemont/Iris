@@ -32,7 +32,7 @@ func (c *compiler) Compile(task *Task) {
 	srcPath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.SrcName
 	exePath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.ExeName
 
-	// task.code로 srcName에 파일 생성
+	// task.code로 srcName에 파일 생성, 얘는 다른곳에서 생성해줘야됨. 컴파일이 아님
 	c.createSrcFile(srcPath, task.code)
 
 	// option에서 바로 매칭시켜서 sadnbox인자 넘겨주기
@@ -40,6 +40,7 @@ func (c *compiler) Compile(task *Task) {
 	args := strings.Replace(options.Args, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)
 	argSlice := strings.Split(args, " ")
+	// sandbox 받지말고 그냥 여기서 arg처리한다음에 libjudger 실행하기
 
 	c.sandbox.Execute(
 		&SandboxArgs{
@@ -54,9 +55,9 @@ func (c *compiler) Compile(task *Task) {
 }
 
 func (c *compiler) createSrcFile(srcPath string, code string) error {
-	err := ioutil.WriteFile(srcPath, []byte(code), 0644)
+	err := ioutil.WriteFile(srcPath, []byte(code), constants.BASE_FILE_MODE)
 	if err != nil {
-		fmt.Println("파일 생성 실패")
+		fmt.Println("파일 생성 실패", err)
 		return err
 	}
 	return nil
