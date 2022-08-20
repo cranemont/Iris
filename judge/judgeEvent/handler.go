@@ -39,7 +39,7 @@ func (h *handler) OnExec(task *judge.Task) {
 func (h *handler) OnExit(task *judge.Task) {
 	// 파일 삭제, task 결과 업데이트 등 정리작업
 	h.eventEmitter.Emit(constants.PUBLISH_RESULT, task)
-	go h.fileManager.RemoveDir(task.GetDir())
+	// go h.fileManager.RemoveDir(task.GetDir())
 }
 
 func (h *handler) RegisterFn() {

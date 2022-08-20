@@ -15,9 +15,9 @@ func NewFileManager() *FileManager {
 }
 
 func (f *FileManager) CreateDir(name string) {
-	os.Mkdir(f.basePath+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
+	os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
 }
 
 func (f *FileManager) RemoveDir(name string) {
-	os.RemoveAll(f.basePath + "/" + name)
+	os.RemoveAll(constants.BASE_DIR + "/" + name)
 }

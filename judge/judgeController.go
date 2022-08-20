@@ -38,7 +38,7 @@ func (j *JudgeController) Judge(task *Task) {
 	// wait
 
 	// err 처리
-	j.judger.Judge(task)
+	j.judger.RunAndGrade(task)
 
 	// eventManager한테 task done 이벤트 전송
 	fmt.Println("done")

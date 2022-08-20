@@ -7,7 +7,7 @@ import (
 )
 
 type Runner interface {
-	Run(task *Task)
+	Run(task *Task, out chan<- string)
 }
 
 type runner struct {
@@ -19,8 +19,10 @@ func NewRunner(sandbox Sandbox, option *config.RunOption) *runner {
 	return &runner{sandbox, option}
 }
 
-func (r *runner) Run(task *Task) {
+func (r *runner) Run(task *Task, out chan<- string) {
 	fmt.Println("RUN! from runner")
-	r.sandbox.Execute()
+	// r.sandbox.Execute()
+	dir := task.GetDir()
+	out <- "task " + dir + " running done"
 	// 채널로 결과반환
 }
