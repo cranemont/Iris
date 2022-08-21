@@ -5,6 +5,7 @@ import (
 
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
+	"github.com/cranemont/judge-manager/testcase"
 )
 
 type JudgeController struct {
@@ -15,7 +16,7 @@ type JudgeController struct {
 func NewJudgeController(
 	judger Judger,
 	eventEmitter event.EventEmitter,
-	// tcManager
+	testcaseManager testcase.TestcaseManager,
 ) *JudgeController {
 	return &JudgeController{judger, eventEmitter}
 }

@@ -15,9 +15,7 @@ func NewEventListener(eventMap map[string](chan interface{}), handler EventHandl
 	return &eventListener{eventMap, handler}
 }
 
-// you should make EventListener for each specific channel data types
-// this is because eventListener has struct for the handlerFn
-// this is also for the preformance because type assertion is faster than reflection
+// type assertion is faster than reflection
 // https://stackoverflow.com/questions/28024884/does-a-type-assertion-type-switch-have-bad-performance-is-slow-in-go
 func (e *eventListener) On(eventCh <-chan interface{}, handlerFn string) {
 	// TODO: handlerFn name으로 등록된 메서드 호출

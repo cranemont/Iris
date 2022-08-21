@@ -1,25 +1,11 @@
 package mq
 
+import "github.com/cranemont/judge-manager/testcase"
+
 // TODO: manager패키지로 옮기기(task 안으로)
 type Limit struct {
 	Time   string
 	Memory string
-}
-
-type Testcase struct {
-	total  int
-	input  []string
-	output []string
-}
-
-func (t *Testcase) IsValid() bool {
-	// Input과 output 개수 같은지 확인
-	return true
-}
-
-func (t *Testcase) GetTotal() int {
-	// return t.total
-	return 3
 }
 
 type SubmissionDto struct {
@@ -28,5 +14,5 @@ type SubmissionDto struct {
 	Language  string
 	ProblemId string
 	Limit     Limit
-	Testcase  Testcase
+	Testcase  testcase.Testcase
 }

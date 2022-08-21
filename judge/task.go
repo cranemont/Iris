@@ -4,6 +4,7 @@ package judge
 import (
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/mq"
+	tc "github.com/cranemont/judge-manager/testcase"
 	"github.com/cranemont/judge-manager/utils"
 )
 
@@ -13,10 +14,11 @@ type Task struct {
 	language  string
 	problemId string
 	limit     mq.Limit
-	testcase  mq.Testcase
+	testcase  tc.Testcase
 }
 
 func NewTask(s mq.SubmissionDto) *Task {
+	// validate, initialize
 	return &Task{
 		dir:       utils.RandString(constants.DIR_NAME_LEN),
 		code:      s.Code,
@@ -31,6 +33,6 @@ func (t *Task) GetDir() string {
 	return t.dir
 }
 
-func (t *Task) GetTestcase() *mq.Testcase {
+func (t *Task) GetTestcase() *tc.Testcase {
 	return &t.testcase
 }

@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 
+	"github.com/cranemont/judge-manager/cache"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/constants/language"
 	"github.com/cranemont/judge-manager/event"
 	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge"
 	"github.com/cranemont/judge-manager/judge/config"
-	"github.com/cranemont/judge-manager/judge/judgeEvent"
+	judgeEvent "github.com/cranemont/judge-manager/judge/event"
 	"github.com/cranemont/judge-manager/mq"
+	"github.com/cranemont/judge-manager/testcase"
 )
 
 func main() {
@@ -28,7 +30,11 @@ func main() {
 
 	eventMap := make(map[string](chan interface{}))
 	eventEmitter := event.NewEventEmitter(eventMap)
-	judgeController := judge.NewJudgeController(judger, eventEmitter)
+
+	cache := cache.NewCache()
+	testcaseManager := testcase.NewTestcaseManager(cache)
+
+	judgeController := judge.NewJudgeController(judger, eventEmitter, testcaseManager)
 	fileManager := fileManager.NewFileManager()
 
 	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeController, fileManager, eventEmitter)
