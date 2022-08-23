@@ -34,10 +34,10 @@ func main() {
 	cache := cache.NewCache()
 	testcaseManager := testcase.NewTestcaseManager(cache)
 
-	judgeController := judge.NewJudgeController(judger, eventEmitter, testcaseManager)
+	judgeService := judge.NewJudgeService(judger, eventEmitter, testcaseManager)
 	fileManager := fileManager.NewFileManager()
 
-	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeController, fileManager, eventEmitter)
+	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, fileManager, eventEmitter)
 	judgeEventHander.RegisterFn()
 
 	judgeEventListener := event.NewEventListener(eventMap, judgeEventHander)

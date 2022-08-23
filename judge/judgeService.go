@@ -5,23 +5,28 @@ import (
 
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
+	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/testcase"
 )
 
-type JudgeController struct {
-	judger       Judger
-	eventEmitter event.EventEmitter
+type JudgeService struct {
+	judger          Judger
+	eventEmitter    event.EventEmitter
+	fileManager     *fileManager.FileManager
+	testcaseManager testcase.TestcaseManager
 }
 
-func NewJudgeController(
+// 여기서 파일생성, 삭제 관리
+func NewJudgeService(
 	judger Judger,
 	eventEmitter event.EventEmitter,
+	fileManager *fileManager.FileManager,
 	testcaseManager testcase.TestcaseManager,
-) *JudgeController {
-	return &JudgeController{judger, eventEmitter}
+) *JudgeService {
+	return &JudgeService{judger, eventEmitter, fileManager, testcaseManager}
 }
 
-func (j *JudgeController) Judge(task *Task) {
+func (j *JudgeService) Judge(task *Task) {
 	defer func() {
 		// 에러가 발생했다면? -> task error / error 이벤트 전송
 		fmt.Println("triggerring event")

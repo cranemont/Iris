@@ -5,20 +5,18 @@ import (
 
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
-	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge"
 )
 
+// controller의 역할. OnJudge, OnRun, OnOutput등으로 여러 상황 구분
 type handler struct {
-	funcMap         map[string]func(task *judge.Task)
-	judgeController *judge.JudgeController
-	fileManager     *fileManager.FileManager
-	eventEmitter    event.EventEmitter
+	funcMap      map[string]func(task *judge.Task)
+	judgeService *judge.JudgeService
+	eventEmitter event.EventEmitter
 }
 
 func NewJudgeEventHandler(
-	judgeController *judge.JudgeController,
-	fileManager *fileManager.FileManager,
+	judgeService *judge.JudgeService,
 	eventEmitter event.EventEmitter,
 ) *handler {
 	funcMap := make(map[string]func(task *judge.Task), 2)
@@ -27,13 +25,13 @@ func NewJudgeEventHandler(
 	// 	"OnExec": (*handler).OnExec,
 	// 	"OnExit": (*handler).OnExit,
 	// }
-	return &handler{funcMap, judgeController, fileManager, eventEmitter}
+	return &handler{funcMap, judgeService, eventEmitter}
 }
 
 func (h *handler) OnExec(task *judge.Task) {
 	// 고루틴으로 JudgeHandler의 judge 호출
-	h.fileManager.CreateDir(task.GetDir())
-	go h.judgeController.Judge(task)
+	// h.fileManager.CreateDir(task.GetDir())
+	go h.judgeService.Judge(task)
 }
 
 func (h *handler) OnExit(task *judge.Task) {
