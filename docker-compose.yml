@@ -1,0 +1,13 @@
+version: '3'
+services:
+  judge-manager:
+    container_name: judge-manager
+    image: coc0a25/judge-manager:dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/go/src/github.com/cranemont/judge-manager:cached
+  redis:
+    container_name: redis
+    image: redis:alpine
+

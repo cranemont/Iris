@@ -59,8 +59,8 @@ func (s *sandbox) Execute(args *SandboxArgs) (*Result, error) {
 	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
 	maxRealTime := "--max_real_time=" + fmt.Sprint(args.MaxRealTime)
 	maxMemory := "--max_memory=" + fmt.Sprint(args.MaxMemory)
-	outputPath := "--output_path=out.out"
-	errorPath := "--error_path=error.out"
+	outputPath := "--output_path=./compile/out.out"
+	errorPath := "--error_path=./compile/error.out"
 
 	argsWithFormat := []string{}
 	for _, arg := range args.Args {
@@ -102,8 +102,8 @@ func (s *sandbox) Run(args *SandboxArgs) (*Result, error) {
 	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
 	maxRealTime := "--max_real_time=" + fmt.Sprint(args.MaxRealTime)
 	maxMemory := "--max_memory=" + fmt.Sprint(args.MaxMemory)
-	outputPath := "--output_path=/home/coc0a25/go/src/github.com/cranemont/judge-manager/out.out"
-	errorPath := "--error_path=/home/coc0a25/go/src/github.com/cranemont/judge-manager/error.out"
+	outputPath := "--output_path=./run/out.out"
+	errorPath := "--error_path=./run/error.out"
 
 	argSlice := []string{
 		exePath, maxCpuTime, maxRealTime, maxMemory, outputPath, errorPath,

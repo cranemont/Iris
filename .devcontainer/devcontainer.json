@@ -1,0 +1,22 @@
+{
+  "forwardPorts": [3000],
+  "name": "judge-manager",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "judge-manager",
+  "runServices": ["judge-manager", "redis"],
+  "workspaceFolder": "/go/src/github.com/cranemont/judge-manager",
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "golang.go",
+        "golang.go-nightly",
+        "albert.TabOut",
+        "donjayamanne.githistory",
+        "eamodio.gitlens"
+      ]
+    }
+  }
+}

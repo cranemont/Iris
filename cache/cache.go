@@ -21,7 +21,7 @@ type cache struct {
 
 func NewCache(ctx context.Context) *cache {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // TODO: export to ENV
+		Addr:     "redis:6379", // TODO: export to ENV
 		Password: "",
 		DB:       0,
 	})
