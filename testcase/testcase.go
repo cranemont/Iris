@@ -1,17 +1,29 @@
 package testcase
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type TestcaseElement struct {
+	In  string
+	Out string
+}
+
 type Testcase struct {
-	total  int
-	input  []string
-	output []string
+	Data []TestcaseElement
 }
 
-func (t *Testcase) IsValid() bool {
-	// Input과 output 개수 같은지 확인
-	return true
+func (t *Testcase) Count() int {
+	fmt.Println(t.Data)
+	return len(t.Data)
+	// return 3
 }
 
-func (t *Testcase) GetTotal() int {
-	// return t.total
-	return 3
+func (t Testcase) MarshalBinary() ([]byte, error) {
+	return json.Marshal(t)
+}
+
+func (t *Testcase) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, t)
 }

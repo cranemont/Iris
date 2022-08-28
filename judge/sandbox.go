@@ -7,8 +7,14 @@ import (
 	"os/exec"
 )
 
+type Result struct {
+	Code int
+	Err  string
+}
+
 type Sandbox interface {
-	Execute(args *SandboxArgs)
+	Execute(args *SandboxArgs) (*Result, error)
+	Run(args *SandboxArgs) (*Result, error)
 }
 
 type SandboxArgs struct {
@@ -47,7 +53,7 @@ func (s *sandbox) isEmptyNum(num int) bool {
 	return false
 }
 
-func (s *sandbox) Execute(args *SandboxArgs) {
+func (s *sandbox) Execute(args *SandboxArgs) (*Result, error) {
 	fmt.Println("Sandbox: func execute")
 	exePath := "--exe_path=" + args.ExePath
 	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
@@ -83,8 +89,38 @@ func (s *sandbox) Execute(args *SandboxArgs) {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return
+		return nil, err
 	}
 	fmt.Println("Result: " + out.String())
+	return &Result{Code: 0}, nil
+	// stdin, out 연결해서 실행?
+}
+
+func (s *sandbox) Run(args *SandboxArgs) (*Result, error) {
+	fmt.Println("Sandbox: func execute")
+	exePath := "--exe_path=" + args.ExePath
+	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
+	maxRealTime := "--max_real_time=" + fmt.Sprint(args.MaxRealTime)
+	maxMemory := "--max_memory=" + fmt.Sprint(args.MaxMemory)
+	outputPath := "--output_path=/home/coc0a25/go/src/github.com/cranemont/judge-manager/out.out"
+	errorPath := "--error_path=/home/coc0a25/go/src/github.com/cranemont/judge-manager/error.out"
+
+	argSlice := []string{
+		exePath, maxCpuTime, maxRealTime, maxMemory, outputPath, errorPath,
+	}
+
+	cmd := exec.Command("/usr/lib/judger/libjudger.so", argSlice...)
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return nil, err
+	}
+	fmt.Println("Result: " + out.String())
+	return &Result{Code: 0}, nil
 	// stdin, out 연결해서 실행?
 }

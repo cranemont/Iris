@@ -11,7 +11,7 @@ import (
 )
 
 type Compiler interface {
-	Compile(task *Task) // 얘는 task 몰라도 됨
+	Compile(task *Task) (int, error) // 얘는 task 몰라도 됨
 	createSrcFile(srcPath string, code string) error
 }
 
@@ -25,7 +25,7 @@ func NewCompiler(sandbox Sandbox, option *config.CompileOption) *compiler {
 	return &compiler{sandbox, option}
 }
 
-func (c *compiler) Compile(task *Task) {
+func (c *compiler) Compile(task *Task) (int, error) {
 	fmt.Println("Compile! from Compiler")
 
 	options := c.option.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
@@ -33,7 +33,11 @@ func (c *compiler) Compile(task *Task) {
 	exePath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.ExeName
 
 	// task.code로 srcName에 파일 생성, 얘는 다른곳에서 생성해줘야됨. 컴파일이 아님
-	c.createSrcFile(srcPath, task.code)
+	if err := c.createSrcFile(srcPath, task.code); err != nil {
+		// ENUM으로 변경, result code 반환
+		fmt.Println("error from createSrcFile")
+		return -1, err
+	}
 
 	// option에서 바로 매칭시켜서 sadnbox인자 넘겨주기
 
@@ -50,8 +54,9 @@ func (c *compiler) Compile(task *Task) {
 			MaxMemory:   options.MaxMemory,
 			Args:        argSlice,
 		})
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
+	return 0, nil
 }
 
 func (c *compiler) createSrcFile(srcPath string, code string) error {

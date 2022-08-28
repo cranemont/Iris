@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/cranemont/judge-manager/cache"
 	"github.com/cranemont/judge-manager/constants"
@@ -15,15 +18,27 @@ import (
 	"github.com/cranemont/judge-manager/testcase"
 )
 
+// func init() {
+// 	http.HandleFunc("/debug/pprof/", Index) // Profile Endpoint for Heap, Block, ThreadCreate, Goroutine, Mutex
+// 	http.HandleFunc("/debug/pprof/cmdline", Cmdline)
+// 	http.HandleFunc("/debug/pprof/profile", Profile) // Profile Endpoint for CPU
+// 	http.HandleFunc("/debug/pprof/symbol", Symbol)
+// 	http.HandleFunc("/debug/pprof/trace", Trace)
+// }
+
 func main() {
+
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
 
 	sandbox := judge.NewSandbox()
 
 	compileOption := config.CompileOption{}
-	runOption := config.RunOption{}
+	// runOption := config.RunOption{}
 
 	compiler := judge.NewCompiler(sandbox, &compileOption)
-	runner := judge.NewRunner(sandbox, &runOption)
+	runner := judge.NewRunner(sandbox, &compileOption)
 	grader := judge.NewGrader()
 
 	judger := judge.NewJudger(compiler, runner, grader)
@@ -31,13 +46,14 @@ func main() {
 	eventMap := make(map[string](chan interface{}))
 	eventEmitter := event.NewEventEmitter(eventMap)
 
-	cache := cache.NewCache()
+	ctx := context.Background()
+	cache := cache.NewCache(ctx)
 	testcaseManager := testcase.NewTestcaseManager(cache)
-
-	judgeService := judge.NewJudgeService(judger, eventEmitter, testcaseManager)
 	fileManager := fileManager.NewFileManager()
 
-	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, fileManager, eventEmitter)
+	judgeService := judge.NewJudgeService(judger, eventEmitter, fileManager, testcaseManager)
+
+	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, eventEmitter)
 	judgeEventHander.RegisterFn()
 
 	judgeEventListener := event.NewEventListener(eventMap, judgeEventHander)

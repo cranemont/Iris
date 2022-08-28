@@ -7,21 +7,26 @@ import (
 	"github.com/cranemont/judge-manager/constants"
 )
 
-type FileManager struct {
+type FileManager interface {
+	CreateDir(name string)
+	RemoveDir(name string)
+}
+
+type fileManager struct {
 	basePath string
 }
 
-func NewFileManager() *FileManager {
-	return &FileManager{basePath: constants.BASE_DIR}
+func NewFileManager() *fileManager {
+	return &fileManager{basePath: constants.BASE_DIR}
 }
 
-func (f *FileManager) CreateDir(name string) {
+func (f *fileManager) CreateDir(name string) {
 	err := os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func (f *FileManager) RemoveDir(name string) {
+func (f *fileManager) RemoveDir(name string) {
 	os.RemoveAll(constants.BASE_DIR + "/" + name)
 }

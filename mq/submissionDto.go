@@ -14,5 +14,5 @@ type SubmissionDto struct {
 	Language  string
 	ProblemId string
 	Limit     Limit
-	Testcase  testcase.Testcase
+	Testcase  testcase.Testcase // 없을수도 있음. 다른 종류의 struct
 }

@@ -2,10 +2,12 @@ package judge
 
 import (
 	"fmt"
+	"log"
 )
 
 type Judger interface {
 	Compile(task *Task)
+	CompileWithChannel(task *Task, out chan<- int)
 	RunAndGrade(task *Task) // run and grade
 }
 
@@ -22,14 +24,27 @@ func NewJudger(compiler Compiler, runner Runner, grader Grader) *judger {
 // err 처리
 func (j *judger) Compile(task *Task) {
 	j.compiler.Compile(task) // 여기서는 인자 정리해서 넘겨주기
+	// TODO: 실패시 error 반환
+}
+
+func (j *judger) CompileWithChannel(task *Task, out chan<- int) {
+	fmt.Println("COMPILE WITH CH")
+	result, err := j.compiler.Compile(task)
+	if err != nil {
+		log.Println(err)
+		out <- -1
+	}
+	out <- result
 }
 
 // func (j *judger) Run(task *Task, out chan<- string)
 
 // err 처리, Run이랑 Grade로 분리
 func (j *judger) RunAndGrade(task *Task) {
+
 	// run and grade
-	tcNum := task.GetTestcase().GetTotal()
+	tcNum := task.GetTestcase().Count()
+	fmt.Println(tcNum)
 
 	runCh := make(chan string, tcNum)
 	for i := 0; i < tcNum; i++ {
