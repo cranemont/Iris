@@ -28,10 +28,18 @@ func NewJudgeEventHandler(
 	return &handler{funcMap, judgeService, eventEmitter}
 }
 
+// controller의 역할!
 func (h *handler) OnExec(task *judge.Task) {
 	// 고루틴으로 JudgeHandler의 judge 호출
 	// h.fileManager.CreateDir(task.GetDir())
-	go h.judgeService.Judge(task)
+	// go h.judgeService.Judge(task)
+	err := h.judgeService.Judge(task)
+	if err != nil {
+		fmt.Println("Error on judgeService.Judge: ", err)
+	} else {
+		fmt.Println("triggerring event")
+		h.eventEmitter.Emit(constants.TASK_EXITED, task)
+	}
 }
 
 func (h *handler) OnExit(task *judge.Task) {

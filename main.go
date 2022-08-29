@@ -41,8 +41,6 @@ func main() {
 	runner := judge.NewRunner(sandbox, &compileOption)
 	grader := judge.NewGrader()
 
-	judger := judge.NewJudger(compiler, runner, grader)
-
 	eventMap := make(map[string](chan interface{}))
 	eventEmitter := event.NewEventEmitter(eventMap)
 
@@ -51,14 +49,22 @@ func main() {
 	testcaseManager := testcase.NewTestcaseManager(cache)
 	fileManager := fileManager.NewFileManager()
 
-	judgeService := judge.NewJudgeService(judger, eventEmitter, fileManager, testcaseManager)
+	judgeService := judge.NewJudgeService(
+		compiler,
+		runner,
+		grader,
+		fileManager,
+		testcaseManager,
+	)
 
 	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, eventEmitter)
 	judgeEventHander.RegisterFn()
 
 	judgeEventListener := event.NewEventListener(eventMap, judgeEventHander)
 
-	judgeEventManager := event.NewEventManager(eventMap, judgeEventListener, eventEmitter)
+	judgeEventManager := event.NewEventManager(
+		eventMap, judgeEventListener, eventEmitter,
+	)
 
 	judgeEventManager.Listen(constants.TASK_EXEC, "OnExec")
 	judgeEventManager.Listen(constants.TASK_EXITED, "OnExit")
@@ -71,7 +77,8 @@ func main() {
 		fmt.Scanln(&input)
 
 		submissionDto := mq.SubmissionDto{
-			Code:      "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
+			Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
+			// Code:      "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
 			Language:  language.C,
 			ProblemId: input,
 			Limit: mq.Limit{
@@ -82,7 +89,7 @@ func main() {
 
 		task := judge.NewTask(submissionDto)
 		// go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
-		go judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
+		judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
 	}
 	// 여기서 rabbitMQ consumer가 돌고
 	// 메시지 수신시 채점자 호출

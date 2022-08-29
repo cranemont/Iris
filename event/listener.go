@@ -22,6 +22,7 @@ func (e *eventListener) On(eventCh <-chan interface{}, handlerFn string) {
 	for {
 		args := <-eventCh
 		fmt.Println("Event Recv: ", handlerFn)
+		// 여기서 goroutine으로 호출하기 때문에 나머지는 신경쓸 필요 없음. 모든 handler의 시작점은 하나의 goroutine
 		go e.handler.Call(handlerFn, args)
 	}
 }

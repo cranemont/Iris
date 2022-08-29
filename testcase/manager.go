@@ -9,7 +9,7 @@ import (
 
 type TestcaseManager interface {
 	GetTestcase(problemId string) (*Testcase, error)
-	GetTestcaseWithChannel(problemId string, out chan<- *Testcase)
+	GetTestcaseWithChannel(out chan<- *Testcase, problemId string)
 	CreateTestcaseFromByteSlice(data []byte) (*Testcase, error)
 }
 
@@ -35,7 +35,7 @@ func (t *testcaseManager) GetTestcase(problemId string) (*Testcase, error) {
 	return t.CreateTestcaseFromByteSlice(data)
 }
 
-func (t *testcaseManager) GetTestcaseWithChannel(problemId string, out chan<- *Testcase) {
+func (t *testcaseManager) GetTestcaseWithChannel(out chan<- *Testcase, problemId string) {
 	if !t.cache.IsExist(problemId) {
 		fmt.Println("Tc does not exist")
 		// http get

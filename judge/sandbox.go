@@ -59,7 +59,7 @@ func (s *sandbox) Execute(args *SandboxArgs) (*Result, error) {
 	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
 	maxRealTime := "--max_real_time=" + fmt.Sprint(args.MaxRealTime)
 	maxMemory := "--max_memory=" + fmt.Sprint(args.MaxMemory)
-	outputPath := "--output_path=./compile/out.out"
+	// outputPath := "--output_path=./compile/out.out"
 	errorPath := "--error_path=./compile/error.out"
 
 	argsWithFormat := []string{}
@@ -74,7 +74,7 @@ func (s *sandbox) Execute(args *SandboxArgs) (*Result, error) {
 	// }
 
 	argSlice := []string{
-		exePath, maxCpuTime, maxRealTime, maxMemory, outputPath, errorPath, env, "--uid=0", "--gid=0",
+		exePath, maxCpuTime, maxRealTime, maxMemory, errorPath, env, "--uid=0", "--gid=0",
 	}
 	// argSlice = append(argSlice, append(argsWithFormat, envWithFormat...)...)
 	argSlice = append(argSlice, argsWithFormat...)
@@ -102,11 +102,11 @@ func (s *sandbox) Run(args *SandboxArgs) (*Result, error) {
 	maxCpuTime := "--max_cpu_time=" + fmt.Sprint(args.MaxCpuTime)
 	maxRealTime := "--max_real_time=" + fmt.Sprint(args.MaxRealTime)
 	maxMemory := "--max_memory=" + fmt.Sprint(args.MaxMemory)
-	outputPath := "--output_path=./run/out.out"
+	// outputPath := "--output_path=./run/out.out"
 	errorPath := "--error_path=./run/error.out"
 
 	argSlice := []string{
-		exePath, maxCpuTime, maxRealTime, maxMemory, outputPath, errorPath,
+		exePath, maxCpuTime, maxRealTime, maxMemory, errorPath,
 	}
 
 	cmd := exec.Command("/usr/lib/judger/libjudger.so", argSlice...)
@@ -120,7 +120,7 @@ func (s *sandbox) Run(args *SandboxArgs) (*Result, error) {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return nil, err
 	}
-	fmt.Println("Result: " + out.String())
+	// fmt.Println("Result: " + out.String())
 	return &Result{Code: 0}, nil
 	// stdin, out 연결해서 실행?
 }
