@@ -34,11 +34,12 @@ func main() {
 
 	sandbox := judge.NewSandbox()
 
-	compileOption := config.CompileOption{}
+	config := config.LanguageConfig{}
+	config.Init()
 	// runOption := config.RunOption{}
 
-	compiler := judge.NewCompiler(sandbox, &compileOption)
-	runner := judge.NewRunner(sandbox, &compileOption)
+	compiler := judge.NewCompiler(sandbox, &config)
+	runner := judge.NewRunner(sandbox, &config)
 	grader := judge.NewGrader()
 
 	eventMap := make(map[string](chan interface{}))
@@ -55,6 +56,7 @@ func main() {
 		grader,
 		fileManager,
 		testcaseManager,
+		&config,
 	)
 
 	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, eventEmitter)

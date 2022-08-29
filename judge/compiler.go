@@ -2,7 +2,6 @@ package judge
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -11,32 +10,46 @@ import (
 )
 
 type Compiler interface {
-	Compile(task *Task) (int, error) // 얘는 task 몰라도 됨
-	createSrcFile(srcPath string, code string) error
+	Compile(out chan<- constants.GoResult, task *Task) // 얘는 task 몰라도 됨
 }
 
 type compiler struct {
 	sandbox Sandbox
-	option  *config.CompileOption
+	config  *config.LanguageConfig
 }
 
-func NewCompiler(sandbox Sandbox, option *config.CompileOption) *compiler {
-	option.Init()
-	return &compiler{sandbox, option}
+type CompileResult struct {
+	Signal     int
+	ErrorCode  int
+	ExitCode   int
+	ResultCode int
 }
 
-func (c *compiler) Compile(task *Task) (int, error) {
+func NewCompiler(sandbox Sandbox, config *config.LanguageConfig) *compiler {
+	return &compiler{sandbox, config}
+}
+
+func (c *compiler) Compile(out chan<- constants.GoResult, task *Task) {
 	fmt.Println("Compile! from Compiler")
 
-	options := c.option.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
-	srcPath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.SrcName
-	exePath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.ExeName
+	options, err := c.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
+	if err != nil {
+		err := fmt.Errorf("failed to get language config: %s", err)
+		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		return
+	}
 
-	// task.code로 srcName에 파일 생성, 얘는 다른곳에서 생성해줘야됨. 컴파일이 아님
-	if err := c.createSrcFile(srcPath, task.code); err != nil {
-		// ENUM으로 변경, result code 반환
-		fmt.Println("error from createSrcFile")
-		return -1, err
+	srcPath, err := c.config.GetSrcPath(task.dir, task.language)
+	if err != nil {
+		err := fmt.Errorf("failed to get language config: %s", err)
+		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		return
+	}
+	exePath, err := c.config.GetExePath(task.dir, task.language)
+	if err != nil {
+		err := fmt.Errorf("failed to get language config: %s", err)
+		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		return
 	}
 
 	// option에서 바로 매칭시켜서 sadnbox인자 넘겨주기
@@ -56,14 +69,8 @@ func (c *compiler) Compile(task *Task) (int, error) {
 		})
 	time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
-	return 0, nil
-}
 
-func (c *compiler) createSrcFile(srcPath string, code string) error {
-	err := ioutil.WriteFile(srcPath, []byte(code), constants.BASE_FILE_MODE)
-	if err != nil {
-		fmt.Println("파일 생성 실패", err)
-		return err
-	}
-	return nil
+	// sandbox result 추가
+	// 컴파일 실패시 CompileResult에 error 추가
+	out <- constants.GoResult{Err: err, Data: CompileResult{ResultCode: 0}}
 }

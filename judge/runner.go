@@ -8,23 +8,41 @@ import (
 )
 
 type Runner interface {
-	Run(task *Task, out chan<- string)
+	Run(out chan<- constants.GoResult, task *Task)
 }
 
 type runner struct {
 	sandbox Sandbox
-	option  *config.CompileOption
+	config  *config.LanguageConfig
 }
 
-func NewRunner(sandbox Sandbox, option *config.CompileOption) *runner {
-	return &runner{sandbox, option}
+type RunResult struct {
+	Signal     int
+	ErrorCode  int
+	ExitCode   int
+	ResultCode int
 }
 
-func (r *runner) Run(task *Task, out chan<- string) {
+func NewRunner(sandbox Sandbox, config *config.LanguageConfig) *runner {
+	return &runner{sandbox, config}
+}
+
+func (r *runner) Run(out chan<- constants.GoResult, task *Task) {
 	fmt.Println("RUN! from runner")
 
-	options := r.option.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
-	exePath := constants.BASE_DIR + "/" + task.GetDir() + "/" + options.ExeName
+	options, err := r.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
+	if err != nil {
+		err := fmt.Errorf("failed to get language config: %s", err)
+		out <- constants.GoResult{Err: err, Data: RunResult{}}
+		return
+	}
+
+	exePath, err := r.config.GetExePath(task.dir, task.language)
+	if err != nil {
+		err := fmt.Errorf("failed to get language config: %s", err)
+		out <- constants.GoResult{Err: err, Data: RunResult{}}
+		return
+	}
 
 	args := SandboxArgs{
 		ExePath:     exePath,
@@ -33,8 +51,7 @@ func (r *runner) Run(task *Task, out chan<- string) {
 		MaxMemory:   options.MaxMemory,
 	}
 	r.sandbox.Run(&args)
-	dir := task.GetDir()
-	out <- "task " + dir + " running done"
+	out <- constants.GoResult{Data: RunResult{ExitCode: 0}}
 	// 채널로 결과반환
 }
 

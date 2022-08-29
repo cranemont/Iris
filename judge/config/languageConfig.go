@@ -1,9 +1,16 @@
 package config
 
+import (
+	"fmt"
+	"strings"
+
+	"github.com/cranemont/judge-manager/constants"
+)
+
 // 언어별 설정 관리..
 // 각 DTO로 변환 과정 수행
 
-type option struct {
+type config struct {
 	SrcName      string
 	ExeName      string
 	MaxCpuTime   int
@@ -12,20 +19,24 @@ type option struct {
 	CompilerPath string
 	Args         string
 }
-type CompileOption struct {
+type LanguageConfig struct {
 	// Get(language) -> constants패키지에서 설정값 가져옴
-	optionMap map[string]*option
+	configMap map[string]config
 }
 
 // enum으로 바꾸기
-func (c *CompileOption) Get(lang string) *option {
-	return c.optionMap[lang]
+func (l *LanguageConfig) Get(lang string) (config, error) {
+	if val, ok := l.configMap[lang]; ok {
+		return val, nil
+	}
+	err := fmt.Errorf("language option does not exist")
+	return config{}, err
 }
 
-func (c *CompileOption) Init() {
-	c.optionMap = make(map[string]*option)
+func (l *LanguageConfig) Init() {
+	l.configMap = make(map[string]config)
 	// srcPath, exePath는 base dir + task dir
-	c.optionMap["c"] = &option{
+	l.configMap["c"] = config{
 		SrcName:      "main.c",
 		ExeName:      "main",
 		MaxCpuTime:   3000,
@@ -34,7 +45,7 @@ func (c *CompileOption) Init() {
 		CompilerPath: "/usr/bin/gcc",
 		Args:         "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {srcPath} -lm -o {exePath}",
 	}
-	c.optionMap["cpp"] = &option{
+	l.configMap["cpp"] = config{
 		SrcName:      "main.cpp",
 		ExeName:      "main",
 		MaxCpuTime:   10000,
@@ -43,6 +54,29 @@ func (c *CompileOption) Init() {
 		CompilerPath: "/usr/bin/g++",
 		Args:         "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}",
 	}
+}
+
+func (l *LanguageConfig) GetSrcPath(dir string, language string) (string, error) {
+	if val, ok := l.configMap[language]; ok {
+		return constants.BASE_DIR + "/" + dir + "/" + val.SrcName, nil
+	}
+	return "", fmt.Errorf("unsupported language: %s", language)
+}
+
+func (l *LanguageConfig) GetExePath(dir string, language string) (string, error) {
+	if val, ok := l.configMap[language]; ok {
+		return constants.BASE_DIR + "/" + dir + "/" + val.ExeName, nil
+	}
+	return "", fmt.Errorf("unsupported language: %s", language)
+}
+
+func (l *LanguageConfig) GetArgSlice(srcPath string, exePath string, language string) ([]string, error) {
+	if val, ok := l.configMap[language]; ok {
+		args := strings.Replace(val.Args, "{srcPath}", srcPath, 1)
+		args = strings.Replace(args, "{exePath}", exePath, 1)
+		return strings.Split(args, " "), nil
+	}
+	return nil, fmt.Errorf("unsupported language: %s", language)
 }
 
 // "compile": {
