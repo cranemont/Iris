@@ -28,5 +28,5 @@ ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src/github.com/cranemont" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
-WORKDIR $GOPATH
-RUN git clone https://github.com/cranemont/judge-manager $GOPATH/src/github.com/cranemont/judge-manager
+WORKDIR $GOPATH/src/github.com/cranemont
+RUN git clone https://github.com/cranemont/judge-manager

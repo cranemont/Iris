@@ -13,6 +13,7 @@ const TASK_EXITED = "Exited"
 const PUBLISH_RESULT = "Publish"
 
 // const BASE_DIR = "./results"
-// const BASE_DIR = "/go/src/github.com/cranemont/judge-manager/results"
-const BASE_DIR = "/go/src/workspace/results"
+const BASE_DIR = "/go/src/github.com/cranemont/judge-manager/results"
+
+// const BASE_DIR = "/go/src/workspace/results"
 const BASE_FILE_MODE = 0755
