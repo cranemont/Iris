@@ -4,7 +4,8 @@
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "judge-manager",
   "runServices": ["judge-manager", "redis"],
-  "workspaceFolder": "/go/src/github.com/cranemont/judge-manager",
+  "workspaceFolder": "/go/src/workspace",
+  "postCreateCommand": "go install -v golang.org/x/tools/gopls@latest",
   "customizations": {
     // Configure properties specific to VS Code.
     "vscode": {

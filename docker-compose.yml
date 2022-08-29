@@ -6,7 +6,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - .:/go/src/github.com/cranemont/judge-manager:cached
+      - .:/go/src/workspace:cached
   redis:
     container_name: redis
     image: redis:alpine
