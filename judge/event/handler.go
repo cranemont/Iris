@@ -2,7 +2,9 @@ package judgeEvent
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
 	"github.com/cranemont/judge-manager/judge"
@@ -30,21 +32,25 @@ func NewJudgeEventHandler(
 
 // controller의 역할!
 func (h *handler) OnExec(task *judge.Task) {
-	// 고루틴으로 JudgeHandler의 judge 호출
-	// h.fileManager.CreateDir(task.GetDir())
-	// go h.judgeService.Judge(task)
 	err := h.judgeService.Judge(task)
 	if err != nil {
-		fmt.Println("Error on judgeService.Judge: ", err)
-	} else {
-		fmt.Println("triggerring event")
-		h.eventEmitter.Emit(constants.TASK_EXITED, task)
+		log.Println("error onexec: %w", err)
+		return
+	}
+	// error 처리
+	fmt.Println("triggerring event")
+	err = h.eventEmitter.Emit(constants.TASK_EXITED, task)
+	if err != nil {
+		log.Println("event emit failed: %w", err)
 	}
 }
 
 func (h *handler) OnExit(task *judge.Task) {
 	// 파일 삭제, task 결과 업데이트 등 정리작업
-	h.eventEmitter.Emit(constants.PUBLISH_RESULT, task)
+	err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task)
+	if err != nil {
+		log.Println("event emit failed: ", err)
+	}
 	// go h.fileManager.RemoveDir(task.GetDir())
 }
 
@@ -53,13 +59,13 @@ func (h *handler) RegisterFn() {
 	h.funcMap["OnExit"] = h.OnExit
 }
 
-func (h *handler) Call(funcName string, args interface{}) {
+func (h *handler) Call(funcName string, args interface{}) error {
 	//존재 확인. 없으면 registerFn 구현하라는 에러 throw
-	if v, ok := args.(*judge.Task); ok {
-		fmt.Println("handler function calling... ", funcName, v.GetDir())
+	if _, ok := args.(*judge.Task); ok {
+		fmt.Println("handler function calling... ", funcName)
+		h.funcMap[funcName](args.(*judge.Task))
 	} else {
-		// err log, return
-		fmt.Println("error")
+		return fmt.Errorf("%w: invalid task data", exception.ErrTypeAssertionFail)
 	}
-	h.funcMap[funcName](args.(*judge.Task))
+	return nil
 }

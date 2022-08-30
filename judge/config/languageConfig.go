@@ -55,27 +55,27 @@ func (l *LanguageConfig) Get(language string) (config, error) {
 	return config{}, fmt.Errorf("unsupported language: %s", language)
 }
 
-func (l *LanguageConfig) GetSrcPath(dir string, language string) (string, error) {
+func (l *LanguageConfig) MakeSrcPath(dir string, language string) (string, error) {
 	conf, err := l.Get(language)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to make srcpath: %w", err)
 	}
 	return constants.BASE_DIR + "/" + dir + "/" + conf.SrcName, nil
 }
 
-func (l *LanguageConfig) GetExePath(dir string, language string) (string, error) {
+func (l *LanguageConfig) MakeExePath(dir string, language string) (string, error) {
 	conf, err := l.Get(language)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to make exepath: %w", err)
 	}
 	return constants.BASE_DIR + "/" + dir + "/" + conf.ExeName, nil
 }
 
-func (l *LanguageConfig) GetArgSlice(srcPath string, exePath string, language string) ([]string, error) {
+func (l *LanguageConfig) MakeArgSlice(srcPath string, exePath string, language string) ([]string, error) {
 
 	conf, err := l.Get(language)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make argslice: %w", err)
 	}
 	args := strings.Replace(conf.Args, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)

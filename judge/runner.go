@@ -30,20 +30,19 @@ func NewRunner(sandbox Sandbox, config *config.LanguageConfig) *runner {
 func (r *runner) Run(out chan<- dto.GoResult, task *Task) {
 	fmt.Println("RUN! from runner")
 
-	options, err := r.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
+	options, err := r.config.Get(task.language)
 	if err != nil {
-		err := fmt.Errorf("failed to get language config: %s", err)
 		out <- dto.GoResult{Err: err, Data: RunResult{}}
 		return
 	}
 
-	exePath, err := r.config.GetExePath(task.dir, task.language)
+	exePath, err := r.config.MakeExePath(task.dir, task.language)
 	if err != nil {
-		err := fmt.Errorf("failed to get language config: %s", err)
 		out <- dto.GoResult{Err: err, Data: RunResult{}}
 		return
 	}
 
+	//task의 limit으로 주기
 	args := SandboxArgs{
 		ExePath:     exePath,
 		MaxCpuTime:  options.MaxCpuTime,

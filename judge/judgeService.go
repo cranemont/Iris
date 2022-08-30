@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cranemont/judge-manager/common/dto"
+	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge/config"
 	"github.com/cranemont/judge-manager/testcase"
@@ -42,18 +43,18 @@ func (j *JudgeService) Judge(task *Task) error {
 	// task의 testcase가 있으면 isValid 체크한다음에 그거 쓰고, 없으면 가져와서 task의 testcase에 저장
 	// 이후 m.judge 호출
 	if err := j.fileManager.CreateDir(task.GetDir()); err != nil {
-		return fmt.Errorf("failed to create dir: %s", err)
+		return fmt.Errorf("failed to create dir: %w", err)
 	}
 
 	testcaseOut := make(chan dto.GoResult)
 	go j.testcaseManager.GetTestcase(testcaseOut, task.problemId)
 
-	srcPath, err := j.config.GetSrcPath(task.dir, task.language)
+	srcPath, err := j.config.MakeSrcPath(task.dir, task.language)
 	if err != nil {
-		return fmt.Errorf("failed to get language config: %w", err)
+		return err
 	}
 	if err := j.createSrcFile(srcPath, task.code); err != nil {
-		return fmt.Errorf("failed to create src file: %w", err)
+		return err
 	}
 	compileOut := make(chan dto.GoResult)
 	go j.compiler.Compile(compileOut, task)
@@ -69,7 +70,11 @@ func (j *JudgeService) Judge(task *Task) error {
 	}
 
 	// set testcase로 분리
-	task.testcase = *testcaseResult.Data.(*testcase.Testcase)
+	if data, ok := testcaseResult.Data.(testcase.Testcase); ok {
+		task.testcase = data
+	} else {
+		return fmt.Errorf("%w: invalid testcase data", exception.ErrTypeAssertionFail)
+	}
 
 	// err 처리
 	j.RunAndGrade(task)

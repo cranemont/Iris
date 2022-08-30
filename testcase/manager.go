@@ -11,7 +11,7 @@ import (
 type TestcaseManager interface {
 	// GetTestcase(problemId string) (*Testcase, error)
 	GetTestcase(out chan<- dto.GoResult, problemId string)
-	CreateTestcaseFromByteSlice(data []byte) (*Testcase, error)
+	CreateTestcaseFromByteSlice(data []byte) (Testcase, error)
 }
 
 type testcaseManager struct {
@@ -22,20 +22,6 @@ func NewTestcaseManager(cache cache.Cache) *testcaseManager {
 	return &testcaseManager{cache}
 }
 
-// func (t *testcaseManager) GetTestcase(problemId string) (*Testcase, error) {
-// 	if !t.cache.IsExist(problemId) {
-// 		// http get
-// 		// cache set
-// 		// return testcase
-// 	}
-// 	data := t.cache.Get(problemId)
-// 	if data == nil {
-// 		log.Println("errrrrr")
-// 	}
-// 	fmt.Println(data)
-// 	return t.CreateTestcaseFromByteSlice(data)
-// }
-
 func (t *testcaseManager) GetTestcase(out chan<- dto.GoResult, problemId string) {
 	if !t.cache.IsExist(problemId) {
 		fmt.Println("Tc does not exist")
@@ -43,7 +29,7 @@ func (t *testcaseManager) GetTestcase(out chan<- dto.GoResult, problemId string)
 		// cache set
 		// 임시로 생성
 		testcase := Testcase{[]TestcaseElement{{In: "1 1\n", Out: "1 1\n"}, {In: "2 2\n", Out: "2 2\n"}}}
-		t.cache.Set(problemId, &testcase)
+		t.cache.Set(problemId, testcase)
 		out <- dto.GoResult{Data: testcase}
 		return
 	}
@@ -56,12 +42,12 @@ func (t *testcaseManager) GetTestcase(out chan<- dto.GoResult, problemId string)
 	out <- dto.GoResult{Data: testcase}
 }
 
-func (t *testcaseManager) CreateTestcaseFromByteSlice(data []byte) (*Testcase, error) {
+func (t *testcaseManager) CreateTestcaseFromByteSlice(data []byte) (Testcase, error) {
 	// validate testcase
 	testcase := Testcase{}
 	err := testcase.UnmarshalBinary(data)
 	if err != nil {
-		return nil, err
+		return Testcase{}, err
 	}
-	return &testcase, nil
+	return testcase, nil
 }

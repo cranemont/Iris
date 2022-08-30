@@ -2,8 +2,6 @@ package judge
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/judge/config"
@@ -32,32 +30,27 @@ func NewCompiler(sandbox Sandbox, config *config.LanguageConfig) *compiler {
 func (c *compiler) Compile(out chan<- dto.GoResult, task *Task) {
 	fmt.Println("Compile! from Compiler")
 
-	options, err := c.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
+	options, err := c.config.Get(task.language)
 	if err != nil {
-		err := fmt.Errorf("failed to get language config: %s", err)
 		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
 
-	srcPath, err := c.config.GetSrcPath(task.dir, task.language)
+	srcPath, err := c.config.MakeSrcPath(task.dir, task.language)
 	if err != nil {
-		err := fmt.Errorf("failed to get language config: %s", err)
 		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
-	exePath, err := c.config.GetExePath(task.dir, task.language)
+	exePath, err := c.config.MakeExePath(task.dir, task.language)
 	if err != nil {
-		err := fmt.Errorf("failed to get language config: %s", err)
 		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
-
-	// option에서 바로 매칭시켜서 sadnbox인자 넘겨주기
-
-	args := strings.Replace(options.Args, "{srcPath}", srcPath, 1)
-	args = strings.Replace(args, "{exePath}", exePath, 1)
-	argSlice := strings.Split(args, " ")
-	// sandbox 받지말고 그냥 여기서 arg처리한다음에 libjudger 실행하기
+	argSlice, err := c.config.MakeArgSlice(srcPath, exePath, task.language)
+	if err != nil {
+		out <- dto.GoResult{Err: err, Data: CompileResult{}}
+		return
+	}
 
 	c.sandbox.Execute(
 		&SandboxArgs{
@@ -67,7 +60,7 @@ func (c *compiler) Compile(out chan<- dto.GoResult, task *Task) {
 			MaxMemory:   options.MaxMemory,
 			Args:        argSlice,
 		})
-	time.Sleep(time.Second * 2)
+	// time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
 
 	// sandbox result 추가
