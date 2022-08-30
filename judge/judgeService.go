@@ -3,7 +3,7 @@ package judge
 import (
 	"fmt"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge/config"
 	"github.com/cranemont/judge-manager/testcase"
@@ -45,27 +45,27 @@ func (j *JudgeService) Judge(task *Task) error {
 		return fmt.Errorf("failed to create dir: %s", err)
 	}
 
-	testcaseOut := make(chan constants.GoResult)
+	testcaseOut := make(chan dto.GoResult)
 	go j.testcaseManager.GetTestcase(testcaseOut, task.problemId)
 
 	srcPath, err := j.config.GetSrcPath(task.dir, task.language)
 	if err != nil {
-		return fmt.Errorf("failed to get language config: %s", err)
+		return fmt.Errorf("failed to get language config: %w", err)
 	}
 	if err := j.createSrcFile(srcPath, task.code); err != nil {
-		return fmt.Errorf("failed to create src file: %s", err)
+		return fmt.Errorf("failed to create src file: %w", err)
 	}
-	compileOut := make(chan constants.GoResult)
+	compileOut := make(chan dto.GoResult)
 	go j.compiler.Compile(compileOut, task)
 
 	compileResult := <-compileOut
 	testcaseResult := <-testcaseOut
 
 	if compileResult.Err != nil {
-		return fmt.Errorf("compile failed: %s", compileResult.Err)
+		return fmt.Errorf("compile failed: %w", compileResult.Err)
 	}
 	if testcaseResult.Err != nil {
-		return fmt.Errorf("testcase get failed: %s", testcaseResult.Err)
+		return fmt.Errorf("testcase get failed: %w", testcaseResult.Err)
 	}
 
 	// set testcase로 분리
@@ -96,7 +96,7 @@ func (j *JudgeService) RunAndGrade(task *Task) {
 	tcNum := task.GetTestcase().Count()
 	fmt.Println(tcNum)
 
-	runCh := make(chan constants.GoResult, tcNum)
+	runCh := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		go j.runner.Run(runCh, task) // 여기서는 인자 정리해서 넘겨주기
 	}

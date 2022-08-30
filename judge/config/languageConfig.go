@@ -24,15 +24,6 @@ type LanguageConfig struct {
 	configMap map[string]config
 }
 
-// enum으로 바꾸기
-func (l *LanguageConfig) Get(lang string) (config, error) {
-	if val, ok := l.configMap[lang]; ok {
-		return val, nil
-	}
-	err := fmt.Errorf("language option does not exist")
-	return config{}, err
-}
-
 func (l *LanguageConfig) Init() {
 	l.configMap = make(map[string]config)
 	// srcPath, exePath는 base dir + task dir
@@ -56,27 +47,39 @@ func (l *LanguageConfig) Init() {
 	}
 }
 
-func (l *LanguageConfig) GetSrcPath(dir string, language string) (string, error) {
+// enum으로 바꾸기
+func (l *LanguageConfig) Get(language string) (config, error) {
 	if val, ok := l.configMap[language]; ok {
-		return constants.BASE_DIR + "/" + dir + "/" + val.SrcName, nil
+		return val, nil
 	}
-	return "", fmt.Errorf("unsupported language: %s", language)
+	return config{}, fmt.Errorf("unsupported language: %s", language)
+}
+
+func (l *LanguageConfig) GetSrcPath(dir string, language string) (string, error) {
+	conf, err := l.Get(language)
+	if err != nil {
+		return "", err
+	}
+	return constants.BASE_DIR + "/" + dir + "/" + conf.SrcName, nil
 }
 
 func (l *LanguageConfig) GetExePath(dir string, language string) (string, error) {
-	if val, ok := l.configMap[language]; ok {
-		return constants.BASE_DIR + "/" + dir + "/" + val.ExeName, nil
+	conf, err := l.Get(language)
+	if err != nil {
+		return "", err
 	}
-	return "", fmt.Errorf("unsupported language: %s", language)
+	return constants.BASE_DIR + "/" + dir + "/" + conf.ExeName, nil
 }
 
 func (l *LanguageConfig) GetArgSlice(srcPath string, exePath string, language string) ([]string, error) {
-	if val, ok := l.configMap[language]; ok {
-		args := strings.Replace(val.Args, "{srcPath}", srcPath, 1)
-		args = strings.Replace(args, "{exePath}", exePath, 1)
-		return strings.Split(args, " "), nil
+
+	conf, err := l.Get(language)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("unsupported language: %s", language)
+	args := strings.Replace(conf.Args, "{srcPath}", srcPath, 1)
+	args = strings.Replace(args, "{exePath}", exePath, 1)
+	return strings.Split(args, " "), nil
 }
 
 // "compile": {

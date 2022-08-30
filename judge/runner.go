@@ -3,12 +3,12 @@ package judge
 import (
 	"fmt"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/judge/config"
 )
 
 type Runner interface {
-	Run(out chan<- constants.GoResult, task *Task)
+	Run(out chan<- dto.GoResult, task *Task)
 }
 
 type runner struct {
@@ -27,20 +27,20 @@ func NewRunner(sandbox Sandbox, config *config.LanguageConfig) *runner {
 	return &runner{sandbox, config}
 }
 
-func (r *runner) Run(out chan<- constants.GoResult, task *Task) {
+func (r *runner) Run(out chan<- dto.GoResult, task *Task) {
 	fmt.Println("RUN! from runner")
 
 	options, err := r.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
 	if err != nil {
 		err := fmt.Errorf("failed to get language config: %s", err)
-		out <- constants.GoResult{Err: err, Data: RunResult{}}
+		out <- dto.GoResult{Err: err, Data: RunResult{}}
 		return
 	}
 
 	exePath, err := r.config.GetExePath(task.dir, task.language)
 	if err != nil {
 		err := fmt.Errorf("failed to get language config: %s", err)
-		out <- constants.GoResult{Err: err, Data: RunResult{}}
+		out <- dto.GoResult{Err: err, Data: RunResult{}}
 		return
 	}
 
@@ -51,7 +51,7 @@ func (r *runner) Run(out chan<- constants.GoResult, task *Task) {
 		MaxMemory:   options.MaxMemory,
 	}
 	r.sandbox.Run(&args)
-	out <- constants.GoResult{Data: RunResult{ExitCode: 0}}
+	out <- dto.GoResult{Data: RunResult{ExitCode: 0}}
 	// 채널로 결과반환
 }
 

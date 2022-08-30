@@ -1,4 +1,4 @@
-package constants
+package dto
 
 type GoResult struct {
 	Err  error

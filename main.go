@@ -62,9 +62,9 @@ func main() {
 	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, eventEmitter)
 	judgeEventHander.RegisterFn()
 
-	judgeEventListener := event.NewEventListener(eventMap, judgeEventHander)
+	judgeEventListener := event.NewListener(eventMap, judgeEventHander)
 
-	judgeEventManager := event.NewEventManager(
+	judgeEventManager := event.NewManager(
 		eventMap, judgeEventListener, eventEmitter,
 	)
 

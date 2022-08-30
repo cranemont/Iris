@@ -12,12 +12,12 @@ import (
 type handler struct {
 	funcMap      map[string]func(task *judge.Task)
 	judgeService *judge.JudgeService
-	eventEmitter event.EventEmitter
+	eventEmitter event.Emitter
 }
 
 func NewJudgeEventHandler(
 	judgeService *judge.JudgeService,
-	eventEmitter event.EventEmitter,
+	eventEmitter event.Emitter,
 ) *handler {
 	funcMap := make(map[string]func(task *judge.Task), 2)
 

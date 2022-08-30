@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/judge/config"
 )
 
 type Compiler interface {
-	Compile(out chan<- constants.GoResult, task *Task) // 얘는 task 몰라도 됨
+	Compile(out chan<- dto.GoResult, task *Task) // 얘는 task 몰라도 됨
 }
 
 type compiler struct {
@@ -29,26 +29,26 @@ func NewCompiler(sandbox Sandbox, config *config.LanguageConfig) *compiler {
 	return &compiler{sandbox, config}
 }
 
-func (c *compiler) Compile(out chan<- constants.GoResult, task *Task) {
+func (c *compiler) Compile(out chan<- dto.GoResult, task *Task) {
 	fmt.Println("Compile! from Compiler")
 
 	options, err := c.config.Get(task.language) // 이게 된다고? private 아닌가? GetLanguage 가 필요없어?
 	if err != nil {
 		err := fmt.Errorf("failed to get language config: %s", err)
-		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
 
 	srcPath, err := c.config.GetSrcPath(task.dir, task.language)
 	if err != nil {
 		err := fmt.Errorf("failed to get language config: %s", err)
-		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
 	exePath, err := c.config.GetExePath(task.dir, task.language)
 	if err != nil {
 		err := fmt.Errorf("failed to get language config: %s", err)
-		out <- constants.GoResult{Err: err, Data: CompileResult{}}
+		out <- dto.GoResult{Err: err, Data: CompileResult{}}
 		return
 	}
 
@@ -72,5 +72,5 @@ func (c *compiler) Compile(out chan<- constants.GoResult, task *Task) {
 
 	// sandbox result 추가
 	// 컴파일 실패시 CompileResult에 error 추가
-	out <- constants.GoResult{Err: err, Data: CompileResult{ResultCode: 0}}
+	out <- dto.GoResult{Err: err, Data: CompileResult{ResultCode: 0}}
 }

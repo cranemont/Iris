@@ -2,10 +2,10 @@ package judge
 
 // Task가 여기있는게 맞나? Judger로 가야하는거 아닐까?
 import (
+	"github.com/cranemont/judge-manager/common/utils"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/mq"
 	tc "github.com/cranemont/judge-manager/testcase"
-	"github.com/cranemont/judge-manager/utils"
 )
 
 type Task struct {
