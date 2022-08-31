@@ -49,7 +49,6 @@ func (h *handler) OnExit(task *judge.Task) error {
 		return fmt.Errorf("onexit: event emit failed: %w", err)
 	}
 	return nil
-	// go h.fileManager.RemoveDir(task.GetDir())
 }
 
 func (h *handler) Call(funcName string, args interface{}) {

@@ -13,28 +13,27 @@ import (
 type Judger struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
+	config          *sandbox.LanguageConfig
 	grader          Grader
 	fileManager     fileManager.FileManager
 	testcaseManager testcase.TestcaseManager
-	config          *sandbox.LanguageConfig
 }
 
-// 여기서 파일생성, 삭제 관리
 func NewJudger(
 	compiler sandbox.Compiler,
 	runner sandbox.Runner,
+	config *sandbox.LanguageConfig,
 	grader Grader,
 	fileManager fileManager.FileManager,
 	testcaseManager testcase.TestcaseManager,
-	config *sandbox.LanguageConfig,
 ) *Judger {
 	return &Judger{
 		compiler,
 		runner,
+		config,
 		grader,
 		fileManager,
 		testcaseManager,
-		config,
 	}
 }
 
@@ -42,6 +41,10 @@ func (j *Judger) Judge(task *Task) error {
 	// 컴파일과 동시에 테스트케이스 가져오기(메모리에 올리기), 동시에 config에서 언어 설정 가져오기... 그것들을 task에 저장하기
 	// task의 testcase가 있으면 isValid 체크한다음에 그거 쓰고, 없으면 가져와서 task의 testcase에 저장
 	// 이후 m.judge 호출
+	defer func() {
+		j.fileManager.RemoveDir(task.GetDir())
+	}()
+
 	if err := j.fileManager.CreateDir(task.GetDir()); err != nil {
 		return fmt.Errorf("failed to create dir: %w", err)
 	}
@@ -98,7 +101,7 @@ func (j *Judger) RunAndGrade(task *Task) {
 
 	// run and grade
 	tcNum := task.GetTestcase().Count()
-	fmt.Println(tcNum)
+	// fmt.Println(tcNum)
 
 	runCh := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
@@ -110,7 +113,10 @@ func (j *Judger) RunAndGrade(task *Task) {
 		result := <-runCh
 		// result에 따라서 grade할지, 다른방식 쓸지 결정
 		// run 결과를 파일로?
-		fmt.Printf("%s grader running\n", result)
+		if t, ok := result.Data.(sandbox.RunResult); ok {
+			fmt.Println(t)
+		}
+
 		go j.grader.Grade(task, gradeCh) // 여기서는 인자 정리해서 넘겨주기
 		// 여기서 이제 grade 고루틴으로 정리
 	}

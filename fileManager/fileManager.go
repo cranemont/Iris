@@ -1,7 +1,7 @@
 package fileManager
 
 import (
-	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/cranemont/judge-manager/constants"
@@ -9,7 +9,7 @@ import (
 
 type FileManager interface {
 	CreateDir(name string) error
-	RemoveDir(name string)
+	RemoveDir(name string) error
 	CreateFile(srcPath string, data string) error
 }
 
@@ -22,20 +22,22 @@ func NewFileManager() *fileManager {
 }
 
 func (f *fileManager) CreateDir(name string) error {
-	err := os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE))
-	if err != nil {
+	if err := os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (f *fileManager) RemoveDir(name string) {
-	os.RemoveAll(constants.BASE_DIR + "/" + name)
+func (f *fileManager) RemoveDir(name string) error {
+	if err := os.RemoveAll(constants.BASE_DIR + "/" + name); err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
 
 func (f *fileManager) CreateFile(srcPath string, data string) error {
-	err := ioutil.WriteFile(srcPath, []byte(data), constants.BASE_FILE_MODE)
-	if err != nil {
+	if err := os.WriteFile(srcPath, []byte(data), constants.BASE_FILE_MODE); err != nil {
 		return err
 	}
 	return nil
