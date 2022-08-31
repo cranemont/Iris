@@ -2,10 +2,11 @@ package judge
 
 // Task가 여기있는게 맞나? Judger로 가야하는거 아닐까?
 import (
+	"time"
+
 	"github.com/cranemont/judge-manager/common/utils"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/mq"
-	tc "github.com/cranemont/judge-manager/testcase"
 )
 
 type Task struct {
@@ -14,7 +15,7 @@ type Task struct {
 	language  string
 	problemId string
 	limit     mq.Limit
-	testcase  tc.Testcase
+	StartedAt time.Time // for time check
 }
 
 func NewTask(s mq.SubmissionDto) *Task {
@@ -25,7 +26,6 @@ func NewTask(s mq.SubmissionDto) *Task {
 		language:  s.Language,
 		problemId: s.ProblemId,
 		limit:     s.Limit,
-		testcase:  s.Testcase,
 	}
 }
 
@@ -33,6 +33,10 @@ func (t *Task) GetDir() string {
 	return t.dir
 }
 
-func (t *Task) GetTestcase() *tc.Testcase {
-	return &t.testcase
+func (t *Task) GetCode() string {
+	return t.code
+}
+
+func (t *Task) GetLanguage() string {
+	return t.language
 }

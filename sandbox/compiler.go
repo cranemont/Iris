@@ -2,12 +2,10 @@ package sandbox
 
 import (
 	"fmt"
-
-	"github.com/cranemont/judge-manager/common/dto"
 )
 
 type Compiler interface {
-	Compile(out chan<- dto.GoResult, dir string, language string) // 얘는 task 몰라도 됨
+	Compile(dir string, language string) (CompileResult, error) // 얘는 task 몰라도 됨
 }
 
 type compiler struct {
@@ -26,32 +24,27 @@ func NewCompiler(sandbox Sandbox, config *LanguageConfig) *compiler {
 	return &compiler{sandbox, config}
 }
 
-func (c *compiler) Compile(out chan<- dto.GoResult, dir string, language string) {
+func (c *compiler) Compile(dir string, language string) (CompileResult, error) {
 	fmt.Println("Compile! from Compiler")
 
 	options, err := c.config.Get(language)
 	if err != nil {
-		out <- dto.GoResult{Err: err, Data: CompileResult{}}
-		return
+		return CompileResult{}, err
 	}
-
 	srcPath, err := c.config.MakeSrcPath(dir, language)
 	if err != nil {
-		out <- dto.GoResult{Err: err, Data: CompileResult{}}
-		return
+		return CompileResult{}, err
 	}
 	exePath, err := c.config.MakeExePath(dir, language)
 	if err != nil {
-		out <- dto.GoResult{Err: err, Data: CompileResult{}}
-		return
+		return CompileResult{}, err
 	}
 	argSlice, err := c.config.MakeArgSlice(srcPath, exePath, language)
 	if err != nil {
-		out <- dto.GoResult{Err: err, Data: CompileResult{}}
-		return
+		return CompileResult{}, err
 	}
 
-	c.sandbox.Execute(
+	result, err := c.sandbox.Execute(
 		ExecArgs{
 			ExePath:     options.CompilerPath,
 			MaxCpuTime:  options.MaxCpuTime,
@@ -63,11 +56,16 @@ func (c *compiler) Compile(out chan<- dto.GoResult, dir string, language string)
 			Args:        argSlice,
 			Uid:         0,
 			Gid:         0,
-		}, nil)
+		}, nil,
+	)
+	if err != nil {
+		return CompileResult{}, err
+	}
+	fmt.Println(result)
 	// time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
 
 	// sandbox result 추가
 	// 컴파일 실패시 CompileResult에 error 추가
-	out <- dto.GoResult{Err: err, Data: CompileResult{ResultCode: 0}}
+	return CompileResult{ResultCode: 0}, nil
 }

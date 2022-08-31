@@ -2,12 +2,10 @@ package sandbox
 
 import (
 	"fmt"
-
-	"github.com/cranemont/judge-manager/common/dto"
 )
 
 type Runner interface {
-	Run(out chan<- dto.GoResult, dir string, language string)
+	Run(dir string, language string, input []byte) (RunResult, error)
 }
 
 type runner struct {
@@ -27,13 +25,12 @@ func NewRunner(sandbox Sandbox, config *LanguageConfig) *runner {
 	return &runner{sandbox, config}
 }
 
-func (r *runner) Run(out chan<- dto.GoResult, dir string, language string) {
+func (r *runner) Run(dir string, language string, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 
 	exePath, err := r.config.MakeExePath(dir, language)
 	if err != nil {
-		out <- dto.GoResult{Err: err, Data: RunResult{}}
-		return
+		return RunResult{}, err
 	}
 
 	//task의 limit으로 주기
@@ -48,9 +45,12 @@ func (r *runner) Run(out chan<- dto.GoResult, dir string, language string) {
 		ErrorPath:     "./run/error.out",
 		LogPath:       "./run/log.out",
 	}
-	r.sandbox.Execute(args, []byte("input1\ninput2\n"))
-	out <- dto.GoResult{Data: RunResult{ExitCode: 0}}
-	// 채널로 결과반환
+	result, err := r.sandbox.Execute(args, []byte("input1\ninput2\n"))
+	if err != nil {
+		return RunResult{}, err
+	}
+	fmt.Println(result)
+	return RunResult{ExitCode: 0}, nil
 }
 
 // "command": "{exe_path}",

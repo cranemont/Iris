@@ -5,128 +5,164 @@ import (
 
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/common/exception"
-	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
 
+var errJudge = "[Judger: Judge]"
+var errCompile = "[Judger: compile]"
+var errRun = "[Judger: run]"
+var errGrade = "[Judger: Grade]"
+var errGetTestcase = "[Judger: getTestcase]"
+
 type Judger struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
-	config          *sandbox.LanguageConfig
 	grader          Grader
-	fileManager     fileManager.FileManager
 	testcaseManager testcase.TestcaseManager
 }
 
 func NewJudger(
 	compiler sandbox.Compiler,
 	runner sandbox.Runner,
-	config *sandbox.LanguageConfig,
 	grader Grader,
-	fileManager fileManager.FileManager,
 	testcaseManager testcase.TestcaseManager,
 ) *Judger {
 	return &Judger{
 		compiler,
 		runner,
-		config,
 		grader,
-		fileManager,
 		testcaseManager,
 	}
 }
 
 func (j *Judger) Judge(task *Task) error {
-	// 컴파일과 동시에 테스트케이스 가져오기(메모리에 올리기), 동시에 config에서 언어 설정 가져오기... 그것들을 task에 저장하기
-	// task의 testcase가 있으면 isValid 체크한다음에 그거 쓰고, 없으면 가져와서 task의 testcase에 저장
-	// 이후 m.judge 호출
-	defer func() {
-		j.fileManager.RemoveDir(task.GetDir())
-	}()
-
-	if err := j.fileManager.CreateDir(task.GetDir()); err != nil {
-		return fmt.Errorf("failed to create dir: %w", err)
-	}
+	// testcase 있는건 다른 함수에서 처리. grade가 필요없는 요청임
 
 	testcaseOut := make(chan dto.GoResult)
-	go j.testcaseManager.GetTestcase(testcaseOut, task.problemId)
-
-	srcPath, err := j.config.MakeSrcPath(task.dir, task.language)
-	if err != nil {
-		return err
-	}
-	if err := j.createSrcFile(srcPath, task.code); err != nil {
-		return err
-	}
+	go j.getTestcase(testcaseOut, task.problemId)
 	compileOut := make(chan dto.GoResult)
-	go j.compiler.Compile(compileOut, task.dir, task.language)
+	go j.compile(compileOut, task.dir, task.language)
 
 	compileResult := <-compileOut
 	testcaseResult := <-testcaseOut
-
 	if compileResult.Err != nil {
-		return fmt.Errorf("compile failed: %w", compileResult.Err)
+		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
+		return fmt.Errorf("%s: %w", errJudge, compileResult.Err)
 	}
 	if testcaseResult.Err != nil {
-		return fmt.Errorf("testcase get failed: %w", testcaseResult.Err)
+		return fmt.Errorf("%s: %w", errJudge, testcaseResult.Err)
 	}
 
 	// set testcase로 분리
-	if data, ok := testcaseResult.Data.(testcase.Testcase); ok {
-		task.testcase = data
-	} else {
+	data, ok := testcaseResult.Data.(testcase.Testcase)
+	if !ok {
 		return fmt.Errorf("%w: invalid testcase data", exception.ErrTypeAssertionFail)
 	}
+	tc := data
 
-	// err 처리
-	j.RunAndGrade(task)
+	tcNum := len(tc.Data)
+	runOut := make(chan dto.GoResult, tcNum)
+	for i := 0; i < tcNum; i++ {
+		go j.run(runOut, task.dir, task.language, nil)
+	}
+
+	gradeOut := make(chan dto.GoResult, tcNum)
+	for i := 0; i < tcNum; i++ {
+		result := <-runOut
+		if t, ok := result.Data.(sandbox.RunResult); ok {
+			fmt.Println(t.Output) // 이걸 아래 grade에 넘겨주기
+		}
+		go j.grade(gradeOut, nil, nil)
+	}
+
+	finalResult := []bool{}
+	for i := 0; i < tcNum; i++ {
+		gradeResult := <-gradeOut
+		finalResult = append(finalResult, gradeResult.Data.(bool))
+		// task에 결과 반영
+	}
+
+	fmt.Println(finalResult)
 
 	// eventManager한테 task done 이벤트 전송
 	fmt.Println("done")
 	return nil
 }
 
-func (j *Judger) createSrcFile(srcPath string, code string) error {
-	if err := j.fileManager.CreateFile(srcPath, code); err != nil {
-		// ENUM으로 변경, result code 반환
-		err := fmt.Errorf("failed to create src file: %s", err)
-		return err
+// err 처리, Run이랑 Grade로 분리
+// func (j *Judger) RunAndGrade(task *Task) {
+
+// 	// run and grade
+// 	tcNum := task.GetTestcase().Count()
+// 	// fmt.Println(tcNum)
+
+// 	runCh := make(chan dto.GoResult, tcNum)
+// 	for i := 0; i < tcNum; i++ {
+// 		go j.runner.Run(task.dir, task.language, nil) // 여기서는 인자 정리해서 넘겨주기
+// 	}
+
+// 	gradeCh := make(chan string, tcNum)
+// 	for i := 0; i < tcNum; i++ {
+// 		result := <-runCh
+// 		// result에 따라서 grade할지, 다른방식 쓸지 결정
+// 		// run 결과를 파일로?
+// 		if t, ok := result.Data.(sandbox.RunResult); ok {
+// 			fmt.Println(t)
+// 		}
+
+// 		go j.grader.Grade(task, gradeCh) // 여기서는 인자 정리해서 넘겨주기
+// 		// 여기서 이제 grade 고루틴으로 정리
+// 	}
+
+// 	finalResult := ""
+// 	for i := 0; i < tcNum; i++ {
+// 		gradeResult := <-gradeCh
+// 		finalResult += gradeResult
+// 		// task에 결과 반영
+// 	}
+
+// 	fmt.Println(finalResult)
+// }
+
+// wrapper to use goroutine
+func (j *Judger) compile(out chan<- dto.GoResult, dir string, language string) {
+	// 여기서 결과값 처리
+	result, err := j.compiler.Compile(dir, language)
+	if err != nil {
+		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errCompile, err)}
 	}
-	return nil
+	// result 변환, 처리
+	out <- dto.GoResult{Data: result}
 }
 
-// err 처리, Run이랑 Grade로 분리
-func (j *Judger) RunAndGrade(task *Task) {
-
-	// run and grade
-	tcNum := task.GetTestcase().Count()
-	// fmt.Println(tcNum)
-
-	runCh := make(chan dto.GoResult, tcNum)
-	for i := 0; i < tcNum; i++ {
-		go j.runner.Run(runCh, task.dir, task.language) // 여기서는 인자 정리해서 넘겨주기
+func (j *Judger) run(out chan<- dto.GoResult, dir string, language string, input []byte) {
+	// 여기서 결과값 처리
+	result, err := j.runner.Run(dir, language, nil)
+	if err != nil {
+		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errRun, err)}
 	}
+	// result 변환, 처리
+	out <- dto.GoResult{Data: result}
+}
 
-	gradeCh := make(chan string, tcNum)
-	for i := 0; i < tcNum; i++ {
-		result := <-runCh
-		// result에 따라서 grade할지, 다른방식 쓸지 결정
-		// run 결과를 파일로?
-		if t, ok := result.Data.(sandbox.RunResult); ok {
-			fmt.Println(t)
-		}
-
-		go j.grader.Grade(task, gradeCh) // 여기서는 인자 정리해서 넘겨주기
-		// 여기서 이제 grade 고루틴으로 정리
+func (j *Judger) grade(out chan<- dto.GoResult, answer []byte, output []byte) {
+	// 여기서 결과값 처리
+	result, err := j.grader.Grade(answer, output)
+	if err != nil {
+		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errGrade, err)}
 	}
+	// result 변환, 처리
+	out <- dto.GoResult{Data: result}
+}
 
-	finalResult := ""
-	for i := 0; i < tcNum; i++ {
-		gradeResult := <-gradeCh
-		finalResult += gradeResult
-		// task에 결과 반영
+// wrapper to use goroutine
+func (j *Judger) getTestcase(out chan<- dto.GoResult, problemId string) {
+	// 여기서 결과값 처리
+	result, err := j.testcaseManager.GetTestcase(problemId)
+	if err != nil {
+		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errGetTestcase, err)}
 	}
-
-	fmt.Println(finalResult)
+	// result 변환, 처리
+	out <- dto.GoResult{Data: result}
 }

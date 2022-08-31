@@ -53,13 +53,16 @@ func main() {
 	judger := judge.NewJudger(
 		compiler,
 		runner,
-		&languageConfig,
 		grader,
-		fileManager,
 		testcaseManager,
 	)
 
-	judgeEventHander := judgeEvent.NewHandler(judger, eventEmitter)
+	judgeEventHander := judgeEvent.NewHandler(
+		judger,
+		eventEmitter,
+		fileManager,
+		&languageConfig,
+	)
 
 	judgeEventListener := event.NewListener(eventMap, judgeEventHander)
 

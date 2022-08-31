@@ -3,25 +3,37 @@ package judgeEvent
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
+	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge"
+	"github.com/cranemont/judge-manager/sandbox"
 )
 
 // controller의 역할. OnJudge, OnRun, OnOutput등으로 여러 상황 구분
 type handler struct {
 	funcMap      map[string](func(task *judge.Task) error)
-	judgeService *judge.Judger
+	judger       *judge.Judger
 	eventEmitter event.Emitter
+	fileManager  fileManager.FileManager
+	config       *sandbox.LanguageConfig
 }
 
 func NewHandler(
-	judgeService *judge.Judger,
+	judger *judge.Judger,
 	eventEmitter event.Emitter,
+	fileManager fileManager.FileManager,
+	config *sandbox.LanguageConfig,
 ) *handler {
-	handler := &handler{judgeService: judgeService, eventEmitter: eventEmitter}
+	handler := &handler{
+		judger:       judger,
+		eventEmitter: eventEmitter,
+		fileManager:  fileManager,
+		config:       config,
+	}
 	funcMap := map[string](func(task *judge.Task) error){
 		"OnExec": (*handler).OnExec,
 		"OnExit": (*handler).OnExit,
@@ -32,7 +44,22 @@ func NewHandler(
 
 // controller의 역할!
 func (h *handler) OnExec(task *judge.Task) error {
-	if err := h.judgeService.Judge(task); err != nil {
+	task.StartedAt = time.Now()
+	dir := task.GetDir()
+	// 폴더 생성
+	if err := h.fileManager.CreateDir(dir); err != nil {
+		return fmt.Errorf("failed to create dir: %w", err)
+	}
+
+	srcPath, err := h.config.MakeSrcPath(dir, task.GetLanguage())
+	if err != nil {
+		return err
+	}
+	if err := h.createSrcFile(srcPath, task.GetCode()); err != nil {
+		return err
+	}
+
+	if err := h.judger.Judge(task); err != nil {
 		return fmt.Errorf("onexec: %w", err)
 	}
 	// error 처리
@@ -43,16 +70,28 @@ func (h *handler) OnExec(task *judge.Task) error {
 	return nil
 }
 
-func (h *handler) OnExit(task *judge.Task) error {
-	// 파일 삭제, task 결과 업데이트 등 정리작업
-	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
-		return fmt.Errorf("onexit: event emit failed: %w", err)
+func (h *handler) createSrcFile(srcPath string, code string) error {
+	if err := h.fileManager.CreateFile(srcPath, code); err != nil {
+		// ENUM으로 변경, result code 반환
+		err := fmt.Errorf("failed to create src file: %s", err)
+		return err
 	}
 	return nil
 }
 
+func (h *handler) OnExit(task *judge.Task) error {
+	// 파일 삭제, task 결과 업데이트 등 정리작업
+	h.fileManager.RemoveDir(task.GetDir())
+	fmt.Println(time.Since(task.StartedAt))
+	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
+		return fmt.Errorf("onexit: event emit failed: %w", err)
+	}
+
+	return nil
+}
+
 func (h *handler) Call(funcName string, args interface{}) {
-	//존재 확인. 없으면 registerFn 구현하라는 에러 throw
+	// TODO: Refactor
 	if fn, ok := h.funcMap[funcName]; ok {
 		if _, ok := args.(*judge.Task); ok {
 			fmt.Println("handler function calling... ", funcName)
