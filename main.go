@@ -10,7 +10,6 @@ import (
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/constants/language"
 	"github.com/cranemont/judge-manager/event"
-	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge"
 	judgeEvent "github.com/cranemont/judge-manager/judge/event"
 	"github.com/cranemont/judge-manager/mq"
@@ -48,7 +47,6 @@ func main() {
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
 	testcaseManager := testcase.NewTestcaseManager(cache)
-	fileManager := fileManager.NewFileManager()
 
 	judger := judge.NewJudger(
 		compiler,
@@ -60,7 +58,6 @@ func main() {
 	judgeEventHander := judgeEvent.NewHandler(
 		judger,
 		eventEmitter,
-		fileManager,
 		&languageConfig,
 	)
 
@@ -81,14 +78,14 @@ func main() {
 		fmt.Scanln(&input)
 
 		submissionDto := mq.SubmissionDto{
-			Code: "#include <stdio.h>\n\nint main (void) {\n  printf(\"Hello world!\\n\");\n  char buf[100];\n  scanf(\"%s\", buf);\n  printf(\"%s\\n\", buf);\n  return 0;\n}\n",
+			// Code: "#include <stdio.h>\n\nint main (void) {\n  printf(\"Hello world!\\n\");\n  char buf[100];\n  scanf(\"%s\", buf);\n  printf(\"%s\\n\", buf);\n  return 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
-			// Code:      "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
+			Code:      "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
 			Language:  language.C,
 			ProblemId: input,
 			Limit: mq.Limit{
-				Time:   "TIMELIMIT",
-				Memory: "MEMORYLIMIT",
+				Time:   1000,
+				Memory: 256 * 1024 * 1024,
 			},
 		}
 

@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -60,7 +61,7 @@ func (l *LanguageConfig) MakeSrcPath(dir string, language string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("failed to make srcpath: %w", err)
 	}
-	return constants.BASE_DIR + "/" + dir + "/" + conf.SrcName, nil
+	return MakeFilePath(dir, conf.SrcName).String(), nil
 }
 
 func (l *LanguageConfig) MakeExePath(dir string, language string) (string, error) {
@@ -68,7 +69,7 @@ func (l *LanguageConfig) MakeExePath(dir string, language string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("failed to make exepath: %w", err)
 	}
-	return constants.BASE_DIR + "/" + dir + "/" + conf.ExeName, nil
+	return MakeFilePath(dir, conf.ExeName).String(), nil
 }
 
 func (l *LanguageConfig) MakeArgSlice(srcPath string, exePath string, language string) ([]string, error) {
@@ -80,6 +81,15 @@ func (l *LanguageConfig) MakeArgSlice(srcPath string, exePath string, language s
 	args := strings.Replace(conf.Args, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)
 	return strings.Split(args, " "), nil
+}
+
+func MakeFilePath(dir string, fileName string) *bytes.Buffer {
+	var b bytes.Buffer
+	b.WriteString(constants.BASE_DIR)
+	b.WriteString("/")
+	b.WriteString(dir)
+	b.WriteString("/")
+	return &b
 }
 
 // "compile": {

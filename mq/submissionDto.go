@@ -4,8 +4,8 @@ import "github.com/cranemont/judge-manager/testcase"
 
 // TODO: manager패키지로 옮기기(task 안으로)
 type Limit struct {
-	Time   string
-	Memory string
+	Time   int
+	Memory int
 }
 
 type SubmissionDto struct {

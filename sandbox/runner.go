@@ -5,7 +5,7 @@ import (
 )
 
 type Runner interface {
-	Run(dir string, language string, input []byte) (RunResult, error)
+	Run(dir string, id string, language string, input []byte) (RunResult, error)
 }
 
 type runner struct {
@@ -25,7 +25,7 @@ func NewRunner(sandbox Sandbox, config *LanguageConfig) *runner {
 	return &runner{sandbox, config}
 }
 
-func (r *runner) Run(dir string, language string, input []byte) (RunResult, error) {
+func (r *runner) Run(dir string, id string, language string, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 
 	exePath, err := r.config.MakeExePath(dir, language)
@@ -41,14 +41,17 @@ func (r *runner) Run(dir string, language string, input []byte) (RunResult, erro
 		MaxMemory:     256 * 1024 * 1024, //task.limit.Memory,
 		MaxStackSize:  128 * 1024 * 1024,
 		MaxOutputSize: 10 * 1024 * 1024, // TODO: Testcase 크기 따라서 설정
-		OutputPath:    "./run/out.out",
-		ErrorPath:     "./run/error.out",
-		LogPath:       "./run/log.out",
+		// file에 쓰는거랑 stdout이랑 크게 차이 안남
+		// https://stackoverflow.com/questions/29700478/redirecting-of-stdout-in-bash-vs-writing-to-file-in-c-with-fprintf-speed
+		OutputPath: MakeFilePath(dir, id+".out").String(),
+		ErrorPath:  "./run/error.out", //compile은 되는데 run은 안되는 상황에서 error가 덮어씌워지는지?
+		LogPath:    "./run/log.out",
 	}
-	result, err := r.sandbox.Execute(args, []byte("input1\ninput2\n"))
+	result, err := r.sandbox.Execute(args, input)
 	if err != nil {
 		return RunResult{}, err
 	}
+
 	fmt.Println(result)
 	return RunResult{ExitCode: 0}, nil
 }

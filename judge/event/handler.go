@@ -8,7 +8,7 @@ import (
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/event"
-	"github.com/cranemont/judge-manager/fileManager"
+	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/judge"
 	"github.com/cranemont/judge-manager/sandbox"
 )
@@ -18,21 +18,21 @@ type handler struct {
 	funcMap      map[string](func(task *judge.Task) error)
 	judger       *judge.Judger
 	eventEmitter event.Emitter
-	fileManager  fileManager.FileManager
-	config       *sandbox.LanguageConfig
+	// fileManager  fileManager.FileManager
+	config *sandbox.LanguageConfig
 }
 
 func NewHandler(
 	judger *judge.Judger,
 	eventEmitter event.Emitter,
-	fileManager fileManager.FileManager,
+	// fileManager fileManager.FileManager,
 	config *sandbox.LanguageConfig,
 ) *handler {
 	handler := &handler{
 		judger:       judger,
 		eventEmitter: eventEmitter,
-		fileManager:  fileManager,
-		config:       config,
+		// fileManager:  fileManager,
+		config: config,
 	}
 	funcMap := map[string](func(task *judge.Task) error){
 		"OnExec": (*handler).OnExec,
@@ -47,7 +47,7 @@ func (h *handler) OnExec(task *judge.Task) error {
 	task.StartedAt = time.Now()
 	dir := task.GetDir()
 	// 폴더 생성
-	if err := h.fileManager.CreateDir(dir); err != nil {
+	if err := file.CreateDir(dir); err != nil {
 		return fmt.Errorf("failed to create dir: %w", err)
 	}
 
@@ -71,7 +71,7 @@ func (h *handler) OnExec(task *judge.Task) error {
 }
 
 func (h *handler) createSrcFile(srcPath string, code string) error {
-	if err := h.fileManager.CreateFile(srcPath, code); err != nil {
+	if err := file.CreateFile(srcPath, code); err != nil {
 		// ENUM으로 변경, result code 반환
 		err := fmt.Errorf("failed to create src file: %s", err)
 		return err
@@ -81,7 +81,7 @@ func (h *handler) createSrcFile(srcPath string, code string) error {
 
 func (h *handler) OnExit(task *judge.Task) error {
 	// 파일 삭제, task 결과 업데이트 등 정리작업
-	h.fileManager.RemoveDir(task.GetDir())
+	file.RemoveDir(task.GetDir())
 	fmt.Println(time.Since(task.StartedAt))
 	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
 		return fmt.Errorf("onexit: event emit failed: %w", err)

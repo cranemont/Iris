@@ -2,6 +2,7 @@ package judge
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/common/exception"
@@ -55,16 +56,14 @@ func (j *Judger) Judge(task *Task) error {
 	}
 
 	// set testcase로 분리
-	data, ok := testcaseResult.Data.(testcase.Testcase)
+	tc, ok := testcaseResult.Data.(testcase.Testcase)
 	if !ok {
 		return fmt.Errorf("%w: invalid testcase data", exception.ErrTypeAssertionFail)
 	}
-	tc := data
-
 	tcNum := len(tc.Data)
 	runOut := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
-		go j.run(runOut, task.dir, task.language, nil)
+		go j.run(runOut, task.dir, strconv.Itoa(i), task.language, nil)
 	}
 
 	gradeOut := make(chan dto.GoResult, tcNum)
@@ -90,41 +89,6 @@ func (j *Judger) Judge(task *Task) error {
 	return nil
 }
 
-// err 처리, Run이랑 Grade로 분리
-// func (j *Judger) RunAndGrade(task *Task) {
-
-// 	// run and grade
-// 	tcNum := task.GetTestcase().Count()
-// 	// fmt.Println(tcNum)
-
-// 	runCh := make(chan dto.GoResult, tcNum)
-// 	for i := 0; i < tcNum; i++ {
-// 		go j.runner.Run(task.dir, task.language, nil) // 여기서는 인자 정리해서 넘겨주기
-// 	}
-
-// 	gradeCh := make(chan string, tcNum)
-// 	for i := 0; i < tcNum; i++ {
-// 		result := <-runCh
-// 		// result에 따라서 grade할지, 다른방식 쓸지 결정
-// 		// run 결과를 파일로?
-// 		if t, ok := result.Data.(sandbox.RunResult); ok {
-// 			fmt.Println(t)
-// 		}
-
-// 		go j.grader.Grade(task, gradeCh) // 여기서는 인자 정리해서 넘겨주기
-// 		// 여기서 이제 grade 고루틴으로 정리
-// 	}
-
-// 	finalResult := ""
-// 	for i := 0; i < tcNum; i++ {
-// 		gradeResult := <-gradeCh
-// 		finalResult += gradeResult
-// 		// task에 결과 반영
-// 	}
-
-// 	fmt.Println(finalResult)
-// }
-
 // wrapper to use goroutine
 func (j *Judger) compile(out chan<- dto.GoResult, dir string, language string) {
 	// 여기서 결과값 처리
@@ -136,9 +100,9 @@ func (j *Judger) compile(out chan<- dto.GoResult, dir string, language string) {
 	out <- dto.GoResult{Data: result}
 }
 
-func (j *Judger) run(out chan<- dto.GoResult, dir string, language string, input []byte) {
+func (j *Judger) run(out chan<- dto.GoResult, dir string, id string, language string, input []byte) {
 	// 여기서 결과값 처리
-	result, err := j.runner.Run(dir, language, nil)
+	result, err := j.runner.Run(dir, id, language, nil)
 	if err != nil {
 		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errRun, err)}
 	}
