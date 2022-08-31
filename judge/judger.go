@@ -6,29 +6,29 @@ import (
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/fileManager"
-	"github.com/cranemont/judge-manager/judge/config"
+	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
 
-type JudgeService struct {
-	compiler        Compiler
-	runner          Runner
+type Judger struct {
+	compiler        sandbox.Compiler
+	runner          sandbox.Runner
 	grader          Grader
 	fileManager     fileManager.FileManager
 	testcaseManager testcase.TestcaseManager
-	config          *config.LanguageConfig
+	config          *sandbox.LanguageConfig
 }
 
 // 여기서 파일생성, 삭제 관리
-func NewJudgeService(
-	compiler Compiler,
-	runner Runner,
+func NewJudger(
+	compiler sandbox.Compiler,
+	runner sandbox.Runner,
 	grader Grader,
 	fileManager fileManager.FileManager,
 	testcaseManager testcase.TestcaseManager,
-	config *config.LanguageConfig,
-) *JudgeService {
-	return &JudgeService{
+	config *sandbox.LanguageConfig,
+) *Judger {
+	return &Judger{
 		compiler,
 		runner,
 		grader,
@@ -38,7 +38,7 @@ func NewJudgeService(
 	}
 }
 
-func (j *JudgeService) Judge(task *Task) error {
+func (j *Judger) Judge(task *Task) error {
 	// 컴파일과 동시에 테스트케이스 가져오기(메모리에 올리기), 동시에 config에서 언어 설정 가져오기... 그것들을 task에 저장하기
 	// task의 testcase가 있으면 isValid 체크한다음에 그거 쓰고, 없으면 가져와서 task의 testcase에 저장
 	// 이후 m.judge 호출
@@ -57,7 +57,7 @@ func (j *JudgeService) Judge(task *Task) error {
 		return err
 	}
 	compileOut := make(chan dto.GoResult)
-	go j.compiler.Compile(compileOut, task)
+	go j.compiler.Compile(compileOut, task.dir, task.language)
 
 	compileResult := <-compileOut
 	testcaseResult := <-testcaseOut
@@ -84,7 +84,7 @@ func (j *JudgeService) Judge(task *Task) error {
 	return nil
 }
 
-func (j *JudgeService) createSrcFile(srcPath string, code string) error {
+func (j *Judger) createSrcFile(srcPath string, code string) error {
 	// task.code로 srcName에 파일 생성, 얘는 다른곳에서 생성해줘야됨. 컴파일이 아님
 	if err := j.fileManager.CreateFile(srcPath, code); err != nil {
 		// ENUM으로 변경, result code 반환
@@ -95,7 +95,7 @@ func (j *JudgeService) createSrcFile(srcPath string, code string) error {
 }
 
 // err 처리, Run이랑 Grade로 분리
-func (j *JudgeService) RunAndGrade(task *Task) {
+func (j *Judger) RunAndGrade(task *Task) {
 
 	// run and grade
 	tcNum := task.GetTestcase().Count()
@@ -103,7 +103,7 @@ func (j *JudgeService) RunAndGrade(task *Task) {
 
 	runCh := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
-		go j.runner.Run(runCh, task) // 여기서는 인자 정리해서 넘겨주기
+		go j.runner.Run(runCh, task.dir, task.language) // 여기서는 인자 정리해서 넘겨주기
 	}
 
 	gradeCh := make(chan string, tcNum)

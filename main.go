@@ -12,9 +12,9 @@ import (
 	"github.com/cranemont/judge-manager/event"
 	"github.com/cranemont/judge-manager/fileManager"
 	"github.com/cranemont/judge-manager/judge"
-	"github.com/cranemont/judge-manager/judge/config"
 	judgeEvent "github.com/cranemont/judge-manager/judge/event"
 	"github.com/cranemont/judge-manager/mq"
+	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
 
@@ -32,14 +32,14 @@ func main() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
-	sandbox := judge.NewSandbox()
+	libjudger := sandbox.NewSandbox()
 
-	config := config.LanguageConfig{}
-	config.Init()
+	languageConfig := sandbox.LanguageConfig{}
+	languageConfig.Init()
 	// runOption := config.RunOption{}
 
-	compiler := judge.NewCompiler(sandbox, &config)
-	runner := judge.NewRunner(sandbox, &config)
+	compiler := sandbox.NewCompiler(libjudger, &languageConfig)
+	runner := sandbox.NewRunner(libjudger, &languageConfig)
 	grader := judge.NewGrader()
 
 	eventMap := make(map[string](chan interface{}))
@@ -50,17 +50,16 @@ func main() {
 	testcaseManager := testcase.NewTestcaseManager(cache)
 	fileManager := fileManager.NewFileManager()
 
-	judgeService := judge.NewJudgeService(
+	judger := judge.NewJudger(
 		compiler,
 		runner,
 		grader,
 		fileManager,
 		testcaseManager,
-		&config,
+		&languageConfig,
 	)
 
-	judgeEventHander := judgeEvent.NewJudgeEventHandler(judgeService, eventEmitter)
-	judgeEventHander.RegisterFn()
+	judgeEventHander := judgeEvent.NewHandler(judger, eventEmitter)
 
 	judgeEventListener := event.NewListener(eventMap, judgeEventHander)
 

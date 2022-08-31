@@ -20,5 +20,5 @@ func (e *emitter) Emit(eventName string, data interface{}) error {
 		val <- data
 		return nil
 	}
-	return fmt.Errorf("not registered event: %s", eventName)
+	return fmt.Errorf("unregistered event: %s", eventName)
 }

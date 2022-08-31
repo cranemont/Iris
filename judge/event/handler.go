@@ -12,60 +12,58 @@ import (
 
 // controller의 역할. OnJudge, OnRun, OnOutput등으로 여러 상황 구분
 type handler struct {
-	funcMap      map[string]func(task *judge.Task)
-	judgeService *judge.JudgeService
+	funcMap      map[string](func(task *judge.Task) error)
+	judgeService *judge.Judger
 	eventEmitter event.Emitter
 }
 
-func NewJudgeEventHandler(
-	judgeService *judge.JudgeService,
+func NewHandler(
+	judgeService *judge.Judger,
 	eventEmitter event.Emitter,
 ) *handler {
-	funcMap := make(map[string]func(task *judge.Task), 2)
-
-	// funcMap := map[string]func(h *handler, task *judge.Task){
-	// 	"OnExec": (*handler).OnExec,
-	// 	"OnExit": (*handler).OnExit,
-	// }
-	return &handler{funcMap, judgeService, eventEmitter}
+	handler := &handler{judgeService: judgeService, eventEmitter: eventEmitter}
+	funcMap := map[string](func(task *judge.Task) error){
+		"OnExec": (*handler).OnExec,
+		"OnExit": (*handler).OnExit,
+	}
+	handler.funcMap = funcMap
+	return handler
 }
 
 // controller의 역할!
-func (h *handler) OnExec(task *judge.Task) {
-	err := h.judgeService.Judge(task)
-	if err != nil {
-		log.Println("error onexec: %w", err)
-		return
+func (h *handler) OnExec(task *judge.Task) error {
+	if err := h.judgeService.Judge(task); err != nil {
+		return fmt.Errorf("onexec: %w", err)
 	}
 	// error 처리
 	fmt.Println("triggerring event")
-	err = h.eventEmitter.Emit(constants.TASK_EXITED, task)
-	if err != nil {
-		log.Println("event emit failed: %w", err)
+	if err := h.eventEmitter.Emit(constants.TASK_EXITED, task); err != nil {
+		return fmt.Errorf("onexec: event emit failed: %w", err)
 	}
+	return nil
 }
 
-func (h *handler) OnExit(task *judge.Task) {
+func (h *handler) OnExit(task *judge.Task) error {
 	// 파일 삭제, task 결과 업데이트 등 정리작업
-	err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task)
-	if err != nil {
-		log.Println("event emit failed: ", err)
+	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
+		return fmt.Errorf("onexit: event emit failed: %w", err)
 	}
+	return nil
 	// go h.fileManager.RemoveDir(task.GetDir())
 }
 
-func (h *handler) RegisterFn() {
-	h.funcMap["OnExec"] = h.OnExec
-	h.funcMap["OnExit"] = h.OnExit
-}
-
-func (h *handler) Call(funcName string, args interface{}) error {
+func (h *handler) Call(funcName string, args interface{}) {
 	//존재 확인. 없으면 registerFn 구현하라는 에러 throw
-	if _, ok := args.(*judge.Task); ok {
-		fmt.Println("handler function calling... ", funcName)
-		h.funcMap[funcName](args.(*judge.Task))
+	if fn, ok := h.funcMap[funcName]; ok {
+		if _, ok := args.(*judge.Task); ok {
+			fmt.Println("handler function calling... ", funcName)
+			if err := fn(args.(*judge.Task)); err != nil {
+				log.Printf("error on %s: %s", funcName, err)
+			}
+		} else {
+			log.Printf("%s: invalid task data", exception.ErrTypeAssertionFail)
+		}
 	} else {
-		return fmt.Errorf("%w: invalid task data", exception.ErrTypeAssertionFail)
+		log.Printf("unregistered function: %s", funcName)
 	}
-	return nil
 }
