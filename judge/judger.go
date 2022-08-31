@@ -85,7 +85,6 @@ func (j *Judger) Judge(task *Task) error {
 }
 
 func (j *Judger) createSrcFile(srcPath string, code string) error {
-	// task.code로 srcName에 파일 생성, 얘는 다른곳에서 생성해줘야됨. 컴파일이 아님
 	if err := j.fileManager.CreateFile(srcPath, code); err != nil {
 		// ENUM으로 변경, result code 반환
 		err := fmt.Errorf("failed to create src file: %s", err)
