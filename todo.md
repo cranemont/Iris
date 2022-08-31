@@ -5,8 +5,8 @@
   - [x] 일단은 묶어서. 나중에 다시 분리
 - [ ] compile/run config 패키지 완성
 - [ ] testcase Manager 구현
-  - [ ] cache manager
-  - [ ] task에 testcase struct 생성해서 넣기
+  - [x] cache manager
+  - [x] task에 testcase struct 생성해서 넣기
    - [ ] submissionDTO로 넘어왔으면 그거 사용
 - [ ] grader
 - [ ] sandbox 연결

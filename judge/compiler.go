@@ -53,13 +53,18 @@ func (c *compiler) Compile(out chan<- dto.GoResult, task *Task) {
 	}
 
 	c.sandbox.Execute(
-		&SandboxArgs{
+		ExecArgs{
 			ExePath:     options.CompilerPath,
 			MaxCpuTime:  options.MaxCpuTime,
 			MaxRealTime: options.MaxRealTime,
 			MaxMemory:   options.MaxMemory,
+			OutputPath:  "./compile/out.out",
+			ErrorPath:   "./compile/error.out",
+			LogPath:     "./compile/log.out",
 			Args:        argSlice,
-		})
+			Uid:         0,
+			Gid:         0,
+		}, nil)
 	// time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
 

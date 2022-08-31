@@ -21,6 +21,7 @@ type RunResult struct {
 	ErrorCode  int
 	ExitCode   int
 	ResultCode int
+	Output     []byte
 }
 
 func NewRunner(sandbox Sandbox, config *config.LanguageConfig) *runner {
@@ -30,12 +31,6 @@ func NewRunner(sandbox Sandbox, config *config.LanguageConfig) *runner {
 func (r *runner) Run(out chan<- dto.GoResult, task *Task) {
 	fmt.Println("RUN! from runner")
 
-	options, err := r.config.Get(task.language)
-	if err != nil {
-		out <- dto.GoResult{Err: err, Data: RunResult{}}
-		return
-	}
-
 	exePath, err := r.config.MakeExePath(task.dir, task.language)
 	if err != nil {
 		out <- dto.GoResult{Err: err, Data: RunResult{}}
@@ -43,13 +38,18 @@ func (r *runner) Run(out chan<- dto.GoResult, task *Task) {
 	}
 
 	//task의 limit으로 주기
-	args := SandboxArgs{
-		ExePath:     exePath,
-		MaxCpuTime:  options.MaxCpuTime,
-		MaxRealTime: options.MaxRealTime,
-		MaxMemory:   options.MaxMemory,
+	args := ExecArgs{
+		ExePath:       exePath,
+		MaxCpuTime:    1000,              //task.limit.Time,
+		MaxRealTime:   3000,              //task.limit.Time * 3,
+		MaxMemory:     256 * 1024 * 1024, //task.limit.Memory,
+		MaxStackSize:  128 * 1024 * 1024,
+		MaxOutputSize: 10 * 1024 * 1024, // TODO: Testcase 크기 따라서 설정
+		OutputPath:    "./run/out.out",
+		ErrorPath:     "./run/error.out",
+		LogPath:       "./run/log.out",
 	}
-	r.sandbox.Run(&args)
+	r.sandbox.Execute(args, []byte("input1\ninput2\n"))
 	out <- dto.GoResult{Data: RunResult{ExitCode: 0}}
 	// 채널로 결과반환
 }
