@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bytes"
 	"log"
 	"os"
 
@@ -52,4 +53,14 @@ func ReadFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func MakeFilePath(dir string, fileName string) *bytes.Buffer {
+	var b bytes.Buffer
+	b.WriteString(constants.BASE_DIR)
+	b.WriteString("/")
+	b.WriteString(dir)
+	b.WriteString("/")
+	b.WriteString(fileName)
+	return &b
 }

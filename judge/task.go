@@ -10,22 +10,24 @@ import (
 )
 
 type Task struct {
-	dir       string
-	code      string
-	language  string
-	problemId string
-	limit     mq.Limit
-	StartedAt time.Time // for time check
+	dir         string
+	code        string
+	language    string
+	problemId   string
+	timeLimit   int
+	memoryLimit int
+	StartedAt   time.Time // for time check
 }
 
 func NewTask(s mq.SubmissionDto) *Task {
 	// validate, initialize
 	return &Task{
-		dir:       utils.RandString(constants.DIR_NAME_LEN),
-		code:      s.Code,
-		language:  s.Language,
-		problemId: s.ProblemId,
-		limit:     s.Limit,
+		dir:         utils.RandString(constants.DIR_NAME_LEN),
+		code:        s.Code,
+		language:    s.Language,
+		problemId:   s.ProblemId,
+		timeLimit:   s.TimeLimit,
+		memoryLimit: s.MemoryLimit,
 	}
 }
 

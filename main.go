@@ -31,13 +31,11 @@ func main() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
-	libjudger := sandbox.NewSandbox()
-
 	languageConfig := sandbox.LanguageConfig{}
 	languageConfig.Init()
 
-	compiler := sandbox.NewCompiler(libjudger, &languageConfig)
-	runner := sandbox.NewRunner(libjudger, &languageConfig)
+	compiler := sandbox.NewCompiler(&languageConfig)
+	runner := sandbox.NewRunner(&languageConfig)
 
 	eventMap := make(map[string](chan interface{}))
 	eventEmitter := event.NewEventEmitter(eventMap)
@@ -78,13 +76,11 @@ func main() {
 			// Code: "#include <stdio.h>\n\nint main (void) {\n  printf(\"Hello world!\\n\");\n  char buf[100];\n  scanf(\"%s\", buf);\n  printf(\"%s\\n\", buf);\n  return 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
 			// Code:      "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
-			Code:      "#include <stdio.h>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\nreturn 0;\n}\n",
-			Language:  language.C,
-			ProblemId: input,
-			Limit: mq.Limit{
-				Time:   1000,
-				Memory: 256 * 1024 * 1024,
-			},
+			Code:        "#include <stdio.>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\nreturn 0;\n}\n",
+			Language:    language.C,
+			ProblemId:   input,
+			TimeLimit:   1000,
+			MemoryLimit: 256 * 1024 * 1024,
 		}
 
 		task := judge.NewTask(submissionDto)

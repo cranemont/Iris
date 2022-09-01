@@ -1,31 +1,39 @@
 package sandbox
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/cranemont/judge-manager/file"
 )
 
 type Compiler interface {
-	Compile(dir string, language string) (CompileResult, error) // 얘는 task 몰라도 됨
+	Compile(dto CompileRequest) (CompileResult, error) // 얘는 task 몰라도 됨
 }
 
 type compiler struct {
-	sandbox Sandbox
-	config  *LanguageConfig
+	config *LanguageConfig
 }
 
 type CompileResult struct {
-	Signal     int
-	ErrorCode  int
-	ExitCode   int
-	ResultCode int
+	Success    bool
+	ErrOutput  string
+	ExecResult string
 }
 
-func NewCompiler(sandbox Sandbox, config *LanguageConfig) *compiler {
-	return &compiler{sandbox, config}
+type CompileRequest struct {
+	Dir      string
+	Language string
 }
 
-func (c *compiler) Compile(dir string, language string) (CompileResult, error) {
+func NewCompiler(config *LanguageConfig) *compiler {
+	return &compiler{config}
+}
+
+func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 	fmt.Println("Compile! from Compiler")
+	dir, language := dto.Dir, dto.Language
+	fmt.Println(dir, language)
 
 	options, err := c.config.Get(language)
 	if err != nil {
@@ -44,30 +52,46 @@ func (c *compiler) Compile(dir string, language string) (CompileResult, error) {
 		return CompileResult{}, err
 	}
 
-	outputPath := MakeFilePath(dir, "compile.out").String()
-	// errorPath := MakeFilePath(dir, "compile.err").String()
-	result, err := c.sandbox.Execute(
+	outputPath := file.MakeFilePath(dir, "compile.out").String()
+	res, err := Exec(
 		ExecArgs{
-			ExePath:     options.CompilerPath,
-			MaxCpuTime:  options.MaxCpuTime,
-			MaxRealTime: options.MaxRealTime,
-			MaxMemory:   options.MaxMemory,
-			OutputPath:  outputPath,
-			ErrorPath:   outputPath,
-			LogPath:     "./log/compile/log.out",
-			Args:        argSlice,
-			Uid:         0,
-			Gid:         0,
+			ExePath:       options.CompilerPath,
+			MaxCpuTime:    options.MaxCpuTime,
+			MaxRealTime:   options.MaxRealTime,
+			MaxMemory:     options.MaxMemory,
+			MaxStackSize:  128 * 1024 * 1024,
+			MaxOutputSize: 20 * 1024 * 1024,
+			OutputPath:    outputPath,
+			ErrorPath:     outputPath,
+			LogPath:       "./log/compile/log.out",
+			Args:          argSlice,
 		}, nil,
 	)
+	// Exec fail
 	if err != nil {
 		return CompileResult{}, err
 	}
-	fmt.Println(result)
+
+	fmt.Println(res)
+	compileResult := CompileResult{Success: true}
+	if res.ResultCode != SUCCESS {
+		sandboxResult, err := json.Marshal(res)
+		if err != nil {
+			return CompileResult{}, err
+		}
+		data, err := file.ReadFile(outputPath)
+		if err != nil {
+			return CompileResult{}, err
+		}
+		compileResult.Success = false
+		compileResult.ExecResult = string(sandboxResult)
+		compileResult.ErrOutput = string(data)
+	}
 	// time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
 
+	fmt.Println(compileResult)
 	// sandbox result 추가
 	// 컴파일 실패시 CompileResult에 error 추가
-	return CompileResult{ResultCode: 0}, nil
+	return compileResult, nil
 }

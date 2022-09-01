@@ -40,3 +40,15 @@ FATAL [2022-09-01 05:16:29] [/tmp/src/child.c:174]Error: System errno: No such f
 FATAL [2022-09-01 05:16:29] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
 FATAL [2022-09-01 18:11:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
 FATAL [2022-09-01 18:11:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-01 19:39:49] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-01 19:39:49] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 01:40:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 01:40:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 01:51:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 01:51:33] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:46:25] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:46:25] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:47:40] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:47:40] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:48:00] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
+FATAL [2022-09-02 02:48:00] [/tmp/src/child.c:174]Error: System errno: No such file or directory; Internal errno: EXECVE_FAILED
