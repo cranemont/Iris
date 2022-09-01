@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -17,10 +18,9 @@ type runner struct {
 
 type RunResult struct {
 	Id         int
-	Signal     int
-	ErrorCode  int
-	ExitCode   int
-	ResultCode int
+	Success    bool
+	ErrOutput  string // []byte?
+	ExecResult string
 	Output     []byte
 }
 
@@ -49,10 +49,10 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		return RunResult{}, err
 	}
 
-	outputPath := file.MakeFilePath(dto.Dir, strconv.Itoa(id)+".out").String()
-	errorPath := file.MakeFilePath(dto.Dir, strconv.Itoa(id)+".error").String()
+	outputPath := file.MakeFilePath(dir, strconv.Itoa(id)+".out").String()
+	errorPath := file.MakeFilePath(dir, strconv.Itoa(id)+".error").String()
 	//task의 limit으로 주기
-	result, err := Exec(
+	res, err := Exec(
 		ExecArgs{
 			ExePath:       exePath,
 			MaxCpuTime:    timeLimit,     //task.limit.Time,
@@ -71,13 +71,31 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		return RunResult{}, err
 	}
 
+	runResult := RunResult{Id: id, Success: true}
+	if res.ResultCode != SUCCESS {
+		// TODO: 함수로 분리
+		sandboxResult, err := json.Marshal(res)
+		if err != nil {
+			return RunResult{}, fmt.Errorf("invalid result format: %w", err)
+		}
+		data, err := file.ReadFile(outputPath)
+		if err != nil {
+			return RunResult{}, fmt.Errorf("failed to read output file: %w", err)
+		}
+		runResult.Success = false
+		runResult.ExecResult = string(sandboxResult)
+		runResult.ErrOutput = string(data)
+		fmt.Println(runResult)
+	}
+
 	data, err := file.ReadFile(outputPath)
 	if err != nil {
 		return RunResult{}, err
 	}
+	runResult.Output = data
 
-	fmt.Println(result)
-	return RunResult{Id: dto.Id, ExitCode: 0, Output: data}, nil
+	fmt.Println(res)
+	return runResult, nil
 }
 
 // "command": "{exe_path}",

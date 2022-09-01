@@ -72,25 +72,24 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		return CompileResult{}, err
 	}
 
-	fmt.Println(res)
 	compileResult := CompileResult{Success: true}
 	if res.ResultCode != SUCCESS {
 		sandboxResult, err := json.Marshal(res)
 		if err != nil {
-			return CompileResult{}, err
+			return CompileResult{}, fmt.Errorf("invalid result format: %w", err)
 		}
 		data, err := file.ReadFile(outputPath)
 		if err != nil {
-			return CompileResult{}, err
+			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}
 		compileResult.Success = false
 		compileResult.ExecResult = string(sandboxResult)
 		compileResult.ErrOutput = string(data)
+		fmt.Println(compileResult)
 	}
 	// time.Sleep(time.Second * 2)
 	// 채널로 결과반환?
 
-	fmt.Println(compileResult)
 	// sandbox result 추가
 	// 컴파일 실패시 CompileResult에 error 추가
 	return compileResult, nil

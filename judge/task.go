@@ -16,6 +16,7 @@ type Task struct {
 	problemId   string
 	timeLimit   int
 	memoryLimit int
+	Status      string
 	StartedAt   time.Time // for time check
 }
 

@@ -37,63 +37,67 @@ func NewJudger(
 func (j *Judger) Judge(task *Task) error {
 	// testcase 있는건 다른 함수에서 처리. grade가 필요없는 요청임
 
-	testcaseOut := make(chan result.ChResult)
-	go j.getTestcase(testcaseOut, task.problemId)
-	compileOut := make(chan result.ChResult)
+	testcaseOutCh := make(chan result.ChResult)
+	go j.getTestcase(testcaseOutCh, task.problemId)
+	compileOutCh := make(chan result.ChResult)
 	go j.compile(
-		compileOut,
+		compileOutCh,
 		sandbox.CompileRequest{
 			Dir:      task.dir,
 			Language: task.language,
 		},
 	)
 
-	compileResult := <-compileOut
-	testcaseResult := <-testcaseOut
-	if compileResult.Err != nil {
+	compileOut := <-compileOutCh
+	testcaseOut := <-testcaseOutCh
+	if compileOut.Err != nil {
 		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
-		return fmt.Errorf("%s: %w", errJudge, compileResult.Err)
+		return fmt.Errorf("%s: %w", errJudge, compileOut.Err)
 	}
-	if testcaseResult.Err != nil {
-		return fmt.Errorf("%s: %w", errJudge, testcaseResult.Err)
+	if testcaseOut.Err != nil {
+		return fmt.Errorf("%s: %w", errJudge, testcaseOut.Err)
 	}
 
-	tc, ok := testcaseResult.Data.(testcase.Testcase)
+	cp, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
-		return fmt.Errorf("%w: invalid testcase data", exception.ErrTypeAssertionFail)
+		return fmt.Errorf("%w: CompileResult", exception.ErrTypeAssertionFail)
 	}
-	tcNum := len(tc.Data)
+	if cp.Success == false {
+		// task에 데이터 넣기
+		return nil // fmt.Errorf("%s: ", errJudge) 이건 에러가 아니지!!!
+	}
 
-	// 이 아래 과정 너무 지저분함. result 확인 과정은 wrapper function으로 넘길것
-	runOut := make(chan result.ChResult, tcNum)
+	tc, ok := testcaseOut.Data.(testcase.Testcase)
+	if !ok {
+		return fmt.Errorf("%w: Testcase", exception.ErrTypeAssertionFail)
+	}
+
+	tcNum := len(tc.Data)
+	runOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		go j.run(
-			runOut,
-			sandbox.RunRequest{
-				Id:       i,
-				Dir:      task.dir,
-				Language: task.language,
-			},
+			runOutCh,
+			sandbox.RunRequest{Id: i, Dir: task.dir, Language: task.language},
 			[]byte(tc.Data[i].In),
 		)
 	}
 
-	gradeOut := make(chan result.ChResult, tcNum)
+	gradeOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
-		res := <-runOut
-		runResult, ok := res.Data.(sandbox.RunResult)
+		runOut := <-runOutCh
+		runResult, ok := runOut.Data.(sandbox.RunResult)
 		if !ok {
-			return fmt.Errorf("%w: invalid RunResult data", exception.ErrTypeAssertionFail)
+			return fmt.Errorf("%w: RunResult", exception.ErrTypeAssertionFail)
 		}
 		// runResult가 정상이라면
 		fmt.Print(runResult.Id)
-		go j.grade(gradeOut, []byte(tc.Data[runResult.Id].Out), runResult.Output)
+		go j.grade(gradeOutCh, []byte(tc.Data[runResult.Id].Out), runResult.Output)
 	}
 
 	finalResult := []bool{}
 	for i := 0; i < tcNum; i++ {
-		gradeResult := <-gradeOut
-		finalResult = append(finalResult, gradeResult.Data.(bool))
+		gradeOut := <-gradeOutCh
+		finalResult = append(finalResult, gradeOut.Data.(bool))
 		// task에 결과 반영
 	}
 

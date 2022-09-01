@@ -1,0 +1,4 @@
+FATAL [2022-09-02 03:16:02] [/tmp/src/child.c:87]Error: System errno: Bad address; Internal errno: DUP2_FAILED
+FATAL [2022-09-02 03:16:13] [/tmp/src/child.c:87]Error: System errno: Bad address; Internal errno: DUP2_FAILED
+FATAL [2022-09-02 03:23:21] [/tmp/src/child.c:87]Error: System errno: Bad address; Internal errno: DUP2_FAILED
+FATAL [2022-09-02 03:24:39] [/tmp/src/child.c:87]Error: System errno: Bad address; Internal errno: DUP2_FAILED

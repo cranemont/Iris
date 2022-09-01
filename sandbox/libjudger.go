@@ -31,9 +31,10 @@ func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	}
 
 	res := SandboxResult{}
+
 	json.Unmarshal(stdout.Bytes(), &res)
 	fmt.Println("Result: ", res)
-	// fmt.Println(stdout.Len())
+
 	return res, nil
 }
 
