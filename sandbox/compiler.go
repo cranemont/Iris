@@ -44,14 +44,16 @@ func (c *compiler) Compile(dir string, language string) (CompileResult, error) {
 		return CompileResult{}, err
 	}
 
+	outputPath := MakeFilePath(dir, "compile.out").String()
+	// errorPath := MakeFilePath(dir, "compile.err").String()
 	result, err := c.sandbox.Execute(
 		ExecArgs{
 			ExePath:     options.CompilerPath,
 			MaxCpuTime:  options.MaxCpuTime,
 			MaxRealTime: options.MaxRealTime,
 			MaxMemory:   options.MaxMemory,
-			OutputPath:  "./compile/out.out",
-			ErrorPath:   "./compile/error.out",
+			OutputPath:  outputPath,
+			ErrorPath:   outputPath,
 			LogPath:     "./compile/log.out",
 			Args:        argSlice,
 			Uid:         0,

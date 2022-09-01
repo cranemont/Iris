@@ -89,6 +89,7 @@ func MakeFilePath(dir string, fileName string) *bytes.Buffer {
 	b.WriteString("/")
 	b.WriteString(dir)
 	b.WriteString("/")
+	b.WriteString(fileName)
 	return &b
 }
 

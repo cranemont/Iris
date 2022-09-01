@@ -2,7 +2,6 @@ package judge
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/common/exception"
@@ -55,24 +54,28 @@ func (j *Judger) Judge(task *Task) error {
 		return fmt.Errorf("%s: %w", errJudge, testcaseResult.Err)
 	}
 
-	// set testcase로 분리
 	tc, ok := testcaseResult.Data.(testcase.Testcase)
 	if !ok {
 		return fmt.Errorf("%w: invalid testcase data", exception.ErrTypeAssertionFail)
 	}
 	tcNum := len(tc.Data)
+
+	// 이 아래 과정 너무 지저분함. result 확인 과정은 wrapper function으로 넘길것
 	runOut := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
-		go j.run(runOut, task.dir, strconv.Itoa(i), task.language, nil)
+		go j.run(runOut, task.dir, i, task.language, []byte(tc.Data[i].In))
 	}
 
 	gradeOut := make(chan dto.GoResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		result := <-runOut
-		if t, ok := result.Data.(sandbox.RunResult); ok {
-			fmt.Println(t.Output) // 이걸 아래 grade에 넘겨주기
+		runResult, ok := result.Data.(sandbox.RunResult)
+		if !ok {
+			return fmt.Errorf("%w: invalid RunResult data", exception.ErrTypeAssertionFail)
 		}
-		go j.grade(gradeOut, nil, nil)
+		// runResult가 정상이라면
+		fmt.Print(runResult.Id)
+		go j.grade(gradeOut, []byte(tc.Data[runResult.Id].Out), runResult.Output)
 	}
 
 	finalResult := []bool{}
@@ -100,7 +103,7 @@ func (j *Judger) compile(out chan<- dto.GoResult, dir string, language string) {
 	out <- dto.GoResult{Data: result}
 }
 
-func (j *Judger) run(out chan<- dto.GoResult, dir string, id string, language string, input []byte) {
+func (j *Judger) run(out chan<- dto.GoResult, dir string, id int, language string, input []byte) {
 	// 여기서 결과값 처리
 	result, err := j.runner.Run(dir, id, language, nil)
 	if err != nil {

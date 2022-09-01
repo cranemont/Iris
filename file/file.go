@@ -21,26 +21,35 @@ import (
 // 	return &fileManager{basePath: constants.BASE_DIR}
 // }
 
-func CreateDir(name string) error {
-	if err := os.Mkdir(constants.BASE_DIR+"/"+name, os.FileMode(constants.BASE_FILE_MODE)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func RemoveDir(name string) error {
-	if err := os.RemoveAll(constants.BASE_DIR + "/" + name); err != nil {
+func CreateDir(dir string) error {
+	if err := os.Mkdir(constants.BASE_DIR+"/"+dir, os.FileMode(constants.BASE_FILE_MODE)); err != nil {
 		log.Println(err)
 		return err
 	}
 	return nil
 }
 
-func CreateFile(srcPath string, data string) error {
-	if err := os.WriteFile(srcPath, []byte(data), constants.BASE_FILE_MODE); err != nil {
+func RemoveDir(dir string) error {
+	if err := os.RemoveAll(constants.BASE_DIR + "/" + dir); err != nil {
+		log.Println(err)
 		return err
 	}
 	return nil
 }
 
-func ReadFile()
+func CreateFile(path string, data string) error {
+	if err := os.WriteFile(path, []byte(data), constants.BASE_FILE_MODE); err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func ReadFile(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return data, nil
+}

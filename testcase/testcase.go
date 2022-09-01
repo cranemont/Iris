@@ -2,7 +2,6 @@ package testcase
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type TestcaseElement struct {
@@ -15,7 +14,6 @@ type Testcase struct {
 }
 
 func (t *Testcase) Count() int {
-	fmt.Println(t.Data)
 	return len(t.Data)
 	// return 3
 }

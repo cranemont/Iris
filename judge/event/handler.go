@@ -62,7 +62,7 @@ func (h *handler) OnExec(task *judge.Task) error {
 	if err := h.judger.Judge(task); err != nil {
 		return fmt.Errorf("onexec: %w", err)
 	}
-	// error 처리
+	// error 처리, defer에서 무조건 실행되도록 하기(폴더제거)
 	fmt.Println("triggerring event")
 	if err := h.eventEmitter.Emit(constants.TASK_EXITED, task); err != nil {
 		return fmt.Errorf("onexec: event emit failed: %w", err)
@@ -81,7 +81,7 @@ func (h *handler) createSrcFile(srcPath string, code string) error {
 
 func (h *handler) OnExit(task *judge.Task) error {
 	// 파일 삭제, task 결과 업데이트 등 정리작업
-	file.RemoveDir(task.GetDir())
+	// file.RemoveDir(task.GetDir())
 	fmt.Println(time.Since(task.StartedAt))
 	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
 		return fmt.Errorf("onexit: event emit failed: %w", err)

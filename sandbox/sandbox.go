@@ -103,8 +103,8 @@ func (s *sandbox) Execute(args ExecArgs, input []byte) (Result, error) {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return Result{}, fmt.Errorf("execution fail: %w: %s", err, stderr.String())
 	}
-	// fmt.Println("Result: " + stdout.String())
-	fmt.Println(stdout.Len())
+	fmt.Println("Result: " + stdout.String())
+	// fmt.Println(stdout.Len())
 	return Result{Code: 0}, nil
 }
 

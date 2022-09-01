@@ -2,10 +2,13 @@ package sandbox
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/cranemont/judge-manager/file"
 )
 
 type Runner interface {
-	Run(dir string, id string, language string, input []byte) (RunResult, error)
+	Run(dir string, id int, language string, input []byte) (RunResult, error)
 }
 
 type runner struct {
@@ -14,6 +17,7 @@ type runner struct {
 }
 
 type RunResult struct {
+	Id         int
 	Signal     int
 	ErrorCode  int
 	ExitCode   int
@@ -25,7 +29,7 @@ func NewRunner(sandbox Sandbox, config *LanguageConfig) *runner {
 	return &runner{sandbox, config}
 }
 
-func (r *runner) Run(dir string, id string, language string, input []byte) (RunResult, error) {
+func (r *runner) Run(dir string, id int, language string, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 
 	exePath, err := r.config.MakeExePath(dir, language)
@@ -33,6 +37,8 @@ func (r *runner) Run(dir string, id string, language string, input []byte) (RunR
 		return RunResult{}, err
 	}
 
+	outputPath := MakeFilePath(dir, strconv.Itoa(id)+".out").String()
+	errorPath := MakeFilePath(dir, strconv.Itoa(id)+".error").String()
 	//task의 limit으로 주기
 	args := ExecArgs{
 		ExePath:       exePath,
@@ -43,8 +49,8 @@ func (r *runner) Run(dir string, id string, language string, input []byte) (RunR
 		MaxOutputSize: 10 * 1024 * 1024, // TODO: Testcase 크기 따라서 설정
 		// file에 쓰는거랑 stdout이랑 크게 차이 안남
 		// https://stackoverflow.com/questions/29700478/redirecting-of-stdout-in-bash-vs-writing-to-file-in-c-with-fprintf-speed
-		OutputPath: MakeFilePath(dir, id+".out").String(),
-		ErrorPath:  "./run/error.out", //compile은 되는데 run은 안되는 상황에서 error가 덮어씌워지는지?
+		OutputPath: outputPath,
+		ErrorPath:  errorPath, // byte buffer로
 		LogPath:    "./run/log.out",
 	}
 	result, err := r.sandbox.Execute(args, input)
@@ -52,8 +58,13 @@ func (r *runner) Run(dir string, id string, language string, input []byte) (RunR
 		return RunResult{}, err
 	}
 
+	data, err := file.ReadFile(outputPath)
+	if err != nil {
+		return RunResult{}, err
+	}
+
 	fmt.Println(result)
-	return RunResult{ExitCode: 0}, nil
+	return RunResult{Id: id, ExitCode: 0, Output: data}, nil
 }
 
 // "command": "{exe_path}",
