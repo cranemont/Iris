@@ -39,7 +39,6 @@ func main() {
 
 	compiler := sandbox.NewCompiler(libjudger, &languageConfig)
 	runner := sandbox.NewRunner(libjudger, &languageConfig)
-	grader := judge.NewGrader()
 
 	eventMap := make(map[string](chan interface{}))
 	eventEmitter := event.NewEventEmitter(eventMap)
@@ -51,7 +50,6 @@ func main() {
 	judger := judge.NewJudger(
 		compiler,
 		runner,
-		grader,
 		testcaseManager,
 	)
 

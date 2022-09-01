@@ -5,6 +5,7 @@ import (
 
 	"github.com/cranemont/judge-manager/common/dto"
 	"github.com/cranemont/judge-manager/common/exception"
+	"github.com/cranemont/judge-manager/judge/grade"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
@@ -18,20 +19,17 @@ var errGetTestcase = "[Judger: getTestcase]"
 type Judger struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
-	grader          Grader
 	testcaseManager testcase.TestcaseManager
 }
 
 func NewJudger(
 	compiler sandbox.Compiler,
 	runner sandbox.Runner,
-	grader Grader,
 	testcaseManager testcase.TestcaseManager,
 ) *Judger {
 	return &Judger{
 		compiler,
 		runner,
-		grader,
 		testcaseManager,
 	}
 }
@@ -115,7 +113,7 @@ func (j *Judger) run(out chan<- dto.GoResult, dir string, id int, language strin
 
 func (j *Judger) grade(out chan<- dto.GoResult, answer []byte, output []byte) {
 	// 여기서 결과값 처리
-	result, err := j.grader.Grade(answer, output)
+	result, err := grade.Grade(answer, output)
 	if err != nil {
 		out <- dto.GoResult{Err: fmt.Errorf("%s: %w", errGrade, err)}
 	}

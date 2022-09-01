@@ -1,4 +1,4 @@
-package judge
+package grade
 
 import (
 	"bytes"
@@ -6,22 +6,18 @@ import (
 	"unicode"
 )
 
-type Grader interface {
-	Grade(answer []byte, output []byte) (bool, error)
-}
+// type Grader interface {
+// 	Grade(answer []byte, output []byte) (bool, error)
+// }
 
-type grader struct {
-}
+// type grader struct {
+// }
 
-func NewGrader() *grader {
-	return &grader{}
-}
+// func NewGrader() *grader {
+// 	return &grader{}
+// }
 
-func (g *grader) Grade(answer []byte, output []byte) (bool, error) {
-	// 일단 파일로 읽어서 채점
-	// sed로 날리기
-	// https://stackoverflow.com/questions/20521857/remove-white-space-from-the-end-of-line-in-linux
-
+func Grade(answer []byte, output []byte) (bool, error) {
 	fmt.Println("grading....")
 	fmt.Printf("answer: %soutput: %s", string(answer), string(output))
 	return bytes.Equal(answer, TrimWhitespaceBeforeNewline(output)), nil

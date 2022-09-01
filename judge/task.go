@@ -1,6 +1,6 @@
 package judge
 
-// Task가 여기있는게 맞나? Judger로 가야하는거 아닐까?
+// Task가 NewTask로 생성되어야 하는 이유는?
 import (
 	"time"
 
