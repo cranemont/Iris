@@ -35,7 +35,6 @@ func main() {
 
 	languageConfig := sandbox.LanguageConfig{}
 	languageConfig.Init()
-	// runOption := config.RunOption{}
 
 	compiler := sandbox.NewCompiler(libjudger, &languageConfig)
 	runner := sandbox.NewRunner(libjudger, &languageConfig)

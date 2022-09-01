@@ -51,7 +51,7 @@ func (r *runner) Run(dir string, id int, language string, input []byte) (RunResu
 		// https://stackoverflow.com/questions/29700478/redirecting-of-stdout-in-bash-vs-writing-to-file-in-c-with-fprintf-speed
 		OutputPath: outputPath,
 		ErrorPath:  errorPath, // byte buffer로
-		LogPath:    "./run/log.out",
+		LogPath:    "./log/run/log.out",
 	}
 	result, err := r.sandbox.Execute(args, input)
 	if err != nil {

@@ -54,7 +54,7 @@ func (c *compiler) Compile(dir string, language string) (CompileResult, error) {
 			MaxMemory:   options.MaxMemory,
 			OutputPath:  outputPath,
 			ErrorPath:   outputPath,
-			LogPath:     "./compile/log.out",
+			LogPath:     "./log/compile/log.out",
 			Args:        argSlice,
 			Uid:         0,
 			Gid:         0,
