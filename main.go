@@ -7,11 +7,8 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/cranemont/judge-manager/cache"
-	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/constants/language"
-	"github.com/cranemont/judge-manager/event"
 	"github.com/cranemont/judge-manager/judge"
-	judgeEvent "github.com/cranemont/judge-manager/judge/event"
 	"github.com/cranemont/judge-manager/mq"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
@@ -37,8 +34,8 @@ func main() {
 	compiler := sandbox.NewCompiler(&languageConfig)
 	runner := sandbox.NewRunner(&languageConfig)
 
-	eventMap := make(map[string](chan interface{}))
-	eventEmitter := event.NewEventEmitter(eventMap)
+	// eventMap := make(map[string](chan interface{}))
+	// eventEmitter := event.NewEventEmitter(eventMap)
 
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
@@ -50,20 +47,19 @@ func main() {
 		testcaseManager,
 	)
 
-	judgeEventHander := judgeEvent.NewHandler(
+	judgeHandler := judge.NewHandler(
 		judger,
-		eventEmitter,
 		&languageConfig,
 	)
 
-	judgeEventListener := event.NewListener(eventMap, judgeEventHander)
+	// judgeEventListener := event.NewListener(eventMap, judgeEventHander)
 
-	judgeEventManager := event.NewManager(
-		eventMap, judgeEventListener, eventEmitter,
-	)
+	// judgeEventManager := event.NewManager(
+	// 	eventMap, judgeEventListener, eventEmitter,
+	// )
 
-	judgeEventManager.Listen(constants.TASK_EXEC, "OnExec")
-	judgeEventManager.Listen(constants.TASK_EXITED, "OnExit")
+	// judgeEventManager.Listen(constants.TASK_EXEC, "OnExec")
+	// judgeEventManager.Listen(constants.TASK_EXITED, "OnExit")
 
 	// go task event listener
 	// go global error hander
@@ -85,7 +81,9 @@ func main() {
 
 		task := judge.NewTask(submissionDto)
 		// go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
-		judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
+		// 라우터를 하나 만들고, SPJ인지, 등등 판단
+		go judgeHandler.Judge(task)
+		// judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
 	}
 	// 여기서 rabbitMQ consumer가 돌고
 	// 메시지 수신시 채점자 호출

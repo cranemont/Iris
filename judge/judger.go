@@ -34,8 +34,16 @@ func NewJudger(
 	}
 }
 
-func (j *Judger) Judge(task *Task) error {
+type JudgeResult struct {
+	Status int
+	Data   interface{}
+	Error  interface{}
+}
+
+func (j *Judger) Judge(task *Task) JudgeResult {
 	// testcase 있는건 다른 함수에서 처리. grade가 필요없는 요청임
+
+	judgeResult := JudgeResult{Status: FAIL}
 
 	testcaseOutCh := make(chan result.ChResult)
 	go j.getTestcase(testcaseOutCh, task.problemId)

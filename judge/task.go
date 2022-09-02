@@ -9,6 +9,11 @@ import (
 	"github.com/cranemont/judge-manager/mq"
 )
 
+const (
+	SUCCESS = 1
+	FAIL    = 0
+)
+
 type Task struct {
 	dir         string
 	code        string
@@ -16,7 +21,6 @@ type Task struct {
 	problemId   string
 	timeLimit   int
 	memoryLimit int
-	Status      string
 	StartedAt   time.Time // for time check
 }
 
