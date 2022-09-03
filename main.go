@@ -79,10 +79,11 @@ func main() {
 			MemoryLimit: 256 * 1024 * 1024,
 		}
 
+		// FIXME: task도 handler에서 만들어야 하나? 그래야 라우팅도 되니까
 		task := judge.NewTask(submissionDto)
 		// go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
 		// 라우터를 하나 만들고, SPJ인지, 등등 판단
-		go judgeHandler.Judge(task)
+		go judgeHandler.Handle("Judge", task)
 		// judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
 	}
 	// 여기서 rabbitMQ consumer가 돌고

@@ -5,8 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/cranemont/judge-manager/common/exception"
-	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/sandbox"
 )
@@ -27,8 +25,7 @@ func NewHandler(
 		config: config,
 	}
 	funcMap := map[string](func(task *Task) error){
-		"OnExec": (*handler).OnExec,
-		"OnExit": (*handler).OnExit,
+		"Judge": (*handler).Judge,
 	}
 	handler.funcMap = funcMap
 	return handler
@@ -36,7 +33,7 @@ func NewHandler(
 
 // controller의 역할!
 // 여기서 JudgeResult객체 관리
-func (h *handler) OnExec(task *Task) error {
+func (h *handler) Judge(task *Task) error {
 	task.StartedAt = time.Now()
 	dir := task.GetDir()
 	// 폴더 생성
@@ -57,11 +54,6 @@ func (h *handler) OnExec(task *Task) error {
 	}
 	// error 처리, defer에서 무조건 실행되도록 하기(폴더제거)
 	fmt.Println("triggerring event")
-
-	// 얘를 굳이 emit? 그냥 바로 실행시켜도 해당 고루틴 안에서 돌아가는거잖아
-	if err := h.eventEmitter.Emit(constants.TASK_EXITED, task); err != nil {
-		return fmt.Errorf("onexec: event emit failed: %w", err)
-	}
 	return nil
 }
 
@@ -74,28 +66,13 @@ func (h *handler) createSrcFile(srcPath string, code string) error {
 	return nil
 }
 
-func (h *handler) OnExit(task *Task) error {
-	// 파일 삭제, task 결과 업데이트 등 정리작업
-	// file.RemoveDir(task.GetDir())
-	fmt.Println(time.Since(task.StartedAt))
-	if err := h.eventEmitter.Emit(constants.PUBLISH_RESULT, task); err != nil {
-		return fmt.Errorf("onexit: event emit failed: %w", err)
-	}
-
-	return nil
-}
-
-// router의 역할
-func (h *handler) Call(funcName string, args interface{}) {
+// 요청을 받고 최종 response를 내보내는 책임
+func (h *handler) Handle(funcName string, task *Task) {
 	// TODO: Refactor
 	if fn, ok := h.funcMap[funcName]; ok {
-		if _, ok := args.(*Task); ok {
-			fmt.Println("handler function calling... ", funcName)
-			if err := fn(args.(*Task)); err != nil {
-				log.Printf("error on %s: %s", funcName, err)
-			}
-		} else {
-			log.Printf("%s: invalid task data", exception.ErrTypeAssertionFail)
+		fmt.Println("handler function calling... ", funcName)
+		if err := fn(task); err != nil {
+			log.Printf("error on %s: %s", funcName, err)
 		}
 	} else {
 		log.Printf("unregistered function: %s", funcName)

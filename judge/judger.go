@@ -34,16 +34,8 @@ func NewJudger(
 	}
 }
 
-type JudgeResult struct {
-	Status int
-	Data   interface{}
-	Error  interface{}
-}
-
-func (j *Judger) Judge(task *Task) JudgeResult {
+func (j *Judger) Judge(task *Task) error {
 	// testcase 있는건 다른 함수에서 처리. grade가 필요없는 요청임
-
-	judgeResult := JudgeResult{Status: FAIL}
 
 	testcaseOutCh := make(chan result.ChResult)
 	go j.getTestcase(testcaseOutCh, task.problemId)
@@ -60,19 +52,21 @@ func (j *Judger) Judge(task *Task) JudgeResult {
 	testcaseOut := <-testcaseOutCh
 	if compileOut.Err != nil {
 		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
+		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
 		return fmt.Errorf("%s: %w", errJudge, compileOut.Err)
 	}
 	if testcaseOut.Err != nil {
 		return fmt.Errorf("%s: %w", errJudge, testcaseOut.Err)
 	}
 
-	cp, ok := compileOut.Data.(sandbox.CompileResult)
+	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
 		return fmt.Errorf("%w: CompileResult", exception.ErrTypeAssertionFail)
 	}
-	if cp.Success == false {
-		// task에 데이터 넣기
-		return nil // fmt.Errorf("%s: ", errJudge) 이건 에러가 아니지!!!
+	if compileResult.ResultCode != sandbox.SUCCESS {
+		// 컴파일러를 실행했으나 컴파일에 실패한 경우
+		task.SetStatus(COMPILE_ERROR)
+		return nil
 	}
 
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
@@ -85,7 +79,7 @@ func (j *Judger) Judge(task *Task) JudgeResult {
 	for i := 0; i < tcNum; i++ {
 		go j.run(
 			runOutCh,
-			sandbox.RunRequest{Id: i, Dir: task.dir, Language: task.language},
+			sandbox.RunRequest{Order: i, Dir: task.dir, Language: task.language},
 			[]byte(tc.Data[i].In),
 		)
 	}
@@ -93,15 +87,25 @@ func (j *Judger) Judge(task *Task) JudgeResult {
 	gradeOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		runOut := <-runOutCh
+		if runOut.Err != nil {
+			// RunData -> SYSTEM_ERROR
+			// JudgeResult -> RUN_FAILED
+		}
 		runResult, ok := runOut.Data.(sandbox.RunResult)
 		if !ok {
 			return fmt.Errorf("%w: RunResult", exception.ErrTypeAssertionFail)
 		}
+		// run result task에 반영
+
+		if runResult.ResultCode != sandbox.SUCCESS {
+			// run result 저장
+		}
 		// runResult가 정상이라면
-		fmt.Print(runResult.Id)
-		go j.grade(gradeOutCh, []byte(tc.Data[runResult.Id].Out), runResult.Output)
+		fmt.Print(runResult.Order)
+		go j.grade(gradeOutCh, []byte(tc.Data[runResult.Order].Out), runResult.Output)
 	}
 
+	// FIXME: order 관리
 	finalResult := []bool{}
 	for i := 0; i < tcNum; i++ {
 		gradeOut := <-gradeOutCh

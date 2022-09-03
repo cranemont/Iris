@@ -7,6 +7,7 @@ import (
 )
 
 // TODO: event의 manager랑 이름 헷갈림, 이름 더 명확하게 바꾸기
+// FIXME: judge 안에 들어가는게 더 맞을듯
 type TestcaseManager interface {
 	// GetTestcase(problemId string) (*Testcase, error)
 	GetTestcase(problemId string) (Testcase, error)

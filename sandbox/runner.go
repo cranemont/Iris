@@ -17,15 +17,15 @@ type runner struct {
 }
 
 type RunResult struct {
-	Id         int
-	Success    bool
+	Order      int
+	ResultCode int
 	ErrOutput  string // []byte?
 	ExecResult string
 	Output     []byte
 }
 
 type RunRequest struct {
-	Id          int
+	Order       int
 	Dir         string
 	Language    string
 	TimeLimit   int
@@ -39,7 +39,7 @@ func NewRunner(config *LanguageConfig) *runner {
 func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 	dir := dto.Dir
-	id := dto.Id
+	id := dto.Order
 	language := dto.Language
 	timeLimit := dto.TimeLimit
 	memoryLimit := dto.MemoryLimit
@@ -71,19 +71,19 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		return RunResult{}, err
 	}
 
-	runResult := RunResult{Id: id, Success: true}
+	runResult := RunResult{Order: id, ResultCode: SUCCESS}
 	if res.ResultCode != SUCCESS {
 		// TODO: 함수로 분리
 		sandboxResult, err := json.Marshal(res)
 		if err != nil {
 			return RunResult{}, fmt.Errorf("invalid result format: %w", err)
 		}
-		data, err := file.ReadFile(outputPath)
+		data, err := file.ReadFile(errorPath)
 		if err != nil {
 			return RunResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}
-		runResult.Success = false
-		runResult.ExecResult = string(sandboxResult)
+		runResult.ResultCode = res.ResultCode
+		runResult.ExecResult = string(sandboxResult) // 필요한가?
 		runResult.ErrOutput = string(data)
 		fmt.Println(runResult)
 	}

@@ -16,7 +16,7 @@ type compiler struct {
 }
 
 type CompileResult struct {
-	Success    bool
+	ResultCode int
 	ErrOutput  string
 	ExecResult string
 }
@@ -72,7 +72,7 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		return CompileResult{}, err
 	}
 
-	compileResult := CompileResult{Success: true}
+	compileResult := CompileResult{ResultCode: SUCCESS}
 	if res.ResultCode != SUCCESS {
 		sandboxResult, err := json.Marshal(res)
 		if err != nil {
@@ -82,7 +82,8 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}
-		compileResult.Success = false
+		// TODO: res.ErrorCode를 포함한 전체 output을 로그에 남기기
+		compileResult.ResultCode = res.ResultCode
 		compileResult.ExecResult = string(sandboxResult)
 		compileResult.ErrOutput = string(data)
 		fmt.Println(compileResult)

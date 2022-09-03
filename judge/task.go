@@ -9,11 +9,41 @@ import (
 	"github.com/cranemont/judge-manager/mq"
 )
 
-const (
-	SUCCESS = 1
-	FAIL    = 0
+// StatusCode
+
+type RunData struct {
+	Order      int
+	StatusCode bool
+	ExecTime   string
+	Memory     string
+}
+
+const ( // for RunData
+	ACCEPTED = 0 + iota
+	WRONG_ANSWER
+	CPU_TLE
+	REAL_TLE
+	RUNTIME_ERROR
+	SYSTEM_ERROR
+	COMPILE_ERROR
 )
 
+type JudgeResult struct {
+	StatusCode int
+	CompileErr string
+	RunData    []RunData
+}
+
+const (
+	SUCCESS = 0 + iota
+	COMPILE_FAILED
+	RUN_FAILED
+	TESTCASE_GET_FAILED
+	MQ_ERROR
+	INTERNAL_SERVER_ERROR
+)
+
+// task interface, package? spj task, run task...
 type Task struct {
 	dir         string
 	code        string
@@ -21,6 +51,7 @@ type Task struct {
 	problemId   string
 	timeLimit   int
 	memoryLimit int
+	Result      JudgeResult
 	StartedAt   time.Time // for time check
 }
 
@@ -33,6 +64,7 @@ func NewTask(s mq.SubmissionDto) *Task {
 		problemId:   s.ProblemId,
 		timeLimit:   s.TimeLimit,
 		memoryLimit: s.MemoryLimit,
+		Result:      JudgeResult{Success: false, StatusCode: SYSTEM_ERROR},
 	}
 }
 
@@ -46,4 +78,12 @@ func (t *Task) GetCode() string {
 
 func (t *Task) GetLanguage() string {
 	return t.language
+}
+
+func (t *Task) Success() {
+	t.Result.Success = true
+}
+
+func (t *Task) SetStatus(code int) {
+	t.Result.StatusCode = code
 }
