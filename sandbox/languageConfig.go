@@ -66,7 +66,7 @@ func (l *LanguageConfig) Get(language string) (config, error) {
 func (l *LanguageConfig) MakeSrcPath(dir string, language string) (string, error) {
 	conf, err := l.Get(language)
 	if err != nil {
-		return "", fmt.Errorf("failed to make srcpath: %w", err)
+		return "", fmt.Errorf("failed to get config: %w", err)
 	}
 	return file.MakeFilePath(dir, conf.SrcName).String(), nil
 }
@@ -74,7 +74,7 @@ func (l *LanguageConfig) MakeSrcPath(dir string, language string) (string, error
 func (l *LanguageConfig) MakeExePath(dir string, language string) (string, error) {
 	conf, err := l.Get(language)
 	if err != nil {
-		return "", fmt.Errorf("failed to make exepath: %w", err)
+		return "", fmt.Errorf("failedto get config: %w", err)
 	}
 	return file.MakeFilePath(dir, conf.ExeName).String(), nil
 }
@@ -83,7 +83,7 @@ func (l *LanguageConfig) MakeCompileArgSlice(srcPath string, exePath string, lan
 
 	conf, err := l.Get(language)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make argslice: %w", err)
+		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 	args := strings.Replace(conf.CompileArgs, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)

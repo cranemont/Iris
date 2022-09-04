@@ -9,13 +9,6 @@ import (
 	"github.com/cranemont/judge-manager/ingress/rmq"
 )
 
-// Judge Mode
-const (
-	JUDGE = 0 + iota
-	SPECIAL_JUDGE
-	CUSTOM_TESTCASE
-)
-
 // StatusCode
 type RunData struct {
 	Order      int
@@ -41,15 +34,6 @@ type JudgeResult struct {
 	RunData    []RunData
 }
 
-const ( // publish에 전달되는 Result
-	SUCCESS = 0 + iota
-	COMPILE_FAILED
-	RUN_FAILED
-	TESTCASE_GET_FAILED
-	MQ_ERROR
-	INTERNAL_SERVER_ERROR
-)
-
 // task interface, package? spj task, run task...
 type Task struct {
 	dir         string
@@ -62,7 +46,7 @@ type Task struct {
 	StartedAt   time.Time // for time check
 }
 
-func NewTask(s rmq.SubmissionDto) *Task {
+func NewTask(s rmq.JudgeRequest) *Task {
 	// validate, initialize
 	return &Task{
 		dir:         utils.RandString(constants.DIR_NAME_LEN),
@@ -72,7 +56,7 @@ func NewTask(s rmq.SubmissionDto) *Task {
 		timeLimit:   s.TimeLimit,
 		memoryLimit: s.MemoryLimit,
 		// 이걸 들고다니는게 맞을까?
-		Result: JudgeResult{StatusCode: INTERNAL_SERVER_ERROR},
+		Result: JudgeResult{},
 	}
 }
 
@@ -88,12 +72,7 @@ func (t *Task) GetLanguage() string {
 	return t.language
 }
 
-func (t *Task) SetStatus(code int) {
-	t.Result.StatusCode = code
-}
-
 func (t *Task) CompileError(output string) {
-	t.Result.StatusCode = COMPILE_FAILED
 	t.Result.CompileErr = output
 }
 

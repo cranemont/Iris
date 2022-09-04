@@ -1,20 +1,19 @@
 package judge
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cranemont/judge-manager/common/exception"
+	"github.com/cranemont/judge-manager/common/grade"
 	"github.com/cranemont/judge-manager/common/result"
-	"github.com/cranemont/judge-manager/handler/grade"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
 
-var errJudge = "[Judger: Judge]"
-var errCompile = "[Judger: compile]"
-var errRun = "[Judger: run]"
-var errGrade = "[Judger: Grade]"
-var errGetTestcase = "[Judger: getTestcase]"
+var ErrCompileFail = errors.New("judge: compile failed")
+var ErrRunFail = errors.New("judge: run failed")
+var ErrGrade = errors.New("judge: grading failed")
 
 type Judger struct {
 	compiler        sandbox.Compiler
@@ -53,11 +52,10 @@ func (j *Judger) Judge(task *Task) error {
 	if compileOut.Err != nil {
 		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
 		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
-		return fmt.Errorf("%s: %w", errJudge, compileOut.Err)
+		return fmt.Errorf("[judge: Judge]: %w", compileOut.Err)
 	}
 	if testcaseOut.Err != nil {
-		task.SetStatus(TESTCASE_GET_FAILED)
-		return fmt.Errorf("%s: %w", errJudge, testcaseOut.Err)
+		return fmt.Errorf("[judge: Judge]: %w", testcaseOut.Err)
 	}
 
 	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
@@ -90,7 +88,7 @@ func (j *Judger) Judge(task *Task) error {
 	for i := 0; i < tcNum; i++ {
 		runOut := <-runOutCh
 		if runOut.Err != nil {
-			task.SetStatus(RUN_FAILED)
+			// task.SetStatus(RUN_FAILED)
 			// FIXME: 이러면 최종결과의 해당 order는 비어있게됨. runOut? 에 order 정보 넣기
 			return runOut.Err
 			// RunData -> SYSTEM_ERROR
@@ -120,7 +118,7 @@ func (j *Judger) Judge(task *Task) error {
 	// 여기까지
 
 	fmt.Println(finalResult)
-	task.SetStatus(SUCCESS) // RunData는 위에서 채움(run, grade하고 정보 채우기)
+	// task.SetStatus(SUCCESS) // RunData는 위에서 채움(run, grade하고 정보 채우기)
 
 	// eventManager한테 task done 이벤트 전송
 	fmt.Println("done")
@@ -129,42 +127,34 @@ func (j *Judger) Judge(task *Task) error {
 
 // wrapper to use goroutine
 func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest) {
-	// 여기서 결과값 처리
 	res, err := j.compiler.Compile(dto)
 	if err != nil {
-		out <- result.ChResult{Err: fmt.Errorf("%s: %w", errCompile, err)}
+		out <- result.ChResult{Err: err}
 	}
-	// result 변환, 처리
 	out <- result.ChResult{Data: res}
 }
 
 func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input []byte) {
-	// 여기서 결과값 처리
 	res, err := j.runner.Run(dto, nil)
 	if err != nil {
-		out <- result.ChResult{Err: fmt.Errorf("%s: %w", errRun, err)}
+		out <- result.ChResult{Err: err}
 	}
-	// result 변환, 처리
 	out <- result.ChResult{Data: res}
 }
 
 func (j *Judger) grade(out chan<- result.ChResult, answer []byte, output []byte) {
-	// 여기서 결과값 처리
 	res, err := grade.Grade(answer, output)
 	if err != nil {
-		out <- result.ChResult{Err: fmt.Errorf("%s: %w", errGrade, err)}
+		out <- result.ChResult{Err: err}
 	}
-	// result 변환, 처리
 	out <- result.ChResult{Data: res}
 }
 
 // wrapper to use goroutine
 func (j *Judger) getTestcase(out chan<- result.ChResult, problemId string) {
-	// 여기서 결과값 처리
 	res, err := j.testcaseManager.GetTestcase(problemId)
 	if err != nil {
-		out <- result.ChResult{Err: fmt.Errorf("%s: %w", errGetTestcase, err)}
+		out <- result.ChResult{Err: err}
 	}
-	// result 변환, 처리
 	out <- result.ChResult{Data: res}
 }

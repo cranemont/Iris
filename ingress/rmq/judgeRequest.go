@@ -1,6 +1,6 @@
 package rmq
 
-type SubmissionDto struct {
+type JudgeRequest struct {
 	Id          string
 	Code        string
 	Language    string
