@@ -37,7 +37,7 @@ func (h *JudgeHandler) Handle(task *judge.Task) error {
 
 	task.StartedAt = time.Now()
 	dir := task.GetDir()
-	// 폴더 생성
+
 	if err := file.CreateDir(dir); err != nil {
 		return fmt.Errorf("%s: failed to create directory: %w", handler, err)
 	}
@@ -46,7 +46,7 @@ func (h *JudgeHandler) Handle(task *judge.Task) error {
 	if err != nil {
 		return fmt.Errorf("%s: failed to create src path: %w", handler, err)
 	}
-	if err := createSrcFile(srcPath, task.GetCode()); err != nil {
+	if err := file.CreateFile(srcPath, task.GetCode()); err != nil {
 		return fmt.Errorf("%s: failed to create src file: %w", handler, err)
 	}
 
@@ -54,15 +54,6 @@ func (h *JudgeHandler) Handle(task *judge.Task) error {
 		return fmt.Errorf("%s: judge failed: %w", handler, err)
 	}
 	// error 처리, defer에서 무조건 실행되도록 하기(폴더제거)
-	fmt.Println("triggerring event")
-	return nil
-}
-
-func createSrcFile(srcPath string, code string) error {
-	if err := file.CreateFile(srcPath, code); err != nil {
-		// ENUM으로 변경, result code 반환
-		err := fmt.Errorf("failed to create src file: %w", err)
-		return err
-	}
+	fmt.Println("JudgeHandler: Handle Done!")
 	return nil
 }

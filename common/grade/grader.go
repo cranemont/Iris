@@ -19,7 +19,7 @@ import (
 
 func Grade(answer []byte, output []byte) (bool, error) {
 	fmt.Println("grading....")
-	fmt.Printf("answer: %soutput: %s", string(answer), string(output))
+	// fmt.Printf("answer: %soutput: %s", string(answer), string(output))
 	return bytes.Equal(answer, TrimWhitespaceBeforeNewline(output)), nil
 }
 

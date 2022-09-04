@@ -27,13 +27,13 @@ func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return SandboxResult{}, fmt.Errorf("execution fail: %w: %s", err, stderr.String())
+		return SandboxResult{}, fmt.Errorf("execution failed: %w: %s", err, stderr.String())
 	}
 
 	res := SandboxResult{}
 
 	json.Unmarshal(stdout.Bytes(), &res)
-	fmt.Println("Result: ", res)
+	fmt.Println("Result: ", stdout.String()) // on debug
 
 	return res, nil
 }

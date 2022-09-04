@@ -1,7 +1,6 @@
 package sandbox
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -20,7 +19,9 @@ type RunResult struct {
 	Order      int
 	ResultCode int
 	ErrOutput  string // []byte?
-	ExecResult string
+	CpuTime    int
+	RealTime   int
+	Memory     int
 	Output     []byte
 }
 
@@ -72,36 +73,34 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		}, input,
 	)
 	if err != nil {
-		return RunResult{}, err
+		return RunResult{}, fmt.Errorf("runner: Run failed: %w", err)
 	}
 
-	runResult := RunResult{Order: id, ResultCode: SUCCESS}
+	runResult := RunResult{
+		Order:      id,
+		ResultCode: SUCCESS,
+		CpuTime:    res.CpuTime,
+		RealTime:   res.RealTime,
+		Memory:     res.Memory,
+	}
+
 	if res.ResultCode != SUCCESS {
 		// TODO: 함수로 분리
-		sandboxResult, err := json.Marshal(res)
-		if err != nil {
-			return RunResult{}, fmt.Errorf("invalid result format: %w", err)
-		}
 		data, err := file.ReadFile(errorPath)
 		if err != nil {
-			return RunResult{}, fmt.Errorf("failed to read output file: %w", err)
+			return RunResult{}, fmt.Errorf("runner: failed to read error file: %w", err)
 		}
 		runResult.ResultCode = res.ResultCode
-		runResult.ExecResult = string(sandboxResult) // 필요한가?
 		runResult.ErrOutput = string(data)
-		fmt.Println(runResult)
+		fmt.Println(res) // log?
 	}
 
 	data, err := file.ReadFile(outputPath)
 	if err != nil {
-		return RunResult{}, err
+		return RunResult{}, fmt.Errorf("runner: failed to read output file: %w", err)
 	}
 	runResult.Output = data
 
-	fmt.Println(res)
+	// fmt.Println(res)
 	return runResult, nil
 }
-
-// "command": "{exe_path}",
-//         "seccomp_rule": {ProblemIOMode.standard: "c_cpp", ProblemIOMode.file: "c_cpp_file_io"},
-//         "env": default_env

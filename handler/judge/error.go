@@ -6,8 +6,6 @@ const (
 	COMPILE_FAILED
 	RUN_FAILED
 	TESTCASE_GET_FAILED
-	MQ_ERROR
-	INTERNAL_SERVER_ERROR
 )
 
 type JudgeError struct {

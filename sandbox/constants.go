@@ -1,6 +1,6 @@
 package sandbox
 
-const ( // system error, logging
+const ( // ErrorCode
 	SUCCESS = 0 - iota
 	INVALID_CONFIG
 	FORK_FAILED
@@ -16,8 +16,8 @@ const ( // system error, logging
 )
 
 const ( // ResultCode
-	WRONG_ANSWER            = -1
-	CPU_TIME_LIMIT_EXCEEDED = 0 + iota
+	RUN_SUCCESS = 0 + iota // this only means the process exited normally
+	CPU_TIME_LIMIT_EXCEEDED
 	REAL_TIME_LIMIT_EXCEEDED
 	MEMORY_LIMIT_EXCEEDED
 	RUNTIME_ERROR

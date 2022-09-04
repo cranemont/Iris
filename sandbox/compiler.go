@@ -88,10 +88,5 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		compileResult.ErrOutput = string(data)
 		fmt.Println(compileResult)
 	}
-	// time.Sleep(time.Second * 2)
-	// 채널로 결과반환?
-
-	// sandbox result 추가
-	// 컴파일 실패시 CompileResult에 error 추가
 	return compileResult, nil
 }

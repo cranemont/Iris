@@ -1,6 +1,7 @@
 package result
 
 type ChResult struct {
-	Err  error
-	Data interface{}
+	Err   error
+	Order int
+	Data  interface{}
 }

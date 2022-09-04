@@ -3,6 +3,7 @@ package judge
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/common/grade"
@@ -75,6 +76,8 @@ func (j *Judger) Judge(task *Task) error {
 
 	// FIXME: 이 아래 과정 갈아엎기. Result를 중심으로
 	tcNum := len(tc.Data)
+	task.MakeRunResult(tcNum)
+
 	runOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		go j.run(
@@ -84,43 +87,49 @@ func (j *Judger) Judge(task *Task) error {
 		)
 	}
 
-	gradeOutCh := make(chan result.ChResult, tcNum) // out이라는 이름이 헷갈림 wrapper가 나을듯
+	// FIXME: out이라는 이름이 헷갈림 wrapper가 나을듯
+	gradeOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		runOut := <-runOutCh
+		order := runOut.Order
 		if runOut.Err != nil {
-			// task.SetStatus(RUN_FAILED)
-			// FIXME: 이러면 최종결과의 해당 order는 비어있게됨. runOut? 에 order 정보 넣기
-			return runOut.Err
+			task.SetRunState(order, SYSTEM_ERROR)
+			continue
 			// RunData -> SYSTEM_ERROR
 			// JudgeResult -> RUN_FAILED
 		}
 		runResult, ok := runOut.Data.(sandbox.RunResult)
 		if !ok {
-			return fmt.Errorf("%w: RunResult", exception.ErrTypeAssertionFail)
+			task.SetRunState(order, SYSTEM_ERROR)
+			log.Println("%w: RunResult", exception.ErrTypeAssertionFail)
+			continue
 		}
-		// run result task에 반영
-
-		if runResult.ResultCode != sandbox.SUCCESS {
-			// run result 저장
-		}
-
-		fmt.Print(runResult.Order)
-		go j.grade(gradeOutCh, []byte(tc.Data[runResult.Order].Out), runResult.Output)
+		task.SetRunResult(order, runResult)
+		fmt.Print(order)
+		go j.grade(gradeOutCh, []byte(tc.Data[order].Out), runResult.Output, order)
 	}
 
 	// FIXME: order 관리
-	finalResult := []bool{}
 	for i := 0; i < tcNum; i++ {
 		gradeOut := <-gradeOutCh
-		finalResult = append(finalResult, gradeOut.Data.(bool))
-		// task에 결과 반영
+		order := gradeOut.Order
+		if gradeOut.Err != nil {
+			task.SetRunState(order, SYSTEM_ERROR)
+			continue
+		}
+		accepted, ok := gradeOut.Data.(bool)
+		if !ok {
+			task.SetRunState(order, SYSTEM_ERROR)
+			log.Println("%w: GradeResult", exception.ErrTypeAssertionFail)
+		}
+		if accepted {
+			task.SetRunState(order, ACCEPTED)
+		} else {
+			task.SetRunState(order, WRONG_ANSWER)
+		}
 	}
-	// 여기까지
+	// FIXME: 여기까지 수정
 
-	fmt.Println(finalResult)
-	// task.SetStatus(SUCCESS) // RunData는 위에서 채움(run, grade하고 정보 채우기)
-
-	// eventManager한테 task done 이벤트 전송
 	fmt.Println("done")
 	return nil
 }
@@ -137,17 +146,17 @@ func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest)
 func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input []byte) {
 	res, err := j.runner.Run(dto, nil)
 	if err != nil {
-		out <- result.ChResult{Err: err}
+		out <- result.ChResult{Err: err, Order: dto.Order}
 	}
-	out <- result.ChResult{Data: res}
+	out <- result.ChResult{Data: res, Order: dto.Order}
 }
 
-func (j *Judger) grade(out chan<- result.ChResult, answer []byte, output []byte) {
+func (j *Judger) grade(out chan<- result.ChResult, answer []byte, output []byte, order int) {
 	res, err := grade.Grade(answer, output)
 	if err != nil {
-		out <- result.ChResult{Err: err}
+		out <- result.ChResult{Err: err, Order: order}
 	}
-	out <- result.ChResult{Data: res}
+	out <- result.ChResult{Data: res, Order: order}
 }
 
 // wrapper to use goroutine

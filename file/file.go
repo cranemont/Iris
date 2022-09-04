@@ -8,20 +8,6 @@ import (
 	"github.com/cranemont/judge-manager/constants"
 )
 
-// type FileManager interface {
-// 	CreateDir(name string) error
-// 	RemoveDir(name string) error
-// 	CreateFile(srcPath string, data string) error
-// }
-
-// type fileManager struct {
-// 	basePath string
-// }
-
-// func NewFileManager() *fileManager {
-// 	return &fileManager{basePath: constants.BASE_DIR}
-// }
-
 func CreateDir(dir string) error {
 	if err := os.Mkdir(constants.BASE_DIR+"/"+dir, os.FileMode(constants.BASE_FILE_MODE)); err != nil {
 		log.Println(err)
