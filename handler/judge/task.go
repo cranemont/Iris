@@ -6,7 +6,7 @@ import (
 
 	"github.com/cranemont/judge-manager/common/utils"
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/mq"
+	"github.com/cranemont/judge-manager/ingress/rmq"
 )
 
 // Judge Mode
@@ -36,12 +36,12 @@ const ( // for RunData
 )
 
 type JudgeResult struct {
-	StatusCode int
+	// StatusCode int
 	CompileErr string
 	RunData    []RunData
 }
 
-const (
+const ( // publish에 전달되는 Result
 	SUCCESS = 0 + iota
 	COMPILE_FAILED
 	RUN_FAILED
@@ -62,7 +62,7 @@ type Task struct {
 	StartedAt   time.Time // for time check
 }
 
-func NewTask(s mq.SubmissionDto) *Task {
+func NewTask(s rmq.SubmissionDto) *Task {
 	// validate, initialize
 	return &Task{
 		dir:         utils.RandString(constants.DIR_NAME_LEN),
@@ -71,7 +71,8 @@ func NewTask(s mq.SubmissionDto) *Task {
 		problemId:   s.ProblemId,
 		timeLimit:   s.TimeLimit,
 		memoryLimit: s.MemoryLimit,
-		Result:      JudgeResult{StatusCode: INTERNAL_SERVER_ERROR},
+		// 이걸 들고다니는게 맞을까?
+		Result: JudgeResult{StatusCode: INTERNAL_SERVER_ERROR},
 	}
 }
 
@@ -94,4 +95,8 @@ func (t *Task) SetStatus(code int) {
 func (t *Task) CompileError(output string) {
 	t.Result.StatusCode = COMPILE_FAILED
 	t.Result.CompileErr = output
+}
+
+func (t *Task) ResultToJson() string {
+	return "Judge Task to JSON"
 }

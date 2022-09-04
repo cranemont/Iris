@@ -8,8 +8,10 @@ import (
 
 	"github.com/cranemont/judge-manager/cache"
 	"github.com/cranemont/judge-manager/constants/language"
-	"github.com/cranemont/judge-manager/judge"
-	"github.com/cranemont/judge-manager/mq"
+	"github.com/cranemont/judge-manager/egress"
+	"github.com/cranemont/judge-manager/handler"
+	"github.com/cranemont/judge-manager/handler/judge"
+	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
@@ -46,10 +48,15 @@ func main() {
 		runner,
 		testcaseManager,
 	)
+	// specialJudger
+	// customTestcaseRunner 만들어서 같이 넣어주기
 
-	judgeHandler := judge.NewHandler(
+	publisher := egress.NewRmqPublisher()
+
+	handler := handler.NewHandler(
 		judger,
 		&languageConfig,
+		publisher,
 	)
 
 	// judgeEventListener := event.NewListener(eventMap, judgeEventHander)
@@ -68,7 +75,7 @@ func main() {
 		var input string
 		fmt.Scanln(&input)
 
-		submissionDto := mq.SubmissionDto{
+		submissionDto := rmq.SubmissionDto{
 			// Code: "#include <stdio.h>\n\nint main (void) {\n  printf(\"Hello world!\\n\");\n  char buf[100];\n  scanf(\"%s\", buf);\n  printf(\"%s\\n\", buf);\n  return 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
 			// Code:      "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
@@ -80,10 +87,10 @@ func main() {
 		}
 
 		// FIXME: task도 handler에서 만들어야 하나? 그래야 라우팅도 되니까
-		task := judge.NewTask(submissionDto)
+		// task := judge.NewTask(submissionDto)
 		// go judgeEventHander.OnExec(task) //<- 이방법이 더 빠름
 		// 라우터를 하나 만들고, SPJ인지, 등등 판단
-		go judgeHandler.Handle("Judge", task)
+		go handler.Handle("Judge", submissionDto)
 		// judgeEventManager.Dispatch(constants.TASK_EXEC, task) // <- 이벤트를 사용하는 일관된 방법
 	}
 	// 여기서 rabbitMQ consumer가 돌고

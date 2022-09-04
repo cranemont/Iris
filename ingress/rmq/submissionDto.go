@@ -1,4 +1,4 @@
-package mq
+package rmq
 
 type SubmissionDto struct {
 	Id          string

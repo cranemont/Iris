@@ -5,7 +5,7 @@ import (
 
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/common/result"
-	"github.com/cranemont/judge-manager/judge/grade"
+	"github.com/cranemont/judge-manager/handler/grade"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )

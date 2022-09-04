@@ -23,7 +23,6 @@ type config struct {
 	SeccompRuleFileIO string
 }
 type LanguageConfig struct {
-	// Get(language) -> constants패키지에서 설정값 가져옴
 	configMap map[string]config
 }
 
@@ -86,21 +85,7 @@ func (l *LanguageConfig) MakeCompileArgSlice(srcPath string, exePath string, lan
 	if err != nil {
 		return nil, fmt.Errorf("failed to make argslice: %w", err)
 	}
-	args := strings.Replace(conf.Args, "{srcPath}", srcPath, 1)
+	args := strings.Replace(conf.CompileArgs, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)
 	return strings.Split(args, " "), nil
 }
-
-// "compile": {
-//         "src_name": "main.c",
-//         "exe_name": "main",
-//         "max_cpu_time": 3000,
-//         "max_real_time": 10000,
-//         "max_memory": 256 * 1024 * 1024,
-//         "command": "/usr/bin/gcc -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {src_path} -lm -o {exe_path}",
-//     },
-//     "run": {
-//         "command": "{exe_path}",
-//         "seccomp_rule": {ProblemIOMode.standard: "c_cpp", ProblemIOMode.file: "c_cpp_file_io"},
-//         "env": default_env
-//     }
