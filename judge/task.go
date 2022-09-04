@@ -9,13 +9,21 @@ import (
 	"github.com/cranemont/judge-manager/mq"
 )
 
-// StatusCode
+// Judge Mode
+const (
+	JUDGE = 0 + iota
+	SPECIAL_JUDGE
+	CUSTOM_TESTCASE
+)
 
+// StatusCode
 type RunData struct {
 	Order      int
 	StatusCode bool
-	ExecTime   string
+	CpuTime    string
+	RealTime   string
 	Memory     string
+	// Output? string
 }
 
 const ( // for RunData
@@ -25,7 +33,6 @@ const ( // for RunData
 	REAL_TLE
 	RUNTIME_ERROR
 	SYSTEM_ERROR
-	COMPILE_ERROR
 )
 
 type JudgeResult struct {
@@ -64,7 +71,7 @@ func NewTask(s mq.SubmissionDto) *Task {
 		problemId:   s.ProblemId,
 		timeLimit:   s.TimeLimit,
 		memoryLimit: s.MemoryLimit,
-		Result:      JudgeResult{Success: false, StatusCode: SYSTEM_ERROR},
+		Result:      JudgeResult{StatusCode: INTERNAL_SERVER_ERROR},
 	}
 }
 
@@ -80,10 +87,11 @@ func (t *Task) GetLanguage() string {
 	return t.language
 }
 
-func (t *Task) Success() {
-	t.Result.Success = true
-}
-
 func (t *Task) SetStatus(code int) {
 	t.Result.StatusCode = code
+}
+
+func (t *Task) CompileError(output string) {
+	t.Result.StatusCode = COMPILE_FAILED
+	t.Result.CompileErr = output
 }

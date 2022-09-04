@@ -16,9 +16,9 @@ type compiler struct {
 }
 
 type CompileResult struct {
-	ResultCode int
-	ErrOutput  string
-	ExecResult string
+	ResultCode int    // ?
+	ErrOutput  string // compile error message
+	ExecResult string // resource usage and metadata from sandbox
 }
 
 type CompileRequest struct {
@@ -47,7 +47,7 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 	if err != nil {
 		return CompileResult{}, err
 	}
-	argSlice, err := c.config.MakeArgSlice(srcPath, exePath, language)
+	argSlice, err := c.config.MakeCompileArgSlice(srcPath, exePath, language)
 	if err != nil {
 		return CompileResult{}, err
 	}

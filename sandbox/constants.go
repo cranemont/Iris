@@ -15,7 +15,7 @@ const ( // system error, logging
 	SPJ_ERROR
 )
 
-const ( // testcase 별 result
+const ( // ResultCode
 	WRONG_ANSWER            = -1
 	CPU_TIME_LIMIT_EXCEEDED = 0 + iota
 	REAL_TIME_LIMIT_EXCEEDED

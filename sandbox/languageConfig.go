@@ -11,13 +11,16 @@ import (
 // 각 DTO로 변환 과정 수행
 
 type config struct {
-	SrcName      string
-	ExeName      string
-	MaxCpuTime   int
-	MaxRealTime  int
-	MaxMemory    int
-	CompilerPath string
-	Args         string
+	SrcName           string
+	ExeName           string
+	MaxCpuTime        int
+	MaxRealTime       int
+	MaxMemory         int
+	CompilerPath      string
+	CompileArgs       string
+	RunCommand        string
+	SeccompRule       string
+	SeccompRuleFileIO string
 }
 type LanguageConfig struct {
 	// Get(language) -> constants패키지에서 설정값 가져옴
@@ -28,22 +31,28 @@ func (l *LanguageConfig) Init() {
 	l.configMap = make(map[string]config)
 	// srcPath, exePath는 base dir + task dir
 	l.configMap["c"] = config{
-		SrcName:      "main.c",
-		ExeName:      "main",
-		MaxCpuTime:   3000,
-		MaxRealTime:  10000,
-		MaxMemory:    256 * 1024 * 1024,
-		CompilerPath: "/usr/bin/gcc",
-		Args:         "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {srcPath} -lm -o {exePath}",
+		SrcName:           "main.c",
+		ExeName:           "main",
+		MaxCpuTime:        3000,              // compile
+		MaxRealTime:       10000,             // compile
+		MaxMemory:         256 * 1024 * 1024, // compile
+		CompilerPath:      "/usr/bin/gcc",
+		CompileArgs:       "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {srcPath} -lm -o {exePath}",
+		RunCommand:        "{exePath}",
+		SeccompRule:       "c_cpp",
+		SeccompRuleFileIO: "c_cpp_file_io",
 	}
 	l.configMap["cpp"] = config{
-		SrcName:      "main.cpp",
-		ExeName:      "main",
-		MaxCpuTime:   10000,
-		MaxRealTime:  20000,
-		MaxMemory:    1024 * 1024 * 1024,
-		CompilerPath: "/usr/bin/g++",
-		Args:         "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}",
+		SrcName:           "main.cpp",
+		ExeName:           "main",
+		MaxCpuTime:        10000,
+		MaxRealTime:       20000,
+		MaxMemory:         1024 * 1024 * 1024,
+		CompilerPath:      "/usr/bin/g++",
+		CompileArgs:       "-DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}",
+		RunCommand:        "{exePath}",
+		SeccompRule:       "c_cpp",
+		SeccompRuleFileIO: "c_cpp_file_io",
 	}
 }
 
@@ -71,7 +80,7 @@ func (l *LanguageConfig) MakeExePath(dir string, language string) (string, error
 	return file.MakeFilePath(dir, conf.ExeName).String(), nil
 }
 
-func (l *LanguageConfig) MakeArgSlice(srcPath string, exePath string, language string) ([]string, error) {
+func (l *LanguageConfig) MakeCompileArgSlice(srcPath string, exePath string, language string) ([]string, error) {
 
 	conf, err := l.Get(language)
 	if err != nil {

@@ -48,6 +48,10 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	if err != nil {
 		return RunResult{}, err
 	}
+	// argSlice, err := r.config.MakeRunArgSlice(srcPath, exePath, language)
+	// if err != nil {
+	// 	return CompileResult{}, err
+	// }
 
 	outputPath := file.MakeFilePath(dir, strconv.Itoa(id)+".out").String()
 	errorPath := file.MakeFilePath(dir, strconv.Itoa(id)+".error").String()
