@@ -48,7 +48,7 @@ func (r *router) Route(handle string, data interface{}) {
 		judgeRequest, ok := data.(rmq.JudgeRequest)
 		if !ok {
 			log.Printf("JUDGE: %s", exception.ErrTypeAssertionFail)
-			break
+			panic(nil)
 		}
 
 		res, err := r.judgeHandler.Handle(judgeRequest)
@@ -60,7 +60,10 @@ func (r *router) Route(handle string, data interface{}) {
 	case CUSTOM_TESTCASE:
 	default:
 		log.Printf("unregistered handler: %s", handle)
-		result = handler.DefaultResult()
+		panic(nil) // 컴파일시 잡아낼 수 없지만 어딘가 코드가 잘못되었기 때문에 panic
+		// FIXME: string 말고 바로 호출할수있게 라우터에 해당 caller 만들기
+		// 그리고 공통 response middleware를 만들고
+		// result = handler.DefaultResult()
 	}
 
 	// publish result

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -58,17 +59,16 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 	}
 
 	if err := h.judger.Judge(task); err != nil {
-		switch err {
-		case judge.ErrCompile, judge.ErrCompileExec:
+		if errors.Is(err, judge.ErrCompile) || errors.Is(err, judge.ErrCompileExec) {
+			res.Data = task.Result
 			res.StatusCode = COMPILE_ERROR
-
-		case judge.ErrTestcaseGet:
+		}
+		if errors.Is(err, judge.ErrTestcaseGet) {
 			res.StatusCode = TESTCASE_GET_FAILED
 		}
 		return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 	}
 	res.Data = task.Result
-
 	res.StatusCode = SUCCESS
 	fmt.Println("JudgeHandler: Handle Done!")
 	return res, nil
