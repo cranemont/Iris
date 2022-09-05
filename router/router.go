@@ -7,7 +7,6 @@ import (
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/egress"
 	"github.com/cranemont/judge-manager/handler"
-	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/rmq"
 )
 
@@ -43,29 +42,25 @@ func NewRouter(
 // router, controller?
 func (r *router) Route(handle string, data interface{}) {
 	fmt.Println("From Router: ", handle)
-	var result string // []byte
+	var result string
 	switch handle {
 	case JUDGE:
 		judgeRequest, ok := data.(rmq.JudgeRequest)
 		if !ok {
 			log.Printf("JUDGE: %s", exception.ErrTypeAssertionFail)
-			return
+			break
 		}
-		task := judge.NewTask(judgeRequest)
-		err := r.judgeHandler.Handle(task)
+
+		res, err := r.judgeHandler.Handle(judgeRequest)
 		if err != nil {
 			log.Printf("JUDGE: handler error: %s", err)
-			return
 		}
-		result, err = task.ResultToJson()
-		if err != nil {
-			log.Printf("JUDGE: %s", err)
-			return
-		}
+		result = r.judgeHandler.ResultToJson(res)
 	case SPECIAL_JUDGE:
 	case CUSTOM_TESTCASE:
 	default:
 		log.Printf("unregistered handler: %s", handle)
+		result = handler.DefaultResult()
 	}
 
 	// publish result

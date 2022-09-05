@@ -22,6 +22,9 @@ type RunResult struct {
 	CpuTime    int
 	RealTime   int
 	Memory     int
+	Signal     int
+	ErrorCode  int
+	ExitCode   int
 	Output     []byte
 }
 
@@ -82,6 +85,9 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		CpuTime:    res.CpuTime,
 		RealTime:   res.RealTime,
 		Memory:     res.Memory,
+		Signal:     res.Signal,
+		ErrorCode:  res.ErrorCode,
+		ExitCode:   res.ExitCode,
 	}
 
 	if res.ResultCode != SUCCESS {

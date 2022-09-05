@@ -12,9 +12,13 @@ import (
 	"github.com/cranemont/judge-manager/testcase"
 )
 
-var ErrCompileFail = errors.New("judge: compile failed")
-var ErrRunFail = errors.New("judge: run failed")
-var ErrGrade = errors.New("judge: grading failed")
+var ErrPrefixJudge = "[judge: Judge]"
+var ErrCompileExec = errors.New("compiler exec failed")
+var ErrCompile = errors.New("compile failed")
+var ErrTestcaseGet = errors.New("testcase get failed")
+
+// var ErrRun = errors.New("runner exec failed")
+// var ErrGrade = errors.New("grading error")
 
 type Judger struct {
 	compiler        sandbox.Compiler
@@ -34,7 +38,7 @@ func NewJudger(
 	}
 }
 
-func (j *Judger) Judge(task *Task) error {
+func (j *Judger) Judge(task *JudgeTask) error {
 	// testcase 있는건 다른 함수에서 처리. grade가 필요없는 요청임
 
 	testcaseOutCh := make(chan result.ChResult)
@@ -53,28 +57,28 @@ func (j *Judger) Judge(task *Task) error {
 	if compileOut.Err != nil {
 		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
 		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
-		return fmt.Errorf("[judge: Judge]: %w", compileOut.Err)
+		return fmt.Errorf("%s: %w: %s", ErrPrefixJudge, ErrCompileExec, compileOut.Err.Error())
 	}
 	if testcaseOut.Err != nil {
-		return fmt.Errorf("[judge: Judge]: %w", testcaseOut.Err)
+		return fmt.Errorf("%s: %w: %s", ErrPrefixJudge, ErrTestcaseGet, testcaseOut.Err.Error())
 	}
 
 	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
-		return fmt.Errorf("%w: CompileResult", exception.ErrTypeAssertionFail)
+		return fmt.Errorf("%s: %w: CompileResult", ErrPrefixJudge, exception.ErrTypeAssertionFail)
 	}
 	if compileResult.ResultCode != sandbox.SUCCESS {
 		// 컴파일러를 실행했으나 컴파일에 실패한 경우
 		task.CompileError(compileResult.ErrOutput)
-		return nil
+		return fmt.Errorf("%s: %w", ErrPrefixJudge, ErrCompile)
 	}
 
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
 	if !ok {
-		return fmt.Errorf("%w: Testcase", exception.ErrTypeAssertionFail)
+		return fmt.Errorf("%s: %w: Testcase", ErrPrefixJudge, exception.ErrTypeAssertionFail)
 	}
 
-	// FIXME: 이 아래 과정 갈아엎기. Result를 중심으로
+	// FIXME: 이 아래 과정 갈아엎기. Result, error를 중심으로
 	tcNum := len(tc.Data)
 	task.MakeRunResult(tcNum)
 
@@ -92,15 +96,17 @@ func (j *Judger) Judge(task *Task) error {
 	for i := 0; i < tcNum; i++ {
 		runOut := <-runOutCh
 		order := runOut.Order
+
+		// FIXME:
 		if runOut.Err != nil {
-			task.SetRunState(order, SYSTEM_ERROR)
+			task.SetRunResultCode(order, SYSTEM_ERROR)
 			continue
-			// RunData -> SYSTEM_ERROR
-			// JudgeResult -> RUN_FAILED
 		}
 		runResult, ok := runOut.Data.(sandbox.RunResult)
+
+		// FIXME:
 		if !ok {
-			task.SetRunState(order, SYSTEM_ERROR)
+			task.SetRunResultCode(order, SYSTEM_ERROR)
 			log.Println("%w: RunResult", exception.ErrTypeAssertionFail)
 			continue
 		}
@@ -109,23 +115,26 @@ func (j *Judger) Judge(task *Task) error {
 		go j.grade(gradeOutCh, []byte(tc.Data[order].Out), runResult.Output, order)
 	}
 
-	// FIXME: order 관리
 	for i := 0; i < tcNum; i++ {
 		gradeOut := <-gradeOutCh
 		order := gradeOut.Order
+
+		// FIXME:
 		if gradeOut.Err != nil {
-			task.SetRunState(order, SYSTEM_ERROR)
+			task.SetRunResultCode(order, SYSTEM_ERROR)
 			continue
 		}
 		accepted, ok := gradeOut.Data.(bool)
+
+		// FIXME:
 		if !ok {
-			task.SetRunState(order, SYSTEM_ERROR)
+			task.SetRunResultCode(order, SYSTEM_ERROR)
 			log.Println("%w: GradeResult", exception.ErrTypeAssertionFail)
 		}
 		if accepted {
-			task.SetRunState(order, ACCEPTED)
+			task.SetRunResultCode(order, ACCEPTED)
 		} else {
-			task.SetRunState(order, WRONG_ANSWER)
+			task.SetRunResultCode(order, WRONG_ANSWER)
 		}
 	}
 	// FIXME: 여기까지 수정

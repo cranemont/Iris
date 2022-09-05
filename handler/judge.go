@@ -1,15 +1,22 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler/judge"
+	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
 var handler = "JudgeHandler"
+
+type JudgeResult struct {
+	StatusCode int                   `json:"statusCode"` // handler's status code
+	Data       judge.JudgeTaskResult `json:"data"`
+}
 
 type JudgeHandler struct {
 	judger *judge.Judger
@@ -27,33 +34,51 @@ func NewJudgeHandler(
 }
 
 // handle top layer logical flow
-func (h *JudgeHandler) Handle(task *judge.Task) error {
-	defer func() {
-		file.RemoveDir(task.GetDir())
-		fmt.Println(time.Since(task.StartedAt))
-	}()
-	// Result의 status code는 여기서 관리,
-	// task에 들어가있을게 아님. sentinel error로 잡아내기?
-
+func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err error) {
+	res := JudgeResult{StatusCode: INTERNAL_SERVER_ERROR, Data: judge.JudgeTaskResult{}}
+	task := judge.NewTask(request)
 	task.StartedAt = time.Now()
 	dir := task.GetDir()
 
+	defer func() {
+		file.RemoveDir(task.GetDir())
+		fmt.Println(time.Since(task.StartedAt)) // for debug
+	}()
+
 	if err := file.CreateDir(dir); err != nil {
-		return fmt.Errorf("%s: failed to create directory: %w", handler, err)
+		return res, fmt.Errorf("%s: failed to create directory: %w", handler, err)
 	}
 
 	srcPath, err := h.config.MakeSrcPath(dir, task.GetLanguage())
 	if err != nil {
-		return fmt.Errorf("%s: failed to create src path: %w", handler, err)
+		return res, fmt.Errorf("%s: failed to create src path: %w", handler, err)
 	}
 	if err := file.CreateFile(srcPath, task.GetCode()); err != nil {
-		return fmt.Errorf("%s: failed to create src file: %w", handler, err)
+		return res, fmt.Errorf("%s: failed to create src file: %w", handler, err)
 	}
 
 	if err := h.judger.Judge(task); err != nil {
-		return fmt.Errorf("%s: judge failed: %w", handler, err)
+		switch err {
+		case judge.ErrCompile, judge.ErrCompileExec:
+			res.StatusCode = COMPILE_ERROR
+
+		case judge.ErrTestcaseGet:
+			res.StatusCode = TESTCASE_GET_FAILED
+		}
+		return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 	}
-	// error 처리, defer에서 무조건 실행되도록 하기(폴더제거)
+	res.Data = task.Result
+
+	res.StatusCode = SUCCESS
 	fmt.Println("JudgeHandler: Handle Done!")
-	return nil
+	return res, nil
+}
+
+func (h *JudgeHandler) ResultToJson(result JudgeResult) string {
+	res, err := json.Marshal(result)
+	if err != nil {
+		// 적절한 err 처리
+		panic(err)
+	}
+	return string(res)
 }
