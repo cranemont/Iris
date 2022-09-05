@@ -62,11 +62,12 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 		if errors.Is(err, judge.ErrCompile) || errors.Is(err, judge.ErrCompileExec) {
 			res.Data = task.Result
 			res.StatusCode = COMPILE_ERROR
-		}
-		if errors.Is(err, judge.ErrTestcaseGet) {
+		} else if errors.Is(err, judge.ErrTestcaseGet) {
 			res.StatusCode = TESTCASE_GET_FAILED
+			return res, fmt.Errorf("%s: judge failed: %w", handler, err)
+		} else {
+			return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 		}
-		return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 	}
 	res.Data = task.Result
 	res.StatusCode = SUCCESS
