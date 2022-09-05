@@ -16,7 +16,6 @@ type Testcase struct {
 
 func (t *Testcase) Count() int {
 	return len(t.Data)
-	// return 3
 }
 
 func (t Testcase) MarshalBinary() ([]byte, error) {
