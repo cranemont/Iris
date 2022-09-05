@@ -12,8 +12,7 @@ import (
 	"github.com/cranemont/judge-manager/testcase"
 )
 
-var ErrPrefixJudge = "[judge: Judge]"
-var ErrCompileExec = errors.New("compiler exec failed")
+var JudgeErrPrefix = "[judge: Judge]"
 var ErrCompile = errors.New("compile failed")
 var ErrTestcaseGet = errors.New("testcase get failed")
 
@@ -57,25 +56,25 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	if compileOut.Err != nil {
 		// NewError로 분리(funcName, error) 받아서 아래 포맷으로 에러 반환하는 함수
 		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
-		return fmt.Errorf("%s: %w: %s", ErrPrefixJudge, ErrCompileExec, compileOut.Err.Error())
+		return fmt.Errorf("%s: %w", JudgeErrPrefix, compileOut.Err)
 	}
 	if testcaseOut.Err != nil {
-		return fmt.Errorf("%s: %w: %s", ErrPrefixJudge, ErrTestcaseGet, testcaseOut.Err.Error())
+		return fmt.Errorf("%s: %w: %s", JudgeErrPrefix, ErrTestcaseGet, testcaseOut.Err.Error())
 	}
 
 	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
-		return fmt.Errorf("%s: %w: CompileResult", ErrPrefixJudge, exception.ErrTypeAssertionFail)
+		return fmt.Errorf("%s: %w: CompileResult", JudgeErrPrefix, exception.ErrTypeAssertionFail)
 	}
 	if compileResult.ResultCode != sandbox.SUCCESS {
 		// 컴파일러를 실행했으나 컴파일에 실패한 경우
 		task.CompileError(compileResult.ErrOutput)
-		return fmt.Errorf("%s: %w", ErrPrefixJudge, ErrCompile)
+		return fmt.Errorf("%s: %w", JudgeErrPrefix, ErrCompile)
 	}
 
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
 	if !ok {
-		return fmt.Errorf("%s: %w: Testcase", ErrPrefixJudge, exception.ErrTypeAssertionFail)
+		return fmt.Errorf("%s: %w: Testcase", JudgeErrPrefix, exception.ErrTypeAssertionFail)
 	}
 
 	// FIXME: 이 아래 과정 갈아엎기. Result, error를 중심으로

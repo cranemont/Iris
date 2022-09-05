@@ -58,19 +58,19 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 		return res, fmt.Errorf("%s: failed to create src file: %w", handler, err)
 	}
 
-	if err := h.judger.Judge(task); err != nil {
-		if errors.Is(err, judge.ErrCompile) || errors.Is(err, judge.ErrCompileExec) {
-			res.Data = task.Result
-			res.StatusCode = COMPILE_ERROR
-		} else if errors.Is(err, judge.ErrTestcaseGet) {
+	err = h.judger.Judge(task)
+	if err != nil {
+		if errors.Is(err, judge.ErrTestcaseGet) {
 			res.StatusCode = TESTCASE_GET_FAILED
-			return res, fmt.Errorf("%s: judge failed: %w", handler, err)
-		} else {
+		} else if !errors.Is(err, judge.ErrCompile) {
 			return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 		}
+		res.StatusCode = COMPILE_ERROR
+	} else {
+		res.StatusCode = SUCCESS
 	}
+
 	res.Data = task.Result
-	res.StatusCode = SUCCESS
 	fmt.Println("JudgeHandler: Handle Done!")
 	return res, nil
 }
