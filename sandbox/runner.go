@@ -43,7 +43,7 @@ func NewRunner(config *LanguageConfig) *runner {
 func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 	dir := dto.Dir
-	id := dto.Order
+	order := dto.Order
 	language := dto.Language
 	timeLimit := dto.TimeLimit
 	memoryLimit := dto.MemoryLimit
@@ -57,8 +57,8 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	// 	return CompileResult{}, err
 	// }
 
-	outputPath := file.MakeFilePath(dir, strconv.Itoa(id)+".out").String()
-	errorPath := file.MakeFilePath(dir, strconv.Itoa(id)+".error").String()
+	outputPath := file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+	errorPath := file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 	//task의 limit으로 주기
 	res, err := Exec(
 		ExecArgs{
@@ -80,7 +80,7 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	}
 
 	runResult := RunResult{
-		Order:      id,
+		Order:      order,
 		ResultCode: SUCCESS,
 		CpuTime:    res.CpuTime,
 		RealTime:   res.RealTime,

@@ -17,7 +17,6 @@ type Code string
 
 // StatusCode
 type RunResult struct {
-	Order      int  `json:"order"`
 	ResultCode Code `json:"resultCode"` // int for prod
 	CpuTime    int  `json:"cpuTime"`
 	RealTime   int  `json:"realTime"`

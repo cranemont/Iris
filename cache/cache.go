@@ -33,7 +33,7 @@ func (c *cache) Get(key string) []byte {
 	if err != nil {
 		log.Println(err)
 	} else if err == redis.Nil {
-		fmt.Println("k2 does not exist")
+		fmt.Println("key does not exist")
 		return nil
 	}
 	return val

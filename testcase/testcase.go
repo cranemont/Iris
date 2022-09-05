@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 )
 
-type TestcaseElement struct {
+type Element struct {
 	In  string
 	Out string
 }
 
 type Testcase struct {
-	Data []TestcaseElement
+	// metadata should be here
+	Data []Element
 }
 
 func (t *Testcase) Count() int {

@@ -16,9 +16,6 @@ var JudgeErrPrefix = "[judge: Judge]"
 var ErrCompile = errors.New("compile failed")
 var ErrTestcaseGet = errors.New("testcase get failed")
 
-// var ErrRun = errors.New("runner exec failed")
-// var ErrGrade = errors.New("grading error")
-
 type Judger struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
@@ -82,6 +79,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	task.MakeRunResult(tcNum)
 
 	runOutCh := make(chan result.ChResult, tcNum)
+	// testcase의 order로 정렬
 	for i := 0; i < tcNum; i++ {
 		go j.run(
 			runOutCh,
