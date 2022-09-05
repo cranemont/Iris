@@ -25,7 +25,7 @@ func (t *testcaseManager) GetTestcase(problemId string) (Testcase, error) {
 		fmt.Println("Tc does not exist")
 		// http get
 		// 임시로 생성
-		testcase := Testcase{[]Element{{Id: "pr1:1", In: "1 1\n", Out: "1 1\n"}, {Id: "pr1:2", In: "2 2\n", Out: "2 2\n"}}}
+		testcase := Testcase{[]Element{{In: "1 1\n", Out: "1 1\n"}, {In: "2 2\n", Out: "2 2\n"}}}
 		t.cache.Set(problemId, testcase)
 		return testcase, nil
 	}
