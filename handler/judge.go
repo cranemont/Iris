@@ -15,7 +15,7 @@ import (
 var handler = "JudgeHandler"
 
 type JudgeResult struct {
-	StatusCode int                   `json:"statusCode"` // handler's status code
+	StatusCode Code                  `json:"statusCode"` // handler's status code
 	Data       judge.JudgeTaskResult `json:"data"`
 }
 

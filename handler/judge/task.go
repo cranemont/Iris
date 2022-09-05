@@ -10,19 +10,24 @@ import (
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
+// for debug
+type Code string
+
+// type Code int
+
 // StatusCode
-type RunData struct {
-	Order      int    `json:"order"`
-	ResultCode string `json:"resultCode"` // int for prod
-	CpuTime    int    `json:"cpuTime"`
-	RealTime   int    `json:"realTime"`
-	Memory     int    `json:"memory"`
-	Signal     int    `json:"signal"`
-	ErrorCode  int    `json:"exitCode"`
-	ExitCode   int    `json:"errorCode"`
+type RunResult struct {
+	Order      int  `json:"order"`
+	ResultCode Code `json:"resultCode"` // int for prod
+	CpuTime    int  `json:"cpuTime"`
+	RealTime   int  `json:"realTime"`
+	Memory     int  `json:"memory"`
+	Signal     int  `json:"signal"`
+	ErrorCode  int  `json:"exitCode"`
+	ExitCode   int  `json:"errorCode"`
 }
 
-// RunData Status Code
+// RunResult Result Code
 // const (
 // 	ACCEPTED = 0 + iota
 // 	WRONG_ANSWER
@@ -34,18 +39,18 @@ type RunData struct {
 // )
 
 const ( // for debug
-	ACCEPTED              = "accepted"
-	WRONG_ANSWER          = "wrong answer"
-	CPU_TLE               = "cpu time exceeded"
-	REAL_TLE              = "real time exceeded"
-	MEMORY_LIMIT_EXCEEDED = "memory exceeded"
-	RUNTIME_ERROR         = "runtime error"
-	SYSTEM_ERROR          = "system error"
+	ACCEPTED                 = "accepted"
+	WRONG_ANSWER             = "wrong answer"
+	CPU_TIME_LIMIT_EXCEEDED  = "cpu time exceeded"
+	REAL_TIME_LIMIT_EXCEEDED = "real time exceeded"
+	MEMORY_LIMIT_EXCEEDED    = "memory exceeded"
+	RUNTIME_ERROR            = "runtime error"
+	SYSTEM_ERROR             = "system error"
 )
 
 type JudgeTaskResult struct {
-	CompileErr string    `json:"compileError"`
-	Run        []RunData `json:"runResult"`
+	CompileErr string      `json:"compileError"`
+	Run        []RunResult `json:"runResult"`
 }
 
 // task interface, package? spj task, run task...
@@ -90,10 +95,10 @@ func (t *JudgeTask) CompileError(output string) {
 }
 
 func (t *JudgeTask) MakeRunResult(testcaseNum int) {
-	t.Result.Run = make([]RunData, testcaseNum)
+	t.Result.Run = make([]RunResult, testcaseNum)
 }
 
-func (t *JudgeTask) SetRunResultCode(order int, stateCode string) {
+func (t *JudgeTask) SetRunResultCode(order int, stateCode Code) {
 	t.Result.Run[order].ResultCode = stateCode
 }
 
@@ -102,9 +107,9 @@ func (t *JudgeTask) SetRunResult(order int, runResult sandbox.RunResult) {
 	if runResult.ResultCode != sandbox.RUN_SUCCESS {
 		switch runResult.ResultCode {
 		case sandbox.CPU_TIME_LIMIT_EXCEEDED:
-			t.SetRunResultCode(order, CPU_TLE)
+			t.SetRunResultCode(order, CPU_TIME_LIMIT_EXCEEDED)
 		case sandbox.REAL_TIME_LIMIT_EXCEEDED:
-			t.SetRunResultCode(order, REAL_TLE)
+			t.SetRunResultCode(order, REAL_TIME_LIMIT_EXCEEDED)
 		case sandbox.MEMORY_LIMIT_EXCEEDED:
 			t.SetRunResultCode(order, MEMORY_LIMIT_EXCEEDED)
 		default:

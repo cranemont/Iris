@@ -91,14 +91,15 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	}
 
 	// FIXME: out이라는 이름이 헷갈림 wrapper가 나을듯
+	gradeNum := tcNum
 	gradeOutCh := make(chan result.ChResult, tcNum)
 	for i := 0; i < tcNum; i++ {
 		runOut := <-runOutCh
 		order := runOut.Order
 
-		// FIXME:
 		if runOut.Err != nil {
 			task.SetRunResultCode(order, SYSTEM_ERROR)
+			gradeNum -= 1
 			continue
 		}
 		runResult, ok := runOut.Data.(sandbox.RunResult)
@@ -107,6 +108,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		if !ok {
 			task.SetRunResultCode(order, SYSTEM_ERROR)
 			log.Println("%w: RunResult", exception.ErrTypeAssertionFail)
+			gradeNum -= 1
 			continue
 		}
 		task.SetRunResult(order, runResult)
@@ -114,7 +116,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		go j.grade(gradeOutCh, []byte(tc.Data[order].Out), runResult.Output, order)
 	}
 
-	for i := 0; i < tcNum; i++ {
+	for i := 0; i < gradeNum; i++ {
 		gradeOut := <-gradeOutCh
 		order := gradeOut.Order
 
@@ -137,6 +139,8 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		}
 	}
 	// FIXME: 여기까지 수정
+
+	// result 갈무리해서 run state 설정하는 코드
 
 	fmt.Println("done")
 	return nil

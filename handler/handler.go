@@ -2,9 +2,10 @@ package handler
 
 import "encoding/json"
 
-// 여기서 statecode를?
+type Code int
+
 type Result struct {
-	StatusCode int         `json:"statusCode"` // handler's status code
+	StatusCode Code        `json:"statusCode"`
 	Data       interface{} `json:"data"`
 }
 
@@ -13,7 +14,7 @@ type Handler interface {
 }
 
 const (
-	SUCCESS = 0 + iota
+	SUCCESS Code = 0 + iota
 	COMPILE_ERROR
 	SANDBOX_ERROR
 	TESTCASE_GET_FAILED
