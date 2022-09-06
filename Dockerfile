@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-COPY libjudger /tmp
+COPY ./sandbox/libjudger /tmp
 COPY sources.list /etc/apt/
 
 ENV TZ=Asia/Seoul
