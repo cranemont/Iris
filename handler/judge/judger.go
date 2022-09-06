@@ -102,7 +102,6 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		}
 		runResult, ok := runOut.Data.(sandbox.RunResult)
 
-		// FIXME:
 		if !ok {
 			task.SetRunResultCode(order, SYSTEM_ERROR)
 			log.Println("%w: RunResult", exception.ErrTypeAssertionFail)
@@ -111,6 +110,12 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		}
 		task.SetRunResult(order, runResult)
 		fmt.Print(order)
+
+		// result가 success가 아니면 grade 안함
+		if runResult.ResultCode != sandbox.RUN_SUCCESS {
+			gradeNum -= 1
+			continue
+		}
 		go j.grade(gradeOutCh, []byte(tc.Data[order].Out), runResult.Output, order)
 	}
 
@@ -118,14 +123,12 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		gradeOut := <-gradeOutCh
 		order := gradeOut.Order
 
-		// FIXME:
 		if gradeOut.Err != nil {
 			task.SetRunResultCode(order, SYSTEM_ERROR)
 			continue
 		}
 		accepted, ok := gradeOut.Data.(bool)
 
-		// FIXME:
 		if !ok {
 			task.SetRunResultCode(order, SYSTEM_ERROR)
 			log.Println("%w: GradeResult", exception.ErrTypeAssertionFail)
@@ -137,8 +140,6 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		}
 	}
 	// FIXME: 여기까지 수정
-
-	// result 갈무리해서 run state 설정하는 코드
 
 	fmt.Println("done")
 	return nil
@@ -154,7 +155,7 @@ func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest)
 }
 
 func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input []byte) {
-	res, err := sandbox.Run(dto, nil)
+	res, err := sandbox.Run(dto, input)
 	if err != nil {
 		out <- result.ChResult{Err: err, Order: dto.Order}
 	}
