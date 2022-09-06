@@ -39,22 +39,22 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 	if err != nil {
 		return CompileResult{}, err
 	}
-	srcPath, err := c.config.MakeSrcPath(dir, language)
-	if err != nil {
-		return CompileResult{}, err
-	}
-	exePath, err := c.config.MakeExePath(dir, language)
-	if err != nil {
-		return CompileResult{}, err
-	}
-	argSlice, err := c.config.MakeCompileArgSlice(srcPath, exePath, language)
+	// srcPath, err := c.config.MakeSrcPath(dir, language)
+	// if err != nil {
+	// 	return CompileResult{}, err
+	// }
+	// exePath, err := c.config.MakeExePath(dir, language)
+	// if err != nil {
+	// 	return CompileResult{}, err
+	// }
+	argSlice, err := c.config.MakeCompileArgSlice(dir, language)
 	if err != nil {
 		return CompileResult{}, err
 	}
 
 	outputPath := file.MakeFilePath(dir, "compile.out").String()
 	res, err := Exec(
-		ExecArgs{
+		ExecArgs{ // 이걸 여기서만든다고? 구려
 			ExePath:       options.CompilerPath,
 			MaxCpuTime:    options.MaxCpuTime,
 			MaxRealTime:   options.MaxRealTime,
@@ -63,7 +63,7 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 			MaxOutputSize: 20 * 1024 * 1024,
 			OutputPath:    outputPath,
 			ErrorPath:     outputPath,
-			LogPath:       "./log/compile/log.out",
+			LogPath:       CompileLogPath,
 			Args:          argSlice,
 		}, nil,
 	)

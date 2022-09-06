@@ -12,7 +12,6 @@ type Runner interface {
 }
 
 type runner struct {
-	config *LanguageConfig
 }
 
 type RunResult struct {
@@ -36,8 +35,8 @@ type RunRequest struct {
 	MemoryLimit int
 }
 
-func NewRunner(config *LanguageConfig) *runner {
-	return &runner{config}
+func NewRunner() *runner {
+	return &runner{}
 }
 
 func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
@@ -72,7 +71,7 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 			// https://stackoverflow.com/questions/29700478/redirecting-of-stdout-in-bash-vs-writing-to-file-in-c-with-fprintf-speed
 			OutputPath: outputPath,
 			ErrorPath:  errorPath, // byte buffer로
-			LogPath:    "./log/run/log.out",
+			LogPath:    RunLogPath,
 		}, input,
 	)
 	if err != nil {

@@ -49,39 +49,60 @@ type SandboxResult struct {
 }
 
 type ExecArgs struct {
-	MaxCpuTime      int
-	MaxRealTime     int
-	MaxMemory       int
-	MaxStackSize    int
-	MaxOutputSize   int
-	ExePath         string
-	InputPath       string
-	OutputPath      string
-	ErrorPath       string
-	LogPath         string
-	SeccompRuleName string
-	Args            []string
-	Env             []string
-	Uid             int
-	Gid             int
+	MaxCpuTime           int
+	MaxRealTime          int
+	MaxMemory            int
+	MaxStackSize         int
+	MaxOutputSize        int
+	ExePath              string
+	InputPath            string
+	OutputPath           string
+	ErrorPath            string
+	LogPath              string
+	SeccompRuleName      string
+	MemoryLimitCheckOnly bool
+	Args                 []string
+	Env                  []string
+	Uid                  int
+	Gid                  int
 }
 
 type formatString struct {
-	MaxCpuTime      string
-	MaxRealTime     string
-	MaxMemory       string
-	MaxStackSize    string
-	MaxOutputSize   string
-	ExePath         string
-	InputPath       string
-	OutputPath      string
-	ErrorPath       string
-	LogPath         string
-	Args            string
-	Env             string
-	SeccompRuleName string
-	Uid             string
-	Gid             string
+	MaxCpuTime           string
+	MaxRealTime          string
+	MaxMemory            string
+	MaxStackSize         string
+	MaxOutputSize        string
+	ExePath              string
+	InputPath            string
+	OutputPath           string
+	ErrorPath            string
+	LogPath              string
+	Args                 string
+	Env                  string
+	SeccompRuleName      string
+	MemoryLimitCheckOnly string
+	Uid                  string
+	Gid                  string
+}
+
+var format = formatString{
+	MaxCpuTime:           "--max_cpu_time=",
+	MaxRealTime:          "--max_real_time=",
+	MaxMemory:            "--max_memory=",
+	MaxStackSize:         "--max_stack=",
+	MaxOutputSize:        "--max_output_size=",
+	ExePath:              "--exe_path=",
+	InputPath:            "--input_path=",
+	OutputPath:           "--output_path=",
+	ErrorPath:            "--error_path=",
+	LogPath:              "--log_path=",
+	Args:                 "--args=",
+	Env:                  "--env=",
+	SeccompRuleName:      "--seccomp_rule_name=",
+	MemoryLimitCheckOnly: "--memory_limit_check_only=",
+	Uid:                  "--uid=",
+	Gid:                  "--gid=",
 }
 
 // methods below is for the libjudger specific
@@ -126,6 +147,7 @@ func makeExecArgs(data ExecArgs) []string {
 	if !isEmptyString(data.SeccompRuleName) {
 		argSlice = concatStringArgs(argSlice, format.SeccompRuleName, data.SeccompRuleName)
 	}
+	// TODO: MemoryLimitCheckOnly 추가
 	if !isEmptySlice(data.Args) {
 		argSlice = concatSliceArgs(argSlice, format.Args, data.Args)
 	}

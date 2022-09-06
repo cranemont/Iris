@@ -24,20 +24,8 @@ const ( // ResultCode
 	SYSTEM_ERROR
 )
 
-var format = formatString{
-	MaxCpuTime:      "--max_cpu_time=",
-	MaxRealTime:     "--max_real_time=",
-	MaxMemory:       "--max_memory=",
-	MaxStackSize:    "--max_stack=",
-	MaxOutputSize:   "--max_output_size=",
-	ExePath:         "--exe_path=",
-	InputPath:       "--input_path=",
-	OutputPath:      "--output_path=",
-	ErrorPath:       "--error_path=",
-	LogPath:         "--log_path=",
-	Args:            "--args=",
-	Env:             "--env=",
-	SeccompRuleName: "--seccomp_rule_name=",
-	Uid:             "--uid=",
-	Gid:             "--gid=",
-}
+const (
+	CompileLogPath = "./log/compile/log.out"
+	RunLogPath     = "./log/run/log.out"
+	CompileOutFile = "compile.out"
+)
