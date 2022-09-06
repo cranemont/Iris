@@ -29,6 +29,7 @@ func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 
 	err := cmd.Run()
 	if err != nil {
+		// FIXME: 이상태에서는 오류 제대로 반영 안됨
 		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return SandboxResult{}, fmt.Errorf("execution failed: %w: %s", err, stderr.String())
 	}
@@ -36,7 +37,7 @@ func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	res := SandboxResult{}
 
 	json.Unmarshal(stdout.Bytes(), &res)
-	fmt.Println("Result: ", stdout.String()) // on debug
+	// fmt.Println("Result: ", stdout.String()) // on debug
 
 	return res, nil
 }
