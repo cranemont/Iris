@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	C       = "c"
-	CPP     = "cpp"
-	JAVA    = "java"
-	PYTHON2 = "py2"
-	PYTHON3 = "py3"
+	C    = "c"
+	CPP  = "cpp"
+	JAVA = "java"
+	// PYTHON2 = "py2"
+	PYTHON = "py3"
 )
 
 func GetConfig(language string) (LangConfig, error) {
@@ -24,10 +24,10 @@ func GetConfig(language string) (LangConfig, error) {
 		return cppConfig, nil
 	case JAVA:
 		return javaConfig, nil
-	case PYTHON2:
-		return py2Config, nil
-	case PYTHON3:
-		return py3Config, nil
+	// case PYTHON2:
+	// 	return py2Config, nil
+	case PYTHON:
+		return pyConfig, nil
 	}
 	return LangConfig{}, fmt.Errorf("unsupported language: %s", language)
 }
@@ -195,29 +195,29 @@ var javaConfig = LangConfig{
 		"-Djava.security.policy==/etc/java_policy " +
 		"-Djava.awt.headless=true " +
 		"Main",
-	SeccompRule:           "None",
+	SeccompRule:           "",
 	MemoeryLimitCheckOnly: true,
 	env:                   defaultEnv,
 }
 
-var py2Config = LangConfig{
-	Language:              PYTHON2,
-	SrcName:               "solution.py",
-	ExeName:               "solution.pyc",
-	MaxCompileCpuTime:     3000,
-	MaxCompileRealTime:    10000,
-	MaxCompileMemory:      1024 * 1024 * 1024,
-	CompilerPath:          "/usr/bin/python",
-	CompileArgs:           "-m py_compile {srcPath}",
-	RunCommand:            "/usr/bin/python",
-	RunArgs:               "{exePath}",
-	SeccompRule:           "general",
-	MemoeryLimitCheckOnly: false,
-	env:                   defaultEnv,
-}
+// var py2Config = LangConfig{
+// 	Language:              PYTHON2,
+// 	SrcName:               "solution.py",
+// 	ExeName:               "solution.pyc",
+// 	MaxCompileCpuTime:     3000,
+// 	MaxCompileRealTime:    10000,
+// 	MaxCompileMemory:      1024 * 1024 * 1024,
+// 	CompilerPath:          "/usr/bin/python",
+// 	CompileArgs:           "-m py_compile {srcPath}",
+// 	RunCommand:            "/usr/bin/python",
+// 	RunArgs:               "{exePath}",
+// 	SeccompRule:           "general",
+// 	MemoeryLimitCheckOnly: false,
+// 	env:                   defaultEnv,
+// }
 
-var py3Config = LangConfig{
-	Language:              PYTHON3,
+var pyConfig = LangConfig{
+	Language:              PYTHON,
 	SrcName:               "solution.py",
 	ExeName:               "__pycache__/solution.cpython-38.pyc", // TODO: 파이썬 버전 확인
 	MaxCompileCpuTime:     3000,
