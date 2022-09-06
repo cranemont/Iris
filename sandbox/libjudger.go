@@ -154,6 +154,12 @@ func makeExecArgs(data ExecArgs) []string {
 		argSlice = concatStringArgs(argSlice, format.SeccompRuleName, data.SeccompRuleName)
 	}
 	// TODO: MemoryLimitCheckOnly 추가
+	if data.MemoryLimitCheckOnly {
+		argSlice = concatIntArgs(argSlice, format.MemoryLimitCheckOnly, 1)
+	} else {
+		argSlice = concatIntArgs(argSlice, format.MemoryLimitCheckOnly, 0)
+	}
+
 	if !isEmptySlice(data.Args) {
 		argSlice = concatSliceArgs(argSlice, format.Args, data.Args)
 	}
