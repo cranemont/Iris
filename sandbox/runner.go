@@ -51,7 +51,6 @@ func Run(dto RunRequest, input []byte) (RunResult, error) {
 		false,
 	)
 
-	//task의 limit으로 주기
 	res, err := Exec(execArgs, input)
 	if err != nil {
 		return RunResult{}, fmt.Errorf("runner: Run failed: %w", err)
