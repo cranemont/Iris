@@ -111,6 +111,8 @@ func (t *JudgeTask) SetRunResult(order int, runResult sandbox.RunResult) {
 			t.SetRunResultCode(order, REAL_TIME_LIMIT_EXCEEDED)
 		case sandbox.MEMORY_LIMIT_EXCEEDED:
 			t.SetRunResultCode(order, MEMORY_LIMIT_EXCEEDED)
+		case sandbox.RUNTIME_ERROR:
+			t.SetRunResultCode(order, RUNTIME_ERROR)
 		default:
 			t.SetRunResultCode(order, SYSTEM_ERROR)
 			systemErr = true
