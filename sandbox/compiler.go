@@ -48,7 +48,7 @@ func Compile(dto CompileRequest) (CompileResult, error) {
 		compileResult.ResultCode = res.ResultCode
 		compileResult.ExecResult = string(sandboxResult)
 		compileResult.ErrOutput = string(data)
-		fmt.Println(compileResult)
+		fmt.Println("compile failed!: ", compileResult)
 	}
 	return compileResult, nil
 }

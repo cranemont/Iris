@@ -150,6 +150,7 @@ func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest)
 	res, err := sandbox.Compile(dto)
 	if err != nil {
 		out <- result.ChResult{Err: err}
+		return
 	}
 	out <- result.ChResult{Data: res}
 }
@@ -158,6 +159,7 @@ func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input [
 	res, err := sandbox.Run(dto, input)
 	if err != nil {
 		out <- result.ChResult{Err: err, Order: dto.Order}
+		return
 	}
 	out <- result.ChResult{Data: res, Order: dto.Order}
 }
@@ -166,6 +168,7 @@ func (j *Judger) grade(out chan<- result.ChResult, answer []byte, output []byte,
 	res, err := grade.Grade(answer, output)
 	if err != nil {
 		out <- result.ChResult{Err: err, Order: order}
+		return
 	}
 	out <- result.ChResult{Data: res, Order: order}
 }
@@ -175,6 +178,7 @@ func (j *Judger) getTestcase(out chan<- result.ChResult, problemId string) {
 	res, err := j.testcaseManager.GetTestcase(problemId)
 	if err != nil {
 		out <- result.ChResult{Err: err}
+		return
 	}
 	out <- result.ChResult{Data: res}
 }

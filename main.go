@@ -50,10 +50,11 @@ func main() {
 		publisher,
 	)
 
-	c := "#include <stdio.h>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\n\nreturn 0;\n}\n"
+	// c := "#include <stdio.h>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\n\nreturn 0;\n}\n"
 	// cpp := "#include<iostream>\n using namespace std;\n	int main() {\n	cout << \"1 1  \t\\n\";\n	return 0;\n}"
 	// py := "a = input() \nprint(a)" // (\"1 1  \t\\n\")"
-	// java := "public class Main {\n	public static void main(String[] args) {\n		while(true) {\n		int i=0; i++;\n}\n}\n}"
+	// javaTimeout := "public class Main {\n	public static void main(String[] args) {\n		while(true) {\n		int i=0; i++;\n}\n}\n}"
+	java := "public class Main {\n	public static void main(String[] args) {\n		 System.out.println(\"1 1  \t\\n\");\n }\n}"
 
 	for {
 		var input string
@@ -63,8 +64,8 @@ func main() {
 			// Code: "#include <stdio.h>\n\nint main (void) {\n  printf(\"Hello world!\\n\");\n  char buf[100];\n  scanf(\"%s\", buf);\n  printf(\"%s\\n\", buf);\n  return 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
-			Code:        c,
-			Language:    sandbox.C,
+			Code:        java,
+			Language:    sandbox.JAVA,
 			ProblemId:   input,
 			TimeLimit:   1000,
 			MemoryLimit: 256 * 1024 * 1024,
