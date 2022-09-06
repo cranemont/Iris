@@ -17,19 +17,13 @@ var ErrCompile = errors.New("compile failed")
 var ErrTestcaseGet = errors.New("testcase get failed")
 
 type Judger struct {
-	compiler        sandbox.Compiler
-	runner          sandbox.Runner
 	testcaseManager testcase.TestcaseManager
 }
 
 func NewJudger(
-	compiler sandbox.Compiler,
-	runner sandbox.Runner,
 	testcaseManager testcase.TestcaseManager,
 ) *Judger {
 	return &Judger{
-		compiler,
-		runner,
 		testcaseManager,
 	}
 }
@@ -83,7 +77,13 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	for i := 0; i < tcNum; i++ {
 		go j.run(
 			runOutCh,
-			sandbox.RunRequest{Order: i, Dir: task.dir, Language: task.language},
+			sandbox.RunRequest{
+				Order:       i,
+				Dir:         task.dir,
+				Language:    task.language,
+				TimeLimit:   task.timeLimit,
+				MemoryLimit: task.memoryLimit,
+			},
 			[]byte(tc.Data[i].In),
 		)
 	}
@@ -146,7 +146,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 
 // wrapper to use goroutine
 func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest) {
-	res, err := j.compiler.Compile(dto)
+	res, err := sandbox.Compile(dto)
 	if err != nil {
 		out <- result.ChResult{Err: err}
 	}
@@ -154,7 +154,7 @@ func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest)
 }
 
 func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input []byte) {
-	res, err := j.runner.Run(dto, nil)
+	res, err := sandbox.Run(dto, nil)
 	if err != nil {
 		out <- result.ChResult{Err: err, Order: dto.Order}
 	}

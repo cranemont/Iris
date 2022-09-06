@@ -4,16 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
 )
 
 func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
+	// fmt.Println("input: ", args)
 	argSlice := makeExecArgs(args)
 	env := "--env=PATH=" + os.Getenv("PATH")
 	argSlice = append(argSlice, env)
 
+	// fmt.Println(argSlice)
 	cmd := exec.Command("/usr/lib/judger/libjudger.so", argSlice...)
 
 	var stdin bytes.Buffer
@@ -26,14 +29,14 @@ func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return SandboxResult{}, fmt.Errorf("execution failed: %w: %s", err, stderr.String())
 	}
 
 	res := SandboxResult{}
 
 	json.Unmarshal(stdout.Bytes(), &res)
-	// fmt.Println("Result: ", stdout.String()) // on debug
+	fmt.Println("Result: ", stdout.String()) // on debug
 
 	return res, nil
 }
@@ -124,9 +127,11 @@ func makeExecArgs(data ExecArgs) []string {
 		argSlice = concatIntArgs(argSlice, format.MaxOutputSize, data.MaxOutputSize)
 	}
 	if data.Uid >= 0 && data.Uid < 65534 {
+		// FIXME: set default uid
 		argSlice = concatIntArgs(argSlice, format.Uid, data.Uid)
 	}
-	if data.Uid >= 0 && data.Uid < 65534 {
+	if data.Gid >= 0 && data.Gid < 65534 {
+		// FIXME: set default Gid
 		argSlice = concatIntArgs(argSlice, format.Gid, data.Gid)
 	}
 	if !isEmptyString(data.ExePath) {

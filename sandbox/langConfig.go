@@ -19,11 +19,15 @@ const (
 func GetConfig(language string) (LangConfig, error) {
 	switch language {
 	case C:
+		return cConfig, nil
 	case CPP:
+		return cppConfig, nil
 	case JAVA:
+		return javaConfig, nil
 	case PYTHON2:
+		return py2Config, nil
 	case PYTHON3:
-		// return config
+		return py3Config, nil
 	}
 	return LangConfig{}, fmt.Errorf("unsupported language: %s", language)
 }
@@ -45,8 +49,20 @@ type LangConfig struct {
 	env                   []string
 }
 
-func (c LangConfig) MakeSrcPath(dir string) string {
+func (c LangConfig) SrcPath(dir string) string {
 	return file.MakeFilePath(dir, c.SrcName).String()
+}
+
+func (c LangConfig) CompileOutputPath(dir string) string {
+	return file.MakeFilePath(dir, CompileOutFile).String()
+}
+
+func (c LangConfig) RunOutputPath(dir string, order int) string {
+	return file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+}
+
+func (c LangConfig) RunErrPath(dir string, order int) string {
+	return file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 }
 
 func (c LangConfig) ToCompileExecArgs(dir string) ExecArgs {
@@ -77,7 +93,6 @@ func (c LangConfig) ToCompileExecArgs(dir string) ExecArgs {
 }
 
 func (c LangConfig) ToRunExecArgs(dir string, order int, limit Limit, fileIo bool) ExecArgs {
-
 	exePath := file.MakeFilePath(dir, c.ExeName).String()
 	exeDir := file.MakeFilePath(dir, "").String()
 	outputPath := file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
@@ -130,9 +145,9 @@ var cConfig = LangConfig{
 	CompileArgs: "-DONLINE_JUDGE " +
 		"-O2 -w -fmax-errors=3 -std=c11 " +
 		"{srcPath} -lm -o {exePath}",
-	RunCommand:            "{exePath}",
-	RunArgs:               "",
-	SeccompRule:           "c_cpp",
+	RunCommand: "{exePath}",
+	RunArgs:    "",
+	// SeccompRule:           "c_cpp",
 	SeccompRuleFileIO:     "c_cpp_file_io",
 	MemoeryLimitCheckOnly: false,
 	env:                   defaultEnv,

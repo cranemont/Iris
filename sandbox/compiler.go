@@ -7,14 +7,6 @@ import (
 	"github.com/cranemont/judge-manager/file"
 )
 
-type Compiler interface {
-	Compile(dto CompileRequest) (CompileResult, error) // 얘는 task 몰라도 됨
-}
-
-type compiler struct {
-	config *LanguageConfig
-}
-
 type CompileResult struct {
 	ResultCode int    // ?
 	ErrOutput  string // compile error message
@@ -26,48 +18,18 @@ type CompileRequest struct {
 	Language string
 }
 
-func NewCompiler(config *LanguageConfig) *compiler {
-	return &compiler{config}
-}
-
-func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
+func Compile(dto CompileRequest) (CompileResult, error) {
 	fmt.Println("Compile! from Compiler")
 	dir, language := dto.Dir, dto.Language
 	fmt.Println(dir, language)
 
-	options, err := c.config.Get(language)
-	if err != nil {
-		return CompileResult{}, err
-	}
-	// srcPath, err := c.config.MakeSrcPath(dir, language)
-	// if err != nil {
-	// 	return CompileResult{}, err
-	// }
-	// exePath, err := c.config.MakeExePath(dir, language)
-	// if err != nil {
-	// 	return CompileResult{}, err
-	// }
-	argSlice, err := c.config.MakeCompileArgSlice(dir, language)
+	languageConfig, err := GetConfig(language)
 	if err != nil {
 		return CompileResult{}, err
 	}
 
-	outputPath := file.MakeFilePath(dir, "compile.out").String()
-	res, err := Exec(
-		ExecArgs{ // 이걸 여기서만든다고? 구려
-			ExePath:       options.CompilerPath,
-			MaxCpuTime:    options.MaxCpuTime,
-			MaxRealTime:   options.MaxRealTime,
-			MaxMemory:     options.MaxMemory,
-			MaxStackSize:  128 * 1024 * 1024,
-			MaxOutputSize: 20 * 1024 * 1024,
-			OutputPath:    outputPath,
-			ErrorPath:     outputPath,
-			LogPath:       CompileLogPath,
-			Args:          argSlice,
-		}, nil,
-	)
-	// Exec fail
+	execArgs := languageConfig.ToCompileExecArgs(dir)
+	res, err := Exec(execArgs, nil)
 	if err != nil {
 		return CompileResult{}, err
 	}
@@ -78,7 +40,7 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("invalid result format: %w", err)
 		}
-		data, err := file.ReadFile(outputPath)
+		data, err := file.ReadFile(languageConfig.CompileOutputPath(dir))
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}

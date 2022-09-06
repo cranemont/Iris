@@ -7,7 +7,6 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/cranemont/judge-manager/cache"
-	"github.com/cranemont/judge-manager/constants/language"
 	"github.com/cranemont/judge-manager/egress"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/handler/judge"
@@ -31,23 +30,15 @@ func main() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
-	languageConfig := sandbox.LanguageConfig{}
-	languageConfig.Init()
-
-	compiler := sandbox.NewCompiler(&languageConfig)
-	runner := sandbox.NewRunner(&languageConfig)
-
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
 	testcaseManager := testcase.NewTestcaseManager(cache)
 
 	judger := judge.NewJudger(
-		compiler,
-		runner,
 		testcaseManager,
 	)
 
-	judgeHandler := handler.NewJudgeHandler(judger, &languageConfig)
+	judgeHandler := handler.NewJudgeHandler(judger)
 	// specialJudger
 	// customTestcaseRunner 만들어서 같이 넣어주기
 
@@ -67,7 +58,7 @@ func main() {
 			// Code: "#include <stdio.h>\n\nint main (void) {\nprintf(\"Hello world!\");\nreturn 0;\n}\n",
 			// Code: "#include <stdio.h>\n\nint main (void) {\nwhile(1) {printf(\"Hello world!\");}\nreturn 0;\n}\n",
 			Code:        "#include <stdio.h>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\n\nreturn 0;\n}\n",
-			Language:    language.C,
+			Language:    sandbox.C,
 			ProblemId:   input,
 			TimeLimit:   1000,
 			MemoryLimit: 256 * 1024 * 1024,

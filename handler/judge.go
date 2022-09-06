@@ -52,7 +52,7 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 		return res, fmt.Errorf("%s: failed to create src path: %w", handler, err)
 	}
 
-	srcPath := languageConfig.MakeSrcPath(dir)
+	srcPath := languageConfig.SrcPath(dir)
 	if err := file.CreateFile(srcPath, task.GetCode()); err != nil {
 		return res, fmt.Errorf("%s: failed to create src file: %w", handler, err)
 	}
