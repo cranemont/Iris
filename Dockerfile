@@ -1,6 +1,7 @@
 FROM ubuntu:20.04
 
 COPY ./sandbox/libjudger /tmp
+COPY build/java_policy /etc
 COPY sources.list /etc/apt/
 
 ENV TZ=Asia/Seoul

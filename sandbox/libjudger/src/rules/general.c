@@ -7,7 +7,8 @@
 
 #include "../runner.h"
 
-
+// FIXME: https://github.com/zhblue/hustoj/blob/master/trunk/core/judge_client/okcalls64.h
+// 위 링크 참고해서 더 추가하기, 최소 네트워크 관련 작업은 모두 차단해야함
 int general_seccomp_rules(struct config *_config) {
     int syscalls_blacklist[] = {SCMP_SYS(clone),
                                 SCMP_SYS(fork), SCMP_SYS(vfork),
