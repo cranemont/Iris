@@ -83,13 +83,19 @@ func (c LangConfig) ToCompileExecArgs(dir string) ExecArgs {
 		MaxMemory:    c.MaxCompileMemory,
 		MaxStackSize: 128 * 1024 * 1024,
 		// FIXME: testcase크기 따라서 설정하거나, 그냥 바로 stdout 읽어오거나
-		MaxOutputSize:   20 * 1024 * 1024,
-		OutputPath:      outputPath,
-		ErrorPath:       outputPath,
-		LogPath:         CompileLogPath,
-		SeccompRuleName: c.SeccompRule,
-		Args:            strings.Split(args, " "),
+		MaxOutputSize: 20 * 1024 * 1024,
+		OutputPath:    outputPath,
+		ErrorPath:     outputPath,
+		LogPath:       CompileLogPath,
+		Args:          validateArgs(args),
 	}
+}
+
+func validateArgs(args string) []string {
+	if args != "" {
+		return strings.Split(args, " ")
+	}
+	return nil
 }
 
 func (c LangConfig) ToRunExecArgs(dir string, order int, limit Limit, fileIo bool) ExecArgs {
@@ -122,7 +128,7 @@ func (c LangConfig) ToRunExecArgs(dir string, order int, limit Limit, fileIo boo
 		ErrorPath:       errorPath, // byte buffer로
 		LogPath:         RunLogPath,
 		SeccompRuleName: c.SeccompRule,
-		Args:            strings.Split(args, " "),
+		Args:            validateArgs(args),
 	}
 }
 
@@ -145,9 +151,9 @@ var cConfig = LangConfig{
 	CompileArgs: "-DONLINE_JUDGE " +
 		"-O2 -w -fmax-errors=3 -std=c11 " +
 		"{srcPath} -lm -o {exePath}",
-	RunCommand: "{exePath}",
-	RunArgs:    "",
-	// SeccompRule:           "c_cpp",
+	RunCommand:            "{exePath}",
+	RunArgs:               "",
+	SeccompRule:           "c_cpp",
 	SeccompRuleFileIO:     "c_cpp_file_io",
 	MemoeryLimitCheckOnly: false,
 	env:                   defaultEnv,
