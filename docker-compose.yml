@@ -7,6 +7,9 @@ services:
     tty: true
     volumes:
       - .:/go/src/github.com/cranemont/judge-manager:cached
+    environment:
+      TESTCASE_SERVER: "http://localhost:3000/testcase/problem/"
+
   redis:
     container_name: redis
     image: redis:alpine
