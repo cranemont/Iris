@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cranemont/judge-manager/file"
+	"github.com/cranemont/judge-manager/common/file"
 )
 
 type CompileResult struct {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cranemont/judge-manager/file"
+	"github.com/cranemont/judge-manager/common/file"
 	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
