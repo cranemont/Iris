@@ -23,5 +23,5 @@ func (t Testcase) MarshalBinary() ([]byte, error) {
 }
 
 func (t *Testcase) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, &t.Data)
+	return json.Unmarshal(data, &t)
 }

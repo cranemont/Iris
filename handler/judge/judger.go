@@ -16,13 +16,19 @@ var ErrCompile = errors.New("compile failed")
 var ErrTestcaseGet = errors.New("testcase get failed")
 
 type Judger struct {
+	compiler        sandbox.Compiler
+	runner          sandbox.Runner
 	testcaseManager testcase.Manager
 }
 
 func NewJudger(
+	compiler sandbox.Compiler,
+	runner sandbox.Runner,
 	testcaseManager testcase.Manager,
 ) *Judger {
 	return &Judger{
+		compiler,
+		runner,
 		testcaseManager,
 	}
 }
@@ -73,7 +79,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	// testcase의 order로 정렬
 	// FIXME: out이라는 이름이 헷갈림 wrapper가 나을듯
 	for i := 0; i < tcNum; i++ {
-		res, err := sandbox.Run(sandbox.RunRequest{
+		res, err := j.runner.Run(sandbox.RunRequest{
 			Order:       i,
 			Dir:         task.dir,
 			Language:    task.language,
@@ -89,7 +95,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 			continue
 		}
 
-		// 하나당 약 50microsec 10개 채점시 500microsec. 
+		// 하나당 약 50microsec 10개 채점시 500microsec.
 		// output이 커지면 더 길어짐 -> FIXME: 최적화 과정에서 goroutine으로 수정
 		// st := time.Now()
 		accepted, err := grade.Grade([]byte(tc.Data[i].Out), res.Output)
@@ -110,7 +116,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 
 // wrapper to use goroutine
 func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest) {
-	res, err := sandbox.Compile(dto)
+	res, err := j.compiler.Compile(dto)
 	if err != nil {
 		out <- result.ChResult{Err: err}
 		return

@@ -2,8 +2,9 @@ package sandbox
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/cranemont/judge-manager/common/file"
+	"github.com/cranemont/judge-manager/file"
 )
 
 type RunResult struct {
@@ -27,7 +28,20 @@ type RunRequest struct {
 	MemoryLimit int
 }
 
-func Run(dto RunRequest, input []byte) (RunResult, error) {
+type Runner interface {
+	Run(dto RunRequest, input []byte) (RunResult, error)
+}
+
+type runner struct {
+	langConfig LangConfig
+	file       file.FileManager
+}
+
+func NewRunner(langConfig LangConfig, file file.FileManager) *runner {
+	return &runner{langConfig, file}
+}
+
+func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	fmt.Println("RUN! from runner")
 	dir := dto.Dir
 	order := dto.Order
@@ -35,13 +49,14 @@ func Run(dto RunRequest, input []byte) (RunResult, error) {
 	timeLimit := dto.TimeLimit
 	memoryLimit := dto.MemoryLimit
 
-	languageConfig, err := GetConfig(language)
-	if err != nil {
-		return RunResult{}, err
-	}
+	// languageConfig, err := r.config.GetConfig(language)
+	// if err != nil {
+	// 	return RunResult{}, err
+	// }
 
-	execArgs := languageConfig.ToRunExecArgs(
+	execArgs, err := r.langConfig.ToRunExecArgs(
 		dir,
+		language,
 		order,
 		Limit{
 			CpuTime:  timeLimit,
@@ -50,6 +65,9 @@ func Run(dto RunRequest, input []byte) (RunResult, error) {
 		},
 		false,
 	)
+	if err != nil {
+		return RunResult{}, err
+	}
 
 	res, err := Exec(execArgs, input)
 	if err != nil {
@@ -67,12 +85,12 @@ func Run(dto RunRequest, input []byte) (RunResult, error) {
 		ExitCode:   res.ExitCode,
 	}
 
-	outputPath := languageConfig.RunOutputPath(dir, order)
-	errorPath := languageConfig.RunErrPath(dir, order)
+	outputPath := r.file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+	errorPath := r.file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 
 	if res.ResultCode != SUCCESS {
 		// TODO: 함수로 분리
-		data, err := file.ReadFile(errorPath)
+		data, err := r.file.ReadFile(errorPath)
 		if err != nil {
 			return RunResult{}, fmt.Errorf("runner: failed to read error file: %w", err)
 		}
@@ -81,7 +99,7 @@ func Run(dto RunRequest, input []byte) (RunResult, error) {
 		fmt.Println(res) // log?
 	}
 
-	data, err := file.ReadFile(outputPath)
+	data, err := r.file.ReadFile(outputPath)
 	if err != nil {
 		return RunResult{}, fmt.Errorf("runner: failed to read output file: %w", err)
 	}

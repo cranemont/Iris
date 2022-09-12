@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cranemont/judge-manager/common/file"
+	"github.com/cranemont/judge-manager/file"
 )
 
 type CompileResult struct {
@@ -18,17 +18,29 @@ type CompileRequest struct {
 	Language string
 }
 
-func Compile(dto CompileRequest) (CompileResult, error) {
+type Compiler interface {
+	Compile(dto CompileRequest) (CompileResult, error)
+}
+
+type compiler struct {
+	langConfig LangConfig
+	file       file.FileManager
+}
+
+func NewCompiler(langConfig LangConfig, file file.FileManager) *compiler {
+	return &compiler{langConfig, file}
+}
+
+func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 	fmt.Println("Compile! from Compiler")
 	dir, language := dto.Dir, dto.Language
 	fmt.Println(dir, language)
 
-	languageConfig, err := GetConfig(language)
+	execArgs, err := c.langConfig.ToCompileExecArgs(dir, language)
 	if err != nil {
 		return CompileResult{}, err
 	}
 
-	execArgs := languageConfig.ToCompileExecArgs(dir)
 	res, err := Exec(execArgs, nil)
 	if err != nil {
 		return CompileResult{}, err
@@ -40,7 +52,9 @@ func Compile(dto CompileRequest) (CompileResult, error) {
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("invalid result format: %w", err)
 		}
-		data, err := file.ReadFile(languageConfig.CompileOutputPath(dir))
+
+		compileOutputPath := c.file.MakeFilePath(dir, CompileOutFile).String()
+		data, err := c.file.ReadFile(compileOutputPath)
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}

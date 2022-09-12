@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cranemont/judge-manager/common/file"
+	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
@@ -20,15 +20,17 @@ type JudgeResult struct {
 }
 
 type JudgeHandler struct {
-	judger *judge.Judger
+	langConfig sandbox.LangConfig
+	file       file.FileManager
+	judger     *judge.Judger
 }
 
 func NewJudgeHandler(
+	langConfig sandbox.LangConfig,
+	file file.FileManager,
 	judger *judge.Judger,
 ) *JudgeHandler {
-	return &JudgeHandler{
-		judger: judger,
-	}
+	return &JudgeHandler{langConfig, file, judger}
 }
 
 // handle top layer logical flow
@@ -39,21 +41,20 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 	dir := task.GetDir()
 
 	defer func() {
-		file.RemoveDir(task.GetDir())
+		h.file.RemoveDir(task.GetDir())
 		fmt.Println(time.Since(task.StartedAt)) // for debug
 	}()
 
-	if err := file.CreateDir(dir); err != nil {
-		return res, fmt.Errorf("%s: failed to create directory: %w", handler, err)
+	if err := h.file.CreateDir(dir); err != nil {
+		return res, fmt.Errorf("%s: failed to create base directory: %w", handler, err)
 	}
 
-	languageConfig, err := sandbox.GetConfig(task.GetLanguage()) //MakeSrcPath(dir, task.GetLanguage())
+	srcPath, err := h.langConfig.MakeSrcPath(dir, task.GetLanguage())
 	if err != nil {
 		return res, fmt.Errorf("%s: failed to create src path: %w", handler, err)
 	}
 
-	srcPath := languageConfig.SrcPath(dir)
-	if err := file.CreateFile(srcPath, task.GetCode()); err != nil {
+	if err := h.file.CreateFile(srcPath, task.GetCode()); err != nil {
 		return res, fmt.Errorf("%s: failed to create src file: %w", handler, err)
 	}
 

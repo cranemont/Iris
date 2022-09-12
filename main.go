@@ -8,6 +8,7 @@ import (
 
 	"github.com/cranemont/judge-manager/cache"
 	"github.com/cranemont/judge-manager/egress"
+	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/rmq"
@@ -35,11 +36,19 @@ func main() {
 	cache := cache.NewCache(ctx)
 	testcaseManager := testcase.NewManager(cache)
 
+	fileManager := file.NewFileManager()
+	langConfig := sandbox.NewLangConfig(fileManager)
+
+	compiler := sandbox.NewCompiler(langConfig, fileManager)
+	runner := sandbox.NewRunner(langConfig, fileManager)
+
 	judger := judge.NewJudger(
+		compiler,
+		runner,
 		testcaseManager,
 	)
 
-	judgeHandler := handler.NewJudgeHandler(judger)
+	judgeHandler := handler.NewJudgeHandler(langConfig, fileManager, judger)
 	// specialJudger
 	// customTestcaseRunner 만들어서 같이 넣어주기
 

@@ -1,14 +1,49 @@
-FROM golang AS build-server
-# git current directory copy하고 build
-# 패키지 배포할떄 go/src여기에 다른 패키지가 있어야하나?
-# 컴파일된건 상관없지않나?
+FROM ubuntu:20.04 AS base
 
-FROM ubuntu:20.04 AS build-judger
+COPY sources.list /etc/apt/
+ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+
+#######################
+## Install libjudger ##
+#######################
+FROM base AS build-judger
+
+WORKDIR /build
+COPY ./libjudger ./
+
+# output file is in /build/judger/libjudger.so. see CMakeLists.txt
+RUN cmake CMakeLists.txt && make && make install
+
+
 # libjudger 설치
 # 칭다오 버전으로 받아오기(새로 넣기)
 
-FROM ubuntu:20.04 AS deploy
 
+#######################
+## Install go server ##
+#######################
+FROM golang:1.19-alpine AS build-server
+# git current directory copy하고 build
+# 패키지 배포할떄 go/src여기에 다른 패키지가 있어야하나?
+# 컴파일된건 상관없지않나?
+WORKDIR /build
+COPY . .
+RUN go mod download
+RUN go build -o main
+
+
+####################
+## for production ##
+####################
+FROM base AS production
+
+WORKDIR /app
+RUN mkdir -p sandbox/policy
+
+COPY --from=build-judger /build/judger/libjudger.so ./sandbox/
+COPY libjudger/java_policy ./sandbox/policy/
 # 컴파일러/런타임 설치
 ## gcc 버전지정
 ## g++ 버전지정

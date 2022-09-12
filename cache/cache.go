@@ -32,6 +32,7 @@ func (c *cache) Get(key string) []byte {
 	val, err := c.client.Get(c.ctx, key).Bytes()
 	if err != nil {
 		log.Println(err)
+		panic(err)
 	} else if err == redis.Nil {
 		fmt.Println("key does not exist")
 		return nil
@@ -43,6 +44,7 @@ func (c *cache) Set(key string, value interface{}) {
 	fmt.Println("set cache: ", key)
 	err := c.client.Set(c.ctx, key, value, 0).Err()
 	if err != nil {
+		panic(err)
 		log.Println(err)
 	}
 }
@@ -53,6 +55,7 @@ func (c *cache) IsExist(key string) bool {
 		return true
 	}
 	if err != nil {
+		panic(err)
 		log.Println(err)
 	}
 	return false

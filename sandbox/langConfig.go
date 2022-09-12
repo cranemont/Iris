@@ -2,10 +2,12 @@ package sandbox
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
-	"github.com/cranemont/judge-manager/common/file"
+	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/file"
 )
 
 const (
@@ -16,23 +18,7 @@ const (
 	PYTHON = "py3"
 )
 
-func GetConfig(language string) (LangConfig, error) {
-	switch language {
-	case C:
-		return cConfig, nil
-	case CPP:
-		return cppConfig, nil
-	case JAVA:
-		return javaConfig, nil
-	// case PYTHON2:
-	// 	return py2Config, nil
-	case PYTHON:
-		return pyConfig, nil
-	}
-	return LangConfig{}, fmt.Errorf("unsupported language: %s", language)
-}
-
-type LangConfig struct {
+type config struct {
 	Language              string
 	SrcName               string
 	ExeName               string
@@ -49,32 +35,175 @@ type LangConfig struct {
 	env                   []string
 }
 
-func (c LangConfig) SrcPath(dir string) string {
-	return file.MakeFilePath(dir, c.SrcName).String()
+type LangConfig interface {
+	GetConfig(language string) (config, error)
+	MakeSrcPath(dir string, language string) (string, error)
+	ToCompileExecArgs(dir string, language string) (ExecArgs, error)
+	ToRunExecArgs(dir string, language string, order int, limit Limit, fileIo bool) (ExecArgs, error)
 }
 
-func (c LangConfig) CompileOutputPath(dir string) string {
-	return file.MakeFilePath(dir, CompileOutFile).String()
+type langConfig struct {
+	cConfig    config
+	cppConfig  config
+	javaConfig config
+	pyConfig   config
+	file       file.FileManager
 }
 
-func (c LangConfig) RunOutputPath(dir string, order int) string {
-	return file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+func NewLangConfig(file file.FileManager) *langConfig {
+	defaultEnv := []string{"LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"}
+	var cConfig = config{
+		Language:           C,
+		SrcName:            "main.c",
+		ExeName:            "main",
+		MaxCompileCpuTime:  3000,
+		MaxCompileRealTime: 10000,
+		MaxCompileMemory:   256 * 1024 * 1024,
+		CompilerPath:       "/usr/bin/gcc",
+		CompileArgs: "-DONLINE_JUDGE " +
+			"-O2 -w -fmax-errors=3 -std=c11 " +
+			"{srcPath} -lm -o {exePath}",
+		RunCommand:            "{exePath}",
+		RunArgs:               "",
+		SeccompRule:           "c_cpp",
+		SeccompRuleFileIO:     "c_cpp_file_io",
+		MemoeryLimitCheckOnly: false,
+		env:                   defaultEnv,
+	}
+
+	var cppConfig = config{
+		Language:           CPP,
+		SrcName:            "main.cpp",
+		ExeName:            "main",
+		MaxCompileCpuTime:  10000,
+		MaxCompileRealTime: 20000,
+		MaxCompileMemory:   1024 * 1024 * 1024,
+		CompilerPath:       "/usr/bin/g++",
+		CompileArgs: "-DONLINE_JUDGE " +
+			"-O2 -w -fmax-errors=3 " +
+			"-std=c++14 {srcPath} -lm -o {exePath}",
+		RunCommand:            "{exePath}",
+		RunArgs:               "",
+		SeccompRule:           "c_cpp",
+		SeccompRuleFileIO:     "c_cpp_file_io",
+		MemoeryLimitCheckOnly: false,
+		env:                   defaultEnv,
+	}
+
+	var javaPolicyPath string
+	if os.Getenv("APP_ENV") == "production" {
+		javaPolicyPath = constants.JAVA_POLICY_PATH_PROD
+	} else {
+		javaPolicyPath = constants.JAVA_POLICY_PATH_DEV
+	}
+	var javaConfig = config{
+		Language:           JAVA,
+		SrcName:            "Main.java",
+		ExeName:            "Main",
+		MaxCompileCpuTime:  5000,
+		MaxCompileRealTime: 10000,
+		MaxCompileMemory:   -1,
+		CompilerPath:       "/usr/bin/javac",
+		CompileArgs:        "{srcPath} -d {exeDir} -encoding UTF8",
+		RunCommand:         "/usr/bin/java",
+		RunArgs: "-cp {exeDir} " +
+			"-XX:MaxRAM={maxMemory}k " +
+			"-Djava.security.manager " +
+			"-Dfile.encoding=UTF-8 " +
+			"-Djava.security.policy==" +
+			javaPolicyPath + " " +
+			"-Djava.awt.headless=true " +
+			"Main",
+		SeccompRule:           "",
+		MemoeryLimitCheckOnly: true,
+		env:                   defaultEnv,
+	}
+
+	var pyConfig = config{
+		Language:              PYTHON,
+		SrcName:               "solution.py",
+		ExeName:               "__pycache__/solution.cpython-38.pyc", // TODO: 파이썬 버전 확인
+		MaxCompileCpuTime:     3000,
+		MaxCompileRealTime:    10000,
+		MaxCompileMemory:      128 * 1024 * 1024,
+		CompilerPath:          "/usr/bin/python3",
+		CompileArgs:           "-m py_compile {srcPath}",
+		RunCommand:            "/usr/bin/python3",
+		RunArgs:               "{exePath}",
+		SeccompRule:           "general",
+		MemoeryLimitCheckOnly: false,
+		env:                   append(defaultEnv, "PYTHONIOENCODING=utf-8"),
+	}
+
+	return &langConfig{
+		cConfig:    cConfig,
+		cppConfig:  cppConfig,
+		javaConfig: javaConfig,
+		pyConfig:   pyConfig,
+		file:       file,
+	}
 }
 
-func (c LangConfig) RunErrPath(dir string, order int) string {
-	return file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
+func (l *langConfig) GetConfig(language string) (config, error) {
+	switch language {
+	case C:
+		return l.cConfig, nil
+	case CPP:
+		return l.cppConfig, nil
+	case JAVA:
+		return l.javaConfig, nil
+	// case PYTHON2:
+	// 	return py2Config, nil
+	case PYTHON:
+		return l.pyConfig, nil
+	}
+	return config{}, fmt.Errorf("unsupported language: %s", language)
 }
 
-func (c LangConfig) ToCompileExecArgs(dir string) ExecArgs {
+func (l *langConfig) MakeSrcPath(dir string, language string) (string, error) {
+	c, err := l.GetConfig(language)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(l.file)
+	return l.file.MakeFilePath(dir, c.SrcName).String(), nil
+}
 
-	outputPath := file.MakeFilePath(dir, CompileOutFile).String()
-	srcPath := file.MakeFilePath(dir, c.SrcName).String()
-	exePath := file.MakeFilePath(dir, c.ExeName).String()
-	exeDir := file.MakeFilePath(dir, "").String()
+// func (l *langConfig) CompileOutputPath(dir string, language string) (string, error) {
+// 	config, err := l.GetConfig(language)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return file.MakeFilePath(dir, CompileOutFile).String()
+// }
+
+// func (l *langConfig) RunOutputPath(dir string, order int) string {
+// 	return file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+// }
+
+// func (l *langConfig) RunErrPath(dir string, order int) string {
+// 	return file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
+// }
+
+func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, error) {
+	c, err := l.GetConfig(language)
+	if err != nil {
+		return ExecArgs{}, err
+	}
+
+	outputPath := l.file.MakeFilePath(dir, CompileOutFile).String()
+	srcPath := l.file.MakeFilePath(dir, c.SrcName).String()
+	exePath := l.file.MakeFilePath(dir, c.ExeName).String()
+	exeDir := l.file.MakeFilePath(dir, "").String()
 
 	args := strings.Replace(c.CompileArgs, "{srcPath}", srcPath, 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)
 	args = strings.Replace(args, "{exeDir}", exeDir, 1)
+
+	var argSlice []string
+	if args != "" {
+		argSlice = strings.Split(args, " ")
+	}
 
 	return ExecArgs{
 		ExePath:      c.CompilerPath,
@@ -87,27 +216,30 @@ func (c LangConfig) ToCompileExecArgs(dir string) ExecArgs {
 		OutputPath:    outputPath,
 		ErrorPath:     outputPath,
 		LogPath:       CompileLogPath,
-		Args:          validateArgs(args),
-	}
+		Args:          argSlice,
+	}, nil
 }
 
-func validateArgs(args string) []string {
-	if args != "" {
-		return strings.Split(args, " ")
+func (l *langConfig) ToRunExecArgs(dir string, language string, order int, limit Limit, fileIo bool) (ExecArgs, error) {
+	c, err := l.GetConfig(language)
+	if err != nil {
+		return ExecArgs{}, err
 	}
-	return nil
-}
 
-func (c LangConfig) ToRunExecArgs(dir string, order int, limit Limit, fileIo bool) ExecArgs {
-	exePath := file.MakeFilePath(dir, c.ExeName).String()
-	exeDir := file.MakeFilePath(dir, "").String()
-	outputPath := file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
-	errorPath := file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
+	exePath := l.file.MakeFilePath(dir, c.ExeName).String()
+	exeDir := l.file.MakeFilePath(dir, "").String()
+	outputPath := l.file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
+	errorPath := l.file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 
 	// run args 설정
 	args := strings.Replace(c.RunArgs, "{maxMemory}", strconv.Itoa(limit.Memory), 1)
 	args = strings.Replace(args, "{exePath}", exePath, 1)
 	args = strings.Replace(args, "{exeDir}", exeDir, 1)
+
+	var argSlice []string
+	if args != "" {
+		argSlice = strings.Split(args, " ")
+	}
 
 	maxMemory := limit.Memory
 	if c.Language == JAVA {
@@ -128,8 +260,8 @@ func (c LangConfig) ToRunExecArgs(dir string, order int, limit Limit, fileIo boo
 		ErrorPath:       errorPath, // byte buffer로
 		LogPath:         RunLogPath,
 		SeccompRuleName: c.SeccompRule,
-		Args:            validateArgs(args),
-	}
+		Args:            argSlice,
+	}, nil
 }
 
 type Limit struct {
@@ -139,68 +271,8 @@ type Limit struct {
 }
 
 // srcPath, exePath는 base dir + task dir
-var defaultEnv = []string{"LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"}
-var cConfig = LangConfig{
-	Language:           C,
-	SrcName:            "main.c",
-	ExeName:            "main",
-	MaxCompileCpuTime:  3000,              // compile
-	MaxCompileRealTime: 10000,             // compile
-	MaxCompileMemory:   256 * 1024 * 1024, // compile
-	CompilerPath:       "/usr/bin/gcc",
-	CompileArgs: "-DONLINE_JUDGE " +
-		"-O2 -w -fmax-errors=3 -std=c11 " +
-		"{srcPath} -lm -o {exePath}",
-	RunCommand:            "{exePath}",
-	RunArgs:               "",
-	SeccompRule:           "c_cpp",
-	SeccompRuleFileIO:     "c_cpp_file_io",
-	MemoeryLimitCheckOnly: false,
-	env:                   defaultEnv,
-}
 
-var cppConfig = LangConfig{
-	Language:           CPP,
-	SrcName:            "main.cpp",
-	ExeName:            "main",
-	MaxCompileCpuTime:  10000,
-	MaxCompileRealTime: 20000,
-	MaxCompileMemory:   1024 * 1024 * 1024,
-	CompilerPath:       "/usr/bin/g++",
-	CompileArgs: "-DONLINE_JUDGE " +
-		"-O2 -w -fmax-errors=3 " +
-		"-std=c++14 {srcPath} -lm -o {exePath}",
-	RunCommand:            "{exePath}",
-	RunArgs:               "",
-	SeccompRule:           "c_cpp",
-	SeccompRuleFileIO:     "c_cpp_file_io",
-	MemoeryLimitCheckOnly: false,
-	env:                   defaultEnv,
-}
-
-var javaConfig = LangConfig{
-	Language:           JAVA,
-	SrcName:            "Main.java",
-	ExeName:            "Main",
-	MaxCompileCpuTime:  5000,
-	MaxCompileRealTime: 10000,
-	MaxCompileMemory:   -1,
-	CompilerPath:       "/usr/bin/javac",
-	CompileArgs:        "{srcPath} -d {exeDir} -encoding UTF8",
-	RunCommand:         "/usr/bin/java",
-	RunArgs: "-cp {exeDir} " +
-		"-XX:MaxRAM={maxMemory}k " +
-		"-Djava.security.manager " +
-		"-Dfile.encoding=UTF-8 " +
-		"-Djava.security.policy==/etc/java_policy " +
-		"-Djava.awt.headless=true " +
-		"Main",
-	SeccompRule:           "",
-	MemoeryLimitCheckOnly: true,
-	env:                   defaultEnv,
-}
-
-// var py2Config = LangConfig{
+// var py2Config = Config{
 // 	Language:              PYTHON2,
 // 	SrcName:               "solution.py",
 // 	ExeName:               "solution.pyc",
@@ -215,19 +287,3 @@ var javaConfig = LangConfig{
 // 	MemoeryLimitCheckOnly: false,
 // 	env:                   defaultEnv,
 // }
-
-var pyConfig = LangConfig{
-	Language:              PYTHON,
-	SrcName:               "solution.py",
-	ExeName:               "__pycache__/solution.cpython-38.pyc", // TODO: 파이썬 버전 확인
-	MaxCompileCpuTime:     3000,
-	MaxCompileRealTime:    10000,
-	MaxCompileMemory:      128 * 1024 * 1024,
-	CompilerPath:          "/usr/bin/python3",
-	CompileArgs:           "-m py_compile {srcPath}",
-	RunCommand:            "/usr/bin/python3",
-	RunArgs:               "{exePath}",
-	SeccompRule:           "general",
-	MemoeryLimitCheckOnly: false,
-	env:                   append(defaultEnv, "PYTHONIOENCODING=utf-8"),
-}

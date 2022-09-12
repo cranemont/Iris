@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/cranemont/judge-manager/cache"
 )
@@ -15,25 +16,32 @@ type Manager interface {
 }
 
 type manager struct {
-	cache cache.Cache
+	cache     cache.Cache
 	serverUrl string
-	token string
+	token     string
 }
 
 func NewManager(cache cache.Cache) *manager {
 	return &manager{
-		cache: cache, 
-		serverUrl: "http://localhost:3000/testcase/problem/",//os.Getenv("TESTCASE_SERVER_URL"),
-		token: "ro==" ,//os.Getenv("TESTCASE_SERVER_AUTH_TOKEN"),
+		cache:     cache,
+		serverUrl: os.Getenv("TESTCASE_SERVER_URL"),
+		token:     os.Getenv("TESTCASE_SERVER_AUTH_TOKEN"),
 	}
 }
 
 func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 	if !m.cache.IsExist(problemId) {
 		fmt.Println("Tc does not exist")
-		testcase, err := m.GetTestcaseFromServer(problemId)
-		if err != nil {
-			return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
+		// testcase, err := m.GetTestcaseFromServer(problemId)
+		// if err != nil {
+		// 	return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
+		// }
+		// temp data
+		testcase := Testcase{
+			[]Element{
+				{In: "1\n", Out: "1\n"},
+				{In: "22\n", Out: "22\n"},
+			},
 		}
 		m.cache.Set(problemId, testcase)
 		return testcase, nil
@@ -49,24 +57,24 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 func (m *manager) GetTestcaseFromServer(problemId string) (Testcase, error) {
 	// FIXME: timeout 설정
 	req, err := http.NewRequest("GET", m.serverUrl+problemId, nil)
-    if err != nil {
-        return Testcase{}, fmt.Errorf("failed to create request: %w\n", err)
-    }
-    req.Header.Add("judge-server-token", m.token)
- 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
+	if err != nil {
+		return Testcase{}, fmt.Errorf("failed to create request: %w\n", err)
+	}
+	req.Header.Add("judge-server-token", m.token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
 		return Testcase{}, fmt.Errorf("http client error: %w\n", err)
-    }
-    defer resp.Body.Close()
- 
+	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return Testcase{}, fmt.Errorf("status code is not 200:\n code: %d\n", resp.StatusCode)
 	}
 
-    // 결과 출력
-    bytes, _ := ioutil.ReadAll(resp.Body)
+	// 결과 출력
+	bytes, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println(bytes)
 	testcase, err := m.UnMarshal(bytes)
 	if err != nil {
