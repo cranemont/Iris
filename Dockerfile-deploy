@@ -1,0 +1,36 @@
+FROM golang AS build-server
+# git current directory copy하고 build
+# 패키지 배포할떄 go/src여기에 다른 패키지가 있어야하나?
+# 컴파일된건 상관없지않나?
+
+FROM ubuntu:20.04 AS build-judger
+# libjudger 설치
+# 칭다오 버전으로 받아오기(새로 넣기)
+
+FROM ubuntu:20.04 AS deploy
+
+# 컴파일러/런타임 설치
+## gcc 버전지정
+## g++ 버전지정
+## JAVA 버전지정
+## Python3 버전지정?
+## Pypy 버전지정
+## Node 버전지정(칭다오 코드 참조)
+
+# golang 설치 안해도 binary 실행에는 문제가 없나?
+# go 패키지 받아오는게 attack point 아님?
+
+# COPY --from=build-server ~~ go binary 실행파일 가져오기
+# COPY --from=build-judger ~~ libjudger 가져오기
+
+# 권한 설정, 유저 추가
+# 유저 변경?
+# 도커 자체는 다른 유저로 실행?
+# 대신 entrypoint에서 바이너리를 sudo로 실행
+# 이거 의미있나?
+
+# entrypoint 복사
+# entrypoint 실행
+
+## compose할때 cap_drop 할거 살펴보기
+## readonly?

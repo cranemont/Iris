@@ -1,6 +1,7 @@
-version: '3'
+version: "3"
 services:
   judge-manager:
+    network_mode: host
     container_name: judge-manager
     image: coc0a25/judge-manager:dev
     stdin_open: true
@@ -8,9 +9,13 @@ services:
     volumes:
       - .:/go/src/github.com/cranemont/judge-manager:cached
     environment:
-      TESTCASE_SERVER: "http://localhost:3000/testcase/problem/"
+      - "TESTCASE_SERVER_URL=http://host.docker.internal:3000/testcase/problem/"
+      - "TESTCASE_SERVER_AUTH_TOKEN=AUTH_TOKEN"
+    cpuset: "0,1,2"
 
   redis:
     container_name: redis
+    network_mode: host
     image: redis:alpine
-
+    ports: 
+      - 6379:6379

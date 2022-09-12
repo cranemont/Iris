@@ -3,6 +3,7 @@ package judge
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/common/grade"
@@ -16,11 +17,11 @@ var ErrCompile = errors.New("compile failed")
 var ErrTestcaseGet = errors.New("testcase get failed")
 
 type Judger struct {
-	testcaseManager testcase.Manager
+	testcaseManager testcase.TestcaseManager
 }
 
 func NewJudger(
-	testcaseManager testcase.Manager,
+	testcaseManager testcase.TestcaseManager,
 ) *Judger {
 	return &Judger{
 		testcaseManager,
@@ -67,42 +68,78 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		return fmt.Errorf("%s: %w: Testcase", JudgeErrPrefix, exception.ErrTypeAssertionFail)
 	}
 
+	// FIXME: 이 아래 과정 갈아엎기. Result, error를 중심으로
 	tcNum := len(tc.Data)
 	task.MakeRunResult(tcNum)
 
+	runOutCh := make(chan result.ChResult, tcNum)
 	// testcase의 order로 정렬
-	// FIXME: out이라는 이름이 헷갈림 wrapper가 나을듯
 	for i := 0; i < tcNum; i++ {
-		res, err := sandbox.Run(sandbox.RunRequest{
-			Order:       i,
-			Dir:         task.dir,
-			Language:    task.language,
-			TimeLimit:   task.timeLimit,
-			MemoryLimit: task.memoryLimit,
-		}, []byte(tc.Data[i].In))
-		if err != nil {
-			task.SetRunResultCode(i, SYSTEM_ERROR)
-			continue
-		}
-		task.SetRunResult(i, res)
-		if res.ResultCode != sandbox.RUN_SUCCESS {
-			continue
-		}
+		go j.run(
+			runOutCh,
+			sandbox.RunRequest{
+				Order:       i,
+				Dir:         task.dir,
+				Language:    task.language,
+				TimeLimit:   task.timeLimit,
+				MemoryLimit: task.memoryLimit,
+			},
+			[]byte(tc.Data[i].In),
+		)
+	}
 
-		// 하나당 약 50microsec 10개 채점시 500microsec. 
-		// output이 커지면 더 길어짐 -> FIXME: 최적화 과정에서 goroutine으로 수정
-		// st := time.Now()
-		accepted, err := grade.Grade([]byte(tc.Data[i].Out), res.Output)
-		if err != nil {
-			task.SetRunResultCode(i, SYSTEM_ERROR)
+	// FIXME: out이라는 이름이 헷갈림 wrapper가 나을듯
+	gradeNum := tcNum
+	gradeOutCh := make(chan result.ChResult, tcNum)
+	for i := 0; i < tcNum; i++ {
+		runOut := <-runOutCh
+		order := runOut.Order
+
+		if runOut.Err != nil {
+			task.SetRunResultCode(order, SYSTEM_ERROR)
+			gradeNum -= 1
 			continue
+		}
+		runResult, ok := runOut.Data.(sandbox.RunResult)
+
+		if !ok {
+			task.SetRunResultCode(order, SYSTEM_ERROR)
+			log.Println("%w: RunResult", exception.ErrTypeAssertionFail)
+			gradeNum -= 1
+			continue
+		}
+		task.SetRunResult(order, runResult)
+		fmt.Print(order)
+
+		// result가 success가 아니면 grade 안함
+		if runResult.ResultCode != sandbox.RUN_SUCCESS {
+			gradeNum -= 1
+			continue
+		}
+		go j.grade(gradeOutCh, []byte(tc.Data[order].Out), runResult.Output, order)
+	}
+
+	for i := 0; i < gradeNum; i++ {
+		gradeOut := <-gradeOutCh
+		order := gradeOut.Order
+
+		if gradeOut.Err != nil {
+			task.SetRunResultCode(order, SYSTEM_ERROR)
+			continue
+		}
+		accepted, ok := gradeOut.Data.(bool)
+
+		if !ok {
+			task.SetRunResultCode(order, SYSTEM_ERROR)
+			log.Println("%w: GradeResult", exception.ErrTypeAssertionFail)
 		}
 		if accepted {
-			task.SetRunResultCode(i, ACCEPTED)
+			task.SetRunResultCode(order, ACCEPTED)
 		} else {
-			task.SetRunResultCode(i, WRONG_ANSWER)
+			task.SetRunResultCode(order, WRONG_ANSWER)
 		}
 	}
+	// FIXME: 여기까지 수정
 
 	fmt.Println("done")
 	return nil
@@ -118,10 +155,27 @@ func (j *Judger) compile(out chan<- result.ChResult, dto sandbox.CompileRequest)
 	out <- result.ChResult{Data: res}
 }
 
+func (j *Judger) run(out chan<- result.ChResult, dto sandbox.RunRequest, input []byte) {
+	res, err := sandbox.Run(dto, input)
+	if err != nil {
+		out <- result.ChResult{Err: err, Order: dto.Order}
+		return
+	}
+	out <- result.ChResult{Data: res, Order: dto.Order}
+}
+
+func (j *Judger) grade(out chan<- result.ChResult, answer []byte, output []byte, order int) {
+	res, err := grade.Grade(answer, output)
+	if err != nil {
+		out <- result.ChResult{Err: err, Order: order}
+		return
+	}
+	out <- result.ChResult{Data: res, Order: order}
+}
+
 // wrapper to use goroutine
 func (j *Judger) getTestcase(out chan<- result.ChResult, problemId string) {
 	res, err := j.testcaseManager.GetTestcase(problemId)
-	fmt.Println(res)
 	if err != nil {
 		out <- result.ChResult{Err: err}
 		return

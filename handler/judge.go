@@ -61,10 +61,15 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 	if err != nil {
 		if errors.Is(err, judge.ErrTestcaseGet) {
 			res.StatusCode = TESTCASE_GET_FAILED
-		} else if !errors.Is(err, judge.ErrCompile) {
-			return res, fmt.Errorf("%s: judge failed: %w", handler, err)
-		}
-		res.StatusCode = COMPILE_ERROR
+		} else if errors.Is(err, judge.ErrCompile) {
+			res.StatusCode = COMPILE_ERROR
+			// 이때는 아래 코드 실행해야됨(오류로 던지는게 아님)
+			res.Data = task.Result
+			return res, nil
+		} else {
+			res.StatusCode = INTERNAL_SERVER_ERROR
+		} // run, grade 등 추가
+		return res, fmt.Errorf("%s: judge failed: %w", handler, err)
 	} else {
 		res.StatusCode = SUCCESS
 	}

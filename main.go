@@ -33,7 +33,7 @@ func main() {
 
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
-	testcaseManager := testcase.NewTestcaseManager(cache)
+	testcaseManager := testcase.NewManager(cache)
 
 	judger := judge.NewJudger(
 		testcaseManager,
@@ -50,7 +50,7 @@ func main() {
 		publisher,
 	)
 
-	c := "#include <stdio.h>\n\nint main (void) {\nprintf(\"1 1  \t\\n\");\n\nreturn 0;\n}\n"
+	c := "#include <stdio.h>\n\nint main (void) {\nint a=0; scanf(\"%d\", &a);\nprintf(\"%d\t\\n\", a);\n\nreturn 0;\n}\n"
 	// cpp := "#include<iostream>\n using namespace std;\n	int main() {\n	cout << \"1 1  \t\\n\";\n	return 0;\n}"
 	// py := "a = input() \nprint(a)" // (\"1 1  \t\\n\")"
 	// javaTimeout := "public class Main {\n	public static void main(String[] args) {\n		while(true) {\n		int i=0; i++;\n}\n}\n}"

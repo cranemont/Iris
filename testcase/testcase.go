@@ -5,8 +5,8 @@ import (
 )
 
 type Element struct {
-	In  string
-	Out string
+	In  string `json:"input"`
+	Out string `json:"output"`
 }
 
 type Testcase struct {
@@ -23,5 +23,5 @@ func (t Testcase) MarshalBinary() ([]byte, error) {
 }
 
 func (t *Testcase) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, t)
+	return json.Unmarshal(data, &t.Data)
 }

@@ -31,3 +31,5 @@ RUN mkdir -p "$GOPATH/src/github.com/cranemont" "$GOPATH/bin" && chmod -R 777 "$
 
 WORKDIR $GOPATH/src/github.com/cranemont
 RUN git clone https://github.com/cranemont/judge-manager
+
+EXPOSE 12000
