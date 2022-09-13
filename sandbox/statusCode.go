@@ -23,9 +23,3 @@ const ( // ResultCode
 	RUNTIME_ERROR
 	SYSTEM_ERROR
 )
-
-const (
-	CompileLogPath = "./log/compile/log.out"
-	RunLogPath     = "./log/run/log.out"
-	CompileOutFile = "compile.out"
-)

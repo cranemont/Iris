@@ -191,7 +191,7 @@ func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, e
 		return ExecArgs{}, err
 	}
 
-	outputPath := l.file.MakeFilePath(dir, CompileOutFile).String()
+	outputPath := l.file.MakeFilePath(dir, constants.COMPILE_OUT_FILE).String()
 	srcPath := l.file.MakeFilePath(dir, c.SrcName).String()
 	exePath := l.file.MakeFilePath(dir, c.ExeName).String()
 	exeDir := l.file.MakeFilePath(dir, "").String()
@@ -205,6 +205,7 @@ func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, e
 		argSlice = strings.Split(args, " ")
 	}
 
+	fmt.Println("PATH: ", constants.COMPILE_LOG_PATH)
 	return ExecArgs{
 		ExePath:      c.CompilerPath,
 		MaxCpuTime:   c.MaxCompileCpuTime,
@@ -215,7 +216,7 @@ func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, e
 		MaxOutputSize: 20 * 1024 * 1024,
 		OutputPath:    outputPath,
 		ErrorPath:     outputPath,
-		LogPath:       CompileLogPath,
+		LogPath:       constants.COMPILE_LOG_PATH,
 		Args:          argSlice,
 	}, nil
 }
@@ -258,7 +259,7 @@ func (l *langConfig) ToRunExecArgs(dir string, language string, order int, limit
 		// https://stackoverflow.com/questions/29700478/redirecting-of-stdout-in-bash-vs-writing-to-file-in-c-with-fprintf-speed
 		OutputPath:      outputPath,
 		ErrorPath:       errorPath, // byte buffer로
-		LogPath:         RunLogPath,
+		LogPath:         constants.RUN_LOG_PATH,
 		SeccompRuleName: c.SeccompRule,
 		Args:            argSlice,
 	}, nil
