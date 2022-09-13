@@ -3,15 +3,15 @@ package cache
 import (
 	"context"
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/go-redis/redis/v9"
 )
 
 type Cache interface {
-	Get(key string) []byte
-	Set(key string, value interface{})
-	IsExist(key string) bool
+	Get(key string) ([]byte, error)
+	Set(key string, value interface{}) error
+	IsExist(key string) (bool, error)
 }
 
 type cache struct {
@@ -20,43 +20,43 @@ type cache struct {
 }
 
 func NewCache(ctx context.Context) *cache {
+	host := os.Getenv("REDIS_HOST")
+	port := os.Getenv("REDIS_PORT")
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379", // TODO: export to ENV
+		Addr:     host + ":" + port,
 		Password: "",
 		DB:       0,
 	})
 	return &cache{ctx, *rdb}
 }
 
-func (c *cache) Get(key string) []byte {
+func (c *cache) Get(key string) ([]byte, error) {
 	val, err := c.client.Get(c.ctx, key).Bytes()
 	if err != nil {
-		log.Println(err)
-		panic(err)
+		return nil, fmt.Errorf("failed to get key: %w", err)
 	} else if err == redis.Nil {
 		fmt.Println("key does not exist")
-		return nil
+		return nil, fmt.Errorf("key does not exist")
 	}
-	return val
+	return val, nil
 }
 
-func (c *cache) Set(key string, value interface{}) {
+func (c *cache) Set(key string, value interface{}) error {
 	fmt.Println("set cache: ", key)
 	err := c.client.Set(c.ctx, key, value, 0).Err()
 	if err != nil {
-		panic(err)
-		log.Println(err)
+		return fmt.Errorf("failed to set key: %w", err)
 	}
+	return nil
 }
 
-func (c *cache) IsExist(key string) bool {
+func (c *cache) IsExist(key string) (bool, error) {
 	val, err := c.client.Exists(c.ctx, key).Result()
 	if val > 0 {
-		return true
+		return true, nil
 	}
 	if err != nil {
-		panic(err)
-		log.Println(err)
+		return false, fmt.Errorf("failed to check existance: %w", err)
 	}
-	return false
+	return false, nil
 }

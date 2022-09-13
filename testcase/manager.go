@@ -30,7 +30,11 @@ func NewManager(cache cache.Cache) *manager {
 }
 
 func (m *manager) GetTestcase(problemId string) (Testcase, error) {
-	if !m.cache.IsExist(problemId) {
+	isExist, err := m.cache.IsExist(problemId)
+	if err != nil {
+		return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
+	}
+	if !isExist {
 		fmt.Println("Tc does not exist")
 		// testcase, err := m.GetTestcaseFromServer(problemId)
 		// if err != nil {
@@ -43,10 +47,16 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 				{In: "22\n", Out: "22\n"},
 			},
 		}
-		m.cache.Set(problemId, testcase)
+		err := m.cache.Set(problemId, testcase)
+		if err != nil {
+			return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
+		}
 		return testcase, nil
 	}
-	data := m.cache.Get(problemId)
+	data, err := m.cache.Get(problemId)
+	if err != nil {
+		return Testcase{}, fmt.Errorf("GetTestcase: failed to get from cache: %s: %w", problemId, err)
+	}
 	testcase, err := m.UnMarshal(data)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("testcase byte to slice failed: %w", err)
