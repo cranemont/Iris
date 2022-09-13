@@ -23,9 +23,9 @@ type fileManager struct {
 func NewFileManager() *fileManager {
 	fileManager := fileManager{}
 	if os.Getenv("APP_ENV") == "production" {
-		fileManager.baseDir = constants.OUTPUT_PATH_PROD
+		fileManager.baseDir = constants.RESULT_PATH_PROD
 	} else {
-		fileManager.baseDir = constants.OUTPUT_PATH_DEV
+		fileManager.baseDir = constants.RESULT_PATH_DEV
 	}
 	return &fileManager
 }

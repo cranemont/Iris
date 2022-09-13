@@ -8,16 +8,34 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+
+	"github.com/cranemont/judge-manager/constants"
 )
 
-func Exec(args ExecArgs, input []byte) (SandboxResult, error) {
+type Sandbox interface {
+	Exec(args ExecArgs, input []byte) (SandboxResult, error)
+}
+
+type sandbox struct {
+	binaryPath string
+}
+
+func NewSandbox() *sandbox {
+	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV}
+	if os.Getenv("APP_ENV") == "production" {
+		sandbox.binaryPath = constants.LIBJUDGER_PATH_PROD
+	}
+	return &sandbox
+}
+
+func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	// fmt.Println("input: ", args)
 	argSlice := makeExecArgs(args)
 	env := "--env=PATH=" + os.Getenv("PATH")
 	argSlice = append(argSlice, env)
 
 	// fmt.Println(argSlice)
-	cmd := exec.Command("/usr/lib/judger/libjudger.so", argSlice...)
+	cmd := exec.Command(s.binaryPath, argSlice...)
 
 	var stdin bytes.Buffer
 	var stdout bytes.Buffer

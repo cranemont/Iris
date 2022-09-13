@@ -33,12 +33,13 @@ type Runner interface {
 }
 
 type runner struct {
+	sandbox    Sandbox
 	langConfig LangConfig
 	file       file.FileManager
 }
 
-func NewRunner(langConfig LangConfig, file file.FileManager) *runner {
-	return &runner{langConfig, file}
+func NewRunner(sandbox Sandbox, langConfig LangConfig, file file.FileManager) *runner {
+	return &runner{sandbox, langConfig, file}
 }
 
 func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
@@ -69,7 +70,7 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		return RunResult{}, err
 	}
 
-	res, err := Exec(execArgs, input)
+	res, err := r.sandbox.Exec(execArgs, input)
 	if err != nil {
 		return RunResult{}, fmt.Errorf("runner: Run failed: %w", err)
 	}

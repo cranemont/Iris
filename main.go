@@ -39,8 +39,9 @@ func main() {
 	fileManager := file.NewFileManager()
 	langConfig := sandbox.NewLangConfig(fileManager)
 
-	compiler := sandbox.NewCompiler(langConfig, fileManager)
-	runner := sandbox.NewRunner(langConfig, fileManager)
+	sb := sandbox.NewSandbox()
+	compiler := sandbox.NewCompiler(sb, langConfig, fileManager)
+	runner := sandbox.NewRunner(sb, langConfig, fileManager)
 
 	judger := judge.NewJudger(
 		compiler,
