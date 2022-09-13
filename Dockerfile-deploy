@@ -45,7 +45,7 @@ COPY libjudger/java_policy sandbox/policy/
 RUN buildDeps='software-properties-common curl' \
   && apt-get update && apt-get install -y $buildDeps \
   && add-apt-repository ppa:deadsnakes/ppa \
-  && curl -sL https://deb.nodesource.com/setup_14.x | bash -E - \
+  && curl -sL https://deb.nodesource.com/setup_16.x | bash -E - \
   && apt-get update && apt-get install -y \
   gcc \
   g++ \
