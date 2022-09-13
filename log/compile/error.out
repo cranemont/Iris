@@ -1,4 +1,0 @@
-/go/src/github.com/cranemont/judge-manager/results/vQjTlAgtlpYROFRo/main.c:1:10: fatal error: stdioh: No such file or directory
-    1 | #include <stdioh>
-      |          ^~~~~~~~
-compilation terminated.
