@@ -1,9 +1,9 @@
 {
   "forwardPorts": [3000],
-  "name": "judge-manager",
+  "name": "judge-manager-devcontainer",
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "judge-manager",
-  "runServices": ["judge-manager", "redis"],
+  "runServices": ["judge-manager", "redis", "rabbitmq"],
   "workspaceFolder": "/go/src/github.com/cranemont/judge-manager",
   "postCreateCommand": "go install -v golang.org/x/tools/gopls@latest; go install -v github.com/ramya-rao-a/go-outline@latest; git config --global --add safe.directory /go/src/github.com/cranemont/judge-manager",
   "customizations": {

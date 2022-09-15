@@ -1,7 +1,6 @@
 version: "3"
 services:
   judge-manager:
-    network_mode: host
     container_name: judge-manager
     image: coc0a25/judge-manager:dev
     stdin_open: true
@@ -9,13 +8,30 @@ services:
     volumes:
       - .:/go/src/github.com/cranemont/judge-manager:cached
     environment:
-      - "TESTCASE_SERVER_URL=http://host.docker.internal:3000/testcase/problem/"
-      - "TESTCASE_SERVER_AUTH_TOKEN=AUTH_TOKEN"
+      - TESTCASE_SERVER_URL=http://host.docker.internal:3000/testcase/problem/
+      - TESTCASE_SERVER_AUTH_TOKEN=AUTH_TOKEN
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_DEFAULT_USER=skku
+      - RABBITMQ_DEFAULT_PASS=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - APP_ENV=dev
     cpuset: "0,1,2"
 
   redis:
     container_name: redis
-    network_mode: host
     image: redis:alpine
     ports: 
-      - 6379:6379
+      - 11000:6379
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - 12000:5672
+      - 13000:15672
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=RabbitMQ-My-Cookies
+      - RABBITMQ_DEFAULT_USER=skku
+      - RABBITMQ_DEFAULT_PASS=1234
