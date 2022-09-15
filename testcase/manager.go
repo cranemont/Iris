@@ -1,15 +1,17 @@
 package testcase
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/cranemont/judge-manager/cache"
+	"github.com/cranemont/judge-manager/constants"
 )
 
-// FIXME: judge 안에 들어가는게 더 맞을듯
 type Manager interface {
 	GetTestcase(problemId string) (Testcase, error)
 	UnMarshal(data []byte) (Testcase, error)
@@ -36,18 +38,18 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 	}
 	if !isExist {
 		fmt.Println("Tc does not exist")
-		// testcase, err := m.GetTestcaseFromServer(problemId)
-		// if err != nil {
-		// 	return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
-		// }
-		// temp data
-		testcase := Testcase{
-			[]Element{
-				{In: "1\n", Out: "1\n"},
-				{In: "22\n", Out: "22\n"},
-			},
+		testcase, err := m.GetTestcaseFromServer(problemId)
+		if err != nil {
+			return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
 		}
-		err := m.cache.Set(problemId, testcase)
+		// temp data
+		// testcase := Testcase{
+		// 	[]Element{
+		// 		{In: "1\n", Out: "1\n"},
+		// 		{In: "22\n", Out: "22\n"},
+		// 	},
+		// }
+		err = m.cache.Set(problemId, testcase)
 		if err != nil {
 			return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
 		}
@@ -65,14 +67,13 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 }
 
 func (m *manager) GetTestcaseFromServer(problemId string) (Testcase, error) {
-	// FIXME: timeout 설정
 	req, err := http.NewRequest("GET", m.serverUrl+problemId, nil)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("failed to create request: %w\n", err)
 	}
 	req.Header.Add("judge-server-token", m.token)
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: constants.TESTCASE_GET_TIMEOUT * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("http client error: %w\n", err)
@@ -85,12 +86,17 @@ func (m *manager) GetTestcaseFromServer(problemId string) (Testcase, error) {
 
 	// 결과 출력
 	bytes, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(bytes)
-	testcase, err := m.UnMarshal(bytes)
-	if err != nil {
+	// testcase, err := m.UnMarshal(bytes)
+	// if err != nil {
+	// 	return Testcase{}, fmt.Errorf("invalid testcase data: %w\n", err)
+	// }
+
+	testcaseElements := []Element{}
+	if err := json.Unmarshal(bytes, &testcaseElements); err != nil {
 		return Testcase{}, fmt.Errorf("invalid testcase data: %w\n", err)
 	}
-	return testcase, nil
+
+	return Testcase{Data: testcaseElements}, nil
 }
 
 func (m *manager) UnMarshal(data []byte) (Testcase, error) {

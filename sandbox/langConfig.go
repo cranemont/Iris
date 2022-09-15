@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	C    = "c"
-	CPP  = "cpp"
-	JAVA = "java"
+	C    = "C"
+	CPP  = "Cpp"
+	JAVA = "Java"
 	// PYTHON2 = "py2"
-	PYTHON = "py3"
+	PYTHON = "Python3"
 )
 
 type config struct {
@@ -205,7 +205,6 @@ func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, e
 		argSlice = strings.Split(args, " ")
 	}
 
-	fmt.Println("PATH: ", constants.COMPILE_LOG_PATH)
 	return ExecArgs{
 		ExePath:      c.CompilerPath,
 		MaxCpuTime:   c.MaxCompileCpuTime,

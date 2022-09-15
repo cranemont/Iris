@@ -15,7 +15,7 @@ const PUBLISH_RESULT = "Publish"
 // const BASE_DIR = "./results"
 const BASE_DIR_DEV = "/go/src/github.com/cranemont/judge-manager"
 const RESULT_PATH_DEV = BASE_DIR_DEV + "/results"
-const LIBJUDGER_PATH_DEV = "/usr/lib/judger/libjudger.so"
+const LIBJUDGER_PATH_DEV = "/app/sandbox/libjudger.so"
 const JAVA_POLICY_PATH_DEV = BASE_DIR_DEV + "/policy/java_policy"
 
 // const BASE_DIR = "/go/src/workspace/results"
@@ -33,3 +33,7 @@ const (
 	RUN_LOG_PATH     = LOG_BASE_DIR + "/run/log.out"
 	COMPILE_OUT_FILE = "compile.out"
 )
+
+const MAX_MQ_CHANNEL = 10
+
+const TESTCASE_GET_TIMEOUT = 10

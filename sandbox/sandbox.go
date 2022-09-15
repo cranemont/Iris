@@ -47,7 +47,6 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		// FIXME: 이상태에서는 오류 제대로 반영 안됨
 		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return SandboxResult{}, fmt.Errorf("execution failed: %w: %s", err, stderr.String())
 	}
@@ -171,7 +170,7 @@ func makeExecArgs(data ExecArgs) []string {
 	if !isEmptyString(data.SeccompRuleName) {
 		argSlice = concatStringArgs(argSlice, format.SeccompRuleName, data.SeccompRuleName)
 	}
-	// TODO: MemoryLimitCheckOnly 추가
+
 	if data.MemoryLimitCheckOnly {
 		argSlice = concatIntArgs(argSlice, format.MemoryLimitCheckOnly, 1)
 	} else {
