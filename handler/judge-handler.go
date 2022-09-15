@@ -4,19 +4,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler/judge"
-	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
 var handler = "JudgeHandler"
 
-type JudgeResult struct {
+type JudgeResposne struct {
 	StatusCode Code                  `json:"statusCode"` // handler's status code
 	Data       judge.JudgeTaskResult `json:"data"`
+}
+
+type JudgeRequest struct {
+	Code        string
+	Language    string
+	ProblemId   int
+	TimeLimit   int
+	MemoryLimit int
 }
 
 type JudgeHandler struct {
@@ -34,9 +42,11 @@ func NewJudgeHandler(
 }
 
 // handle top layer logical flow
-func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err error) {
-	res := JudgeResult{StatusCode: INTERNAL_SERVER_ERROR, Data: judge.JudgeTaskResult{}}
-	task := judge.NewTask(request)
+func (h *JudgeHandler) Handle(req JudgeRequest) (result JudgeResposne, err error) {
+	res := JudgeResposne{StatusCode: INTERNAL_SERVER_ERROR, Data: judge.JudgeTaskResult{}}
+	task := judge.NewTask(
+		req.Code, req.Language, strconv.Itoa(req.ProblemId), req.TimeLimit, req.MemoryLimit,
+	)
 	task.StartedAt = time.Now()
 	dir := task.GetDir()
 
@@ -80,11 +90,11 @@ func (h *JudgeHandler) Handle(request rmq.JudgeRequest) (result JudgeResult, err
 	return res, nil
 }
 
-func (h *JudgeHandler) ResultToJson(result JudgeResult) string {
+func (h *JudgeHandler) ResultToJson(result JudgeResposne) []byte {
 	res, err := json.Marshal(result)
 	if err != nil {
 		// 적절한 err 처리
 		panic(err)
 	}
-	return string(res)
+	return res
 }
