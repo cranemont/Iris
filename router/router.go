@@ -5,9 +5,7 @@ import (
 	"log"
 
 	"github.com/cranemont/judge-manager/common/exception"
-	"github.com/cranemont/judge-manager/egress"
 	"github.com/cranemont/judge-manager/handler"
-	"github.com/cranemont/judge-manager/ingress/rmq"
 )
 
 // Judge Handler
@@ -24,16 +22,13 @@ type Router interface {
 // controller의 역할. OnJudge, OnRun, OnOutput등으로 여러 상황 구분
 type router struct {
 	judgeHandler *handler.JudgeHandler
-	publisher    egress.Publisher
 }
 
 func NewRouter(
 	judgeHandler *handler.JudgeHandler,
-	publisher egress.Publisher,
 ) *router {
 	return &router{
 		judgeHandler: judgeHandler,
-		publisher:    publisher,
 	}
 }
 
@@ -42,10 +37,10 @@ func NewRouter(
 // router, controller?
 func (r *router) Route(handle string, data interface{}) {
 	fmt.Println("From Router: ", handle)
-	var result string
+	var result []byte
 	switch handle {
 	case JUDGE:
-		judgeRequest, ok := data.(rmq.JudgeRequest)
+		judgeRequest, ok := data.(handler.JudgeRequest)
 		if !ok {
 			log.Printf("JUDGE: %s", exception.ErrTypeAssertionFail)
 			panic(nil)
@@ -67,6 +62,6 @@ func (r *router) Route(handle string, data interface{}) {
 	}
 
 	// publish result
-	r.publisher.Publish(result)
+	log.Printf("done!: %s", string(result))
 	// goroutine으로 하는게 성능향상이 있나?
 }

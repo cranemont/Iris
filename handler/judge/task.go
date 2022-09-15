@@ -6,7 +6,6 @@ import (
 
 	"github.com/cranemont/judge-manager/common/utils"
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/ingress/rmq"
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
@@ -64,15 +63,21 @@ type JudgeTask struct {
 	StartedAt   time.Time // for time check
 }
 
-func NewTask(s rmq.JudgeRequest) *JudgeTask {
+func NewTask(
+	code string,
+	language string,
+	problemId string,
+	timeLimit int,
+	memoryLimit int,
+) *JudgeTask {
 	// validate, initialize
 	return &JudgeTask{
 		dir:         utils.RandString(constants.DIR_NAME_LEN),
-		code:        s.Code,
-		language:    s.Language,
-		problemId:   s.ProblemId,
-		timeLimit:   s.TimeLimit,
-		memoryLimit: s.MemoryLimit,
+		code:        code,
+		language:    language,
+		problemId:   problemId,
+		timeLimit:   timeLimit,
+		memoryLimit: memoryLimit,
 		Result:      JudgeTaskResult{},
 	}
 }
