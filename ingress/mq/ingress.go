@@ -2,9 +2,9 @@ package mq
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cranemont/judge-manager/ingress/mq/rabbitmq"
+	"github.com/cranemont/judge-manager/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -17,14 +17,16 @@ type ingress struct {
 	producer   rabbitmq.Producer
 	controller RmqController
 	Done       chan error
+	logging    *logger.Logger
 }
 
 func NewIngress(
 	consumer rabbitmq.Consumer,
 	producer rabbitmq.Producer,
 	controller RmqController,
+	logging *logger.Logger,
 ) *ingress {
-	return &ingress{consumer, producer, controller, make(chan error)}
+	return &ingress{consumer, producer, controller, make(chan error), logging}
 }
 
 func (i *ingress) Activate() {
@@ -68,7 +70,7 @@ func (i *ingress) Activate() {
 	<-i.Done
 
 	if err := i.consumer.CleanUp(); err != nil {
-		log.Printf("Error during clean up: %s", err)
+		i.logging.Error(fmt.Sprintf("failed to clean up the consumer: %s", err))
 	}
 }
 
@@ -79,17 +81,15 @@ func (i *ingress) consume(messages <-chan amqp.Delivery, done chan error) {
 	defer clean()
 
 	for message := range messages {
-		log.Printf("Message: %s\n", message.Body)
 		go i.handle(message)
 	}
 }
 
 func (i *ingress) handle(message amqp.Delivery) {
-	fmt.Println(message.Type)
-	result := i.controller.Call(JUDGE, message.Body)
+	result := i.controller.Call(Judge, message.Body)
 
 	i.producer.Publish(result)
 	if err := message.Ack(false); err != nil {
-		log.Println("ingress: handle: %w", err)
+		i.logging.Error(fmt.Sprintf("failed to ack message: %s", err))
 	}
 }

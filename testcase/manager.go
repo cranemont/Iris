@@ -37,7 +37,6 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 		return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
 	}
 	if !isExist {
-		fmt.Println("Tc does not exist")
 		testcase, err := m.GetTestcaseFromServer(problemId)
 		if err != nil {
 			return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
@@ -57,7 +56,7 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 	}
 	data, err := m.cache.Get(problemId)
 	if err != nil {
-		return Testcase{}, fmt.Errorf("GetTestcase: failed to get from cache: %s: %w", problemId, err)
+		return Testcase{}, fmt.Errorf("GetTestcase: %s: %w", problemId, err)
 	}
 	testcase, err := m.UnMarshal(data)
 	if err != nil {
@@ -69,9 +68,9 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 func (m *manager) GetTestcaseFromServer(problemId string) (Testcase, error) {
 	req, err := http.NewRequest("GET", m.serverUrl+problemId, nil)
 	if err != nil {
-		return Testcase{}, fmt.Errorf("failed to create request: %w\n", err)
+		return Testcase{}, fmt.Errorf("failed to create http request: %w\n", err)
 	}
-	req.Header.Add("judge-server-token", m.token)
+	req.Header.Add(constants.TOKEN_HEADER, m.token)
 
 	client := &http.Client{Timeout: constants.TESTCASE_GET_TIMEOUT * time.Second}
 	resp, err := client.Do(req)
@@ -86,11 +85,6 @@ func (m *manager) GetTestcaseFromServer(problemId string) (Testcase, error) {
 
 	// 결과 출력
 	bytes, _ := ioutil.ReadAll(resp.Body)
-	// testcase, err := m.UnMarshal(bytes)
-	// if err != nil {
-	// 	return Testcase{}, fmt.Errorf("invalid testcase data: %w\n", err)
-	// }
-
 	testcaseElements := []Element{}
 	if err := json.Unmarshal(bytes, &testcaseElements); err != nil {
 		return Testcase{}, fmt.Errorf("invalid testcase data: %w\n", err)

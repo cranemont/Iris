@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/mq"
 	"github.com/cranemont/judge-manager/ingress/mq/rabbitmq"
+	"github.com/cranemont/judge-manager/logger"
 	"github.com/cranemont/judge-manager/sandbox"
 	"github.com/cranemont/judge-manager/testcase"
 )
@@ -35,6 +35,8 @@ func init() {
 
 func main() {
 
+	zapLogger := logger.NewLogger(logger.Console, logger.Env(os.Getenv("APP_ENV")))
+
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
 	testcaseManager := testcase.NewManager(cache)
@@ -42,7 +44,7 @@ func main() {
 	fileManager := file.NewFileManager()
 	langConfig := sandbox.NewLangConfig(fileManager)
 
-	sb := sandbox.NewSandbox()
+	sb := sandbox.NewSandbox(zapLogger)
 	compiler := sandbox.NewCompiler(sb, langConfig, fileManager)
 	runner := sandbox.NewRunner(sb, langConfig, fileManager)
 
@@ -50,13 +52,14 @@ func main() {
 		compiler,
 		runner,
 		testcaseManager,
+		zapLogger,
 	)
 
-	judgeHandler := handler.NewJudgeHandler(langConfig, fileManager, judger)
+	judgeHandler := handler.NewJudgeHandler(langConfig, fileManager, judger, zapLogger)
 	// specialJudger
 	// customTestcaseRunner 만들어서 같이 넣어주기
 
-	rmqController := mq.NewRmqController(judgeHandler)
+	rmqController := mq.NewRmqController(judgeHandler, zapLogger)
 
 	uri := "amqp://" +
 		os.Getenv("RABBITMQ_DEFAULT_USER") + ":" +
@@ -70,8 +73,8 @@ func main() {
 
 	producer := rabbitmq.NewProducer()
 
-	fmt.Println("running ingress...")
-	mq.NewIngress(consumer, producer, rmqController).Activate()
+	zapLogger.Info("Server started")
+	mq.NewIngress(consumer, producer, rmqController, zapLogger).Activate()
 	select {}
 
 	// for debug

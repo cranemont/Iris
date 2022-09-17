@@ -2,7 +2,7 @@ package file
 
 import (
 	"bytes"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/cranemont/judge-manager/constants"
@@ -32,24 +32,21 @@ func NewFileManager() *fileManager {
 
 func (f *fileManager) CreateDir(dir string) error {
 	if err := os.Mkdir(f.baseDir+"/"+dir, os.FileMode(constants.BASE_FILE_MODE)); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("failed to create dir: %s: %w", dir, err)
 	}
 	return nil
 }
 
 func (f *fileManager) RemoveDir(dir string) error {
 	if err := os.RemoveAll(f.baseDir + "/" + dir); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("failed to remove dir: %s: %w", dir, err)
 	}
 	return nil
 }
 
 func (f *fileManager) CreateFile(path string, data string) error {
 	if err := os.WriteFile(path, []byte(data), constants.BASE_FILE_MODE); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("failed to create file: %s: %w", path, err)
 	}
 	return nil
 }
@@ -57,8 +54,7 @@ func (f *fileManager) CreateFile(path string, data string) error {
 func (f *fileManager) ReadFile(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("failed to read file: %s: %w", path, err)
 	}
 	return data, nil
 }

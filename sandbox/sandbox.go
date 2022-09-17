@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
 
 	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/logger"
 )
 
 type Sandbox interface {
@@ -18,10 +18,11 @@ type Sandbox interface {
 
 type sandbox struct {
 	binaryPath string
+	logging    *logger.Logger
 }
 
-func NewSandbox() *sandbox {
-	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV}
+func NewSandbox(logging *logger.Logger) *sandbox {
+	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV, logging: logging}
 	if os.Getenv("APP_ENV") == "production" {
 		sandbox.binaryPath = constants.LIBJUDGER_PATH_PROD
 	}
@@ -47,14 +48,16 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		log.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return SandboxResult{}, fmt.Errorf("execution failed: %w: %s", err, stderr.String())
+		return SandboxResult{}, fmt.Errorf("sandbox execution failed: %w: %s", err, stderr.String())
 	}
 
 	res := SandboxResult{}
-
-	json.Unmarshal(stdout.Bytes(), &res)
-	fmt.Println("Result: ", stdout.String()) // on debug
+	err = json.Unmarshal(stdout.Bytes(), &res)
+	if err != nil {
+		return SandboxResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
+	}
+	s.logging.Debug(fmt.Sprintf("sandbox result: %s", stdout.String()))
+	// fmt.Printf("sandbox result: %s", stdout.String())
 
 	return res, nil
 }
@@ -88,100 +91,98 @@ type ExecArgs struct {
 	Gid                  int
 }
 
-type formatString struct {
-	MaxCpuTime           string
-	MaxRealTime          string
-	MaxMemory            string
-	MaxStackSize         string
-	MaxOutputSize        string
-	ExePath              string
-	InputPath            string
-	OutputPath           string
-	ErrorPath            string
-	LogPath              string
-	Args                 string
-	Env                  string
-	SeccompRuleName      string
-	MemoryLimitCheckOnly string
-	Uid                  string
-	Gid                  string
-}
+// type formatString struct {
+// 	MaxCpuTime           string
+// 	MaxRealTime          string
+// 	MaxMemory            string
+// 	MaxStackSize         string
+// 	MaxOutputSize        string
+// 	ExePath              string
+// 	InputPath            string
+// 	OutputPath           string
+// 	ErrorPath            string
+// 	LogPath              string
+// 	Args                 string
+// 	Env                  string
+// 	SeccompRuleName      string
+// 	MemoryLimitCheckOnly string
+// 	Uid                  string
+// 	Gid                  string
+// }
 
-var format = formatString{
-	MaxCpuTime:           "--max_cpu_time=",
-	MaxRealTime:          "--max_real_time=",
-	MaxMemory:            "--max_memory=",
-	MaxStackSize:         "--max_stack=",
-	MaxOutputSize:        "--max_output_size=",
-	ExePath:              "--exe_path=",
-	InputPath:            "--input_path=",
-	OutputPath:           "--output_path=",
-	ErrorPath:            "--error_path=",
-	LogPath:              "--log_path=",
-	Args:                 "--args=",
-	Env:                  "--env=",
-	SeccompRuleName:      "--seccomp_rule_name=",
-	MemoryLimitCheckOnly: "--memory_limit_check_only=",
-	Uid:                  "--uid=",
-	Gid:                  "--gid=",
-}
+const (
+	MaxCpuTime           = "--max_cpu_time="
+	MaxRealTime          = "--max_real_time="
+	MaxMemory            = "--max_memory="
+	MaxStackSize         = "--max_stack="
+	MaxOutputSize        = "--max_output_size="
+	ExePath              = "--exe_path="
+	InputPath            = "--input_path="
+	OutputPath           = "--output_path="
+	ErrorPath            = "--error_path="
+	LogPath              = "--log_path="
+	Args                 = "--args="
+	Env                  = "--env="
+	SeccompRuleName      = "--seccomp_rule_name="
+	MemoryLimitCheckOnly = "--memory_limit_check_only="
+	Uid                  = "--uid="
+	Gid                  = "--gid="
+)
 
 // methods below is for the libjudger specific
 func makeExecArgs(data ExecArgs) []string {
 	argSlice := []string{}
 	if !isEmptyInt(data.MaxCpuTime) {
-		argSlice = concatIntArgs(argSlice, format.MaxCpuTime, data.MaxCpuTime)
+		argSlice = concatIntArgs(argSlice, MaxCpuTime, data.MaxCpuTime)
 	}
 	if !isEmptyInt(data.MaxRealTime) {
-		argSlice = concatIntArgs(argSlice, format.MaxRealTime, data.MaxRealTime)
+		argSlice = concatIntArgs(argSlice, MaxRealTime, data.MaxRealTime)
 	}
 	if !isEmptyInt(data.MaxMemory) {
-		argSlice = concatIntArgs(argSlice, format.MaxMemory, data.MaxMemory)
+		argSlice = concatIntArgs(argSlice, MaxMemory, data.MaxMemory)
 	}
 	if !isEmptyInt(data.MaxStackSize) {
-		argSlice = concatIntArgs(argSlice, format.MaxStackSize, data.MaxStackSize)
+		argSlice = concatIntArgs(argSlice, MaxStackSize, data.MaxStackSize)
 	}
 	if !isEmptyInt(data.MaxOutputSize) {
-		argSlice = concatIntArgs(argSlice, format.MaxOutputSize, data.MaxOutputSize)
+		argSlice = concatIntArgs(argSlice, MaxOutputSize, data.MaxOutputSize)
 	}
 	if data.Uid >= 0 && data.Uid < 65534 {
-		// FIXME: set default uid
-		argSlice = concatIntArgs(argSlice, format.Uid, data.Uid)
+		argSlice = concatIntArgs(argSlice, Uid, data.Uid)
 	}
 	if data.Gid >= 0 && data.Gid < 65534 {
-		// FIXME: set default Gid
-		argSlice = concatIntArgs(argSlice, format.Gid, data.Gid)
+		argSlice = concatIntArgs(argSlice, Gid, data.Gid)
 	}
 	if !isEmptyString(data.ExePath) {
-		argSlice = concatStringArgs(argSlice, format.ExePath, data.ExePath)
+		argSlice = concatStringArgs(argSlice, ExePath, data.ExePath)
 	}
 	if !isEmptyString(data.InputPath) {
-		argSlice = concatStringArgs(argSlice, format.InputPath, data.InputPath)
+		argSlice = concatStringArgs(argSlice, InputPath, data.InputPath)
 	}
 	if !isEmptyString(data.OutputPath) {
-		argSlice = concatStringArgs(argSlice, format.OutputPath, data.OutputPath)
+		argSlice = concatStringArgs(argSlice, OutputPath, data.OutputPath)
 	}
 	if !isEmptyString(data.ErrorPath) {
-		argSlice = concatStringArgs(argSlice, format.ErrorPath, data.ErrorPath)
+		argSlice = concatStringArgs(argSlice, ErrorPath, data.ErrorPath)
 	}
 	if !isEmptyString(data.LogPath) {
-		argSlice = concatStringArgs(argSlice, format.LogPath, data.LogPath)
+		argSlice = concatStringArgs(argSlice, LogPath, data.LogPath)
 	}
 	if !isEmptyString(data.SeccompRuleName) {
-		argSlice = concatStringArgs(argSlice, format.SeccompRuleName, data.SeccompRuleName)
+		argSlice = concatStringArgs(argSlice, SeccompRuleName, data.SeccompRuleName)
 	}
 
 	if data.MemoryLimitCheckOnly {
-		argSlice = concatIntArgs(argSlice, format.MemoryLimitCheckOnly, 1)
+		argSlice = concatIntArgs(argSlice, MemoryLimitCheckOnly, 1)
 	} else {
-		argSlice = concatIntArgs(argSlice, format.MemoryLimitCheckOnly, 0)
+		argSlice = concatIntArgs(argSlice, MemoryLimitCheckOnly, 0)
 	}
 
 	if !isEmptySlice(data.Args) {
-		argSlice = concatSliceArgs(argSlice, format.Args, data.Args)
+		argSlice = concatSliceArgs(argSlice, Args, data.Args)
 	}
 	if !isEmptySlice(data.Env) {
-		argSlice = concatSliceArgs(argSlice, format.Env, data.Env)
+		argSlice = concatSliceArgs(argSlice, Env, data.Env)
 	}
 	return argSlice
 }

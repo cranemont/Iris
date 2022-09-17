@@ -9,12 +9,23 @@ import (
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
-// for debug
-type Code string
+type Code int
 
-// type Code int
+// const ( // for debug
+// 	ACCEPTED                 = "accepted"
+// 	WRONG_ANSWER             = "wrong answer"
+// 	CPU_TIME_LIMIT_EXCEEDED  = "cpu time exceeded"
+// 	REAL_TIME_LIMIT_EXCEEDED = "real time exceeded"
+// 	MEMORY_LIMIT_EXCEEDED    = "memory exceeded"
+// 	RUNTIME_ERROR            = "runtime error"
+// 	SYSTEM_ERROR             = "system error"
+// )
 
-// StatusCode
+type JudgeTaskResult struct {
+	CompileErr string      `json:"compileError"`
+	Run        []RunResult `json:"runResult"`
+}
+
 type RunResult struct {
 	ResultCode Code `json:"resultCode"` // int for prod
 	CpuTime    int  `json:"cpuTime"`
@@ -26,32 +37,16 @@ type RunResult struct {
 }
 
 // RunResult Result Code
-// const (
-// 	ACCEPTED = 0 + iota
-// 	WRONG_ANSWER
-// 	CPU_TLE
-// 	REAL_TLE
-// 	MEMORY_LIMIT_EXCEEDED
-// 	RUNTIME_ERROR
-// 	SYSTEM_ERROR
-// )
-
-const ( // for debug
-	ACCEPTED                 = "accepted"
-	WRONG_ANSWER             = "wrong answer"
-	CPU_TIME_LIMIT_EXCEEDED  = "cpu time exceeded"
-	REAL_TIME_LIMIT_EXCEEDED = "real time exceeded"
-	MEMORY_LIMIT_EXCEEDED    = "memory exceeded"
-	RUNTIME_ERROR            = "runtime error"
-	SYSTEM_ERROR             = "system error"
+const (
+	ACCEPTED = 0 + iota
+	WRONG_ANSWER
+	CPU_TIME_LIMIT_EXCEEDED
+	REAL_TIME_LIMIT_EXCEEDED
+	MEMORY_LIMIT_EXCEEDED
+	RUNTIME_ERROR
+	SYSTEM_ERROR
 )
 
-type JudgeTaskResult struct {
-	CompileErr string      `json:"compileError"`
-	Run        []RunResult `json:"runResult"`
-}
-
-// task interface, package? spj task, run task...
 type JudgeTask struct {
 	dir         string
 	code        string
@@ -79,6 +74,7 @@ func NewTask(
 		timeLimit:   timeLimit,
 		memoryLimit: memoryLimit,
 		Result:      JudgeTaskResult{},
+		StartedAt:   time.Now(),
 	}
 }
 

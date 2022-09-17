@@ -24,10 +24,10 @@ type Handler interface {
 	Handle(data interface{}) error
 }
 
-func DefaultResult() string {
-	res, err := json.Marshal(Result{StatusCode: INVALID_MODE})
+func DefaultResult() []byte {
+	res, err := json.Marshal(Result{StatusCode: INTERNAL_SERVER_ERROR})
 	if err != nil {
 		panic(err)
 	}
-	return string(res)
+	return res
 }

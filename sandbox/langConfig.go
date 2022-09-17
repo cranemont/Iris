@@ -165,7 +165,6 @@ func (l *langConfig) MakeSrcPath(dir string, language string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(l.file)
 	return l.file.MakeFilePath(dir, c.SrcName).String(), nil
 }
 

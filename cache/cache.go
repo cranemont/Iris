@@ -35,14 +35,12 @@ func (c *cache) Get(key string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	} else if err == redis.Nil {
-		fmt.Println("key does not exist")
 		return nil, fmt.Errorf("key does not exist")
 	}
 	return val, nil
 }
 
 func (c *cache) Set(key string, value interface{}) error {
-	fmt.Println("set cache: ", key)
 	err := c.client.Set(c.ctx, key, value, 0).Err()
 	if err != nil {
 		return fmt.Errorf("failed to set key: %w", err)

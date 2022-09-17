@@ -43,17 +43,11 @@ func NewRunner(sandbox Sandbox, langConfig LangConfig, file file.FileManager) *r
 }
 
 func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
-	fmt.Println("RUN! from runner")
 	dir := dto.Dir
 	order := dto.Order
 	language := dto.Language
 	timeLimit := dto.TimeLimit
 	memoryLimit := dto.MemoryLimit
-
-	// languageConfig, err := r.config.GetConfig(language)
-	// if err != nil {
-	// 	return RunResult{}, err
-	// }
 
 	execArgs, err := r.langConfig.ToRunExecArgs(
 		dir,
@@ -90,14 +84,12 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	errorPath := r.file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 
 	if res.ResultCode != SUCCESS {
-		// TODO: 함수로 분리
 		data, err := r.file.ReadFile(errorPath)
 		if err != nil {
 			return RunResult{}, fmt.Errorf("runner: failed to read error file: %w", err)
 		}
 		runResult.ResultCode = res.ResultCode
 		runResult.ErrOutput = string(data)
-		fmt.Println(res) // log?
 	}
 
 	data, err := r.file.ReadFile(outputPath)
@@ -106,6 +98,5 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 	}
 	runResult.Output = data
 
-	// fmt.Println(res)
 	return runResult, nil
 }

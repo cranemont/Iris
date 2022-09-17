@@ -2,25 +2,11 @@ package grade
 
 import (
 	"bytes"
-	"fmt"
 	"unicode"
 )
 
-// type Grader interface {
-// 	Grade(answer []byte, output []byte) (bool, error)
-// }
-
-// type grader struct {
-// }
-
-// func NewGrader() *grader {
-// 	return &grader{}
-// }
-
-func Grade(answer []byte, output []byte) (bool, error) {
-	fmt.Println("grading....")
-	// fmt.Printf("answer: %soutput: %s", string(answer), string(output))
-	return bytes.Equal(TrimWhitespaceBeforeNewline(answer), TrimWhitespaceBeforeNewline(output)), nil
+func Grade(answer []byte, output []byte) bool {
+	return bytes.Equal(TrimWhitespaceBeforeNewline(answer), TrimWhitespaceBeforeNewline(output))
 }
 
 func TrimWhitespaceBeforeNewline(a []byte) []byte {

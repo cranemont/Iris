@@ -34,9 +34,7 @@ func NewCompiler(sandbox Sandbox, langConfig LangConfig, file file.FileManager) 
 }
 
 func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
-	fmt.Println("Compile! from Compiler")
 	dir, language := dto.Dir, dto.Language
-	fmt.Println(dir, language)
 
 	execArgs, err := c.langConfig.ToCompileExecArgs(dir, language)
 	if err != nil {
@@ -60,11 +58,9 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}
-		// TODO: res.ErrorCode를 포함한 전체 output을 로그에 남기기
 		compileResult.ResultCode = res.ResultCode
 		compileResult.ExecResult = string(sandboxResult)
 		compileResult.ErrOutput = string(data)
-		fmt.Println("compile failed!: ", compileResult)
 		if res.ResultCode == SYSTEM_ERROR {
 			return CompileResult{}, fmt.Errorf("system error: %v", compileResult)
 		}
