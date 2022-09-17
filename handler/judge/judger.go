@@ -105,10 +105,8 @@ func (j *Judger) Judge(submissionId int, task *JudgeTask) error {
 		} else {
 			task.SetResultCode(i, WRONG_ANSWER)
 		}
-
-		// update RunResultCode on every iteration
-		task.SetJudgeResultCode(i)
 	}
+	task.SetJudgeResultCode()
 	return nil
 }
 

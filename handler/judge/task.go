@@ -24,7 +24,7 @@ type JudgeTaskResult struct {
 	CompileErr      string      `json:"compileError"`
 	TotalTestcase   int         `json:"totalTestcase"`
 	AcceptedNum     int         `json:"acceptedNum"`
-	JudgeResultCode int         `json:"judgeResultCode"` // first failed resultCode if some testcase failed
+	JudgeResultCode int         `json:"judgeResultCode"` // 에러가 있다면 그중 첫번째, 다맞으면 Accepted
 	Run             []RunResult `json:"runResult"`
 }
 
@@ -104,11 +104,15 @@ func (t *JudgeTask) InitResult(submissionId int, testcaseNum int) {
 	t.Result.AcceptedNum = 0
 }
 
-func (t *JudgeTask) SetJudgeResultCode(idx int) {
-	result := t.Result.Run[idx].ResultCode
-	t.Result.JudgeResultCode = result
-	if result == ACCEPTED {
-		t.Result.AcceptedNum += 1
+func (t *JudgeTask) SetJudgeResultCode() {
+	firstErr := false
+	for _, res := range t.Result.Run {
+		if res.ResultCode == ACCEPTED {
+			t.Result.AcceptedNum += 1
+		} else if !firstErr {
+			t.Result.JudgeResultCode = res.ResultCode
+			firstErr = true
+		}
 	}
 }
 
