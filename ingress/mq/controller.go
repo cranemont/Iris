@@ -38,7 +38,7 @@ func (r *rmqController) Call(handle string, data interface{}) []byte {
 		req := handler.JudgeRequest{}
 		err := json.Unmarshal(data.([]byte), &req)
 		if err != nil {
-			r.logging.Error(fmt.Sprintf("judge: failed to unmarshal request data: %s", err))
+			r.logging.Error(fmt.Sprintf("judge: invalid request data: %s", err))
 			break
 		}
 
