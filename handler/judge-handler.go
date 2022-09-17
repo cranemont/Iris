@@ -16,8 +16,8 @@ import (
 var handler = "JudgeHandler"
 
 type JudgeResposne struct {
-	StatusCode Code                  `json:"statusCode"` // handler's status code
-	Data       judge.JudgeTaskResult `json:"data"`
+	ServerStatusCode Code                  `json:"serverStatusCode"` // handler's status code
+	Data             judge.JudgeTaskResult `json:"data"`
 }
 
 type JudgeRequest struct {
@@ -46,7 +46,7 @@ func NewJudgeHandler(
 
 // handle top layer logical flow
 func (j *JudgeHandler) Handle(req JudgeRequest) (result JudgeResposne, err error) {
-	res := JudgeResposne{StatusCode: INTERNAL_SERVER_ERROR, Data: judge.JudgeTaskResult{}}
+	res := JudgeResposne{ServerStatusCode: INTERNAL_SERVER_ERROR, Data: judge.JudgeTaskResult{}}
 	task := judge.NewTask(
 		req.Code, req.Language, strconv.Itoa(req.ProblemId), req.TimeLimit, req.MemoryLimit,
 	)
@@ -73,17 +73,17 @@ func (j *JudgeHandler) Handle(req JudgeRequest) (result JudgeResposne, err error
 	err = j.judger.Judge(task)
 	if err != nil {
 		if errors.Is(err, judge.ErrTestcaseGet) {
-			res.StatusCode = TESTCASE_GET_FAILED
+			res.ServerStatusCode = TESTCASE_GET_FAILED
 		} else if errors.Is(err, judge.ErrCompile) {
-			res.StatusCode = COMPILE_ERROR
+			res.ServerStatusCode = COMPILE_ERROR
 			res.Data = task.Result
 			return res, nil
 		} else {
-			res.StatusCode = INTERNAL_SERVER_ERROR
+			res.ServerStatusCode = INTERNAL_SERVER_ERROR
 		} // run, grade 등 추가
 		return res, fmt.Errorf("handler: judge failed: %w", err)
 	} else {
-		res.StatusCode = SUCCESS
+		res.ServerStatusCode = SUCCESS
 	}
 
 	res.Data = task.Result

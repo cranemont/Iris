@@ -9,8 +9,6 @@ import (
 	"github.com/cranemont/judge-manager/sandbox"
 )
 
-type Code int
-
 // const ( // for debug
 // 	ACCEPTED                 = "accepted"
 // 	WRONG_ANSWER             = "wrong answer"
@@ -22,21 +20,25 @@ type Code int
 // )
 
 type JudgeTaskResult struct {
-	CompileErr string      `json:"compileError"`
-	Run        []RunResult `json:"runResult"`
+	CompileErr      string      `json:"compileError"`
+	TotalTestcase   int         `json:"totalTestcase"`
+	AcceptedNum     int         `json:"acceptedNum"`
+	JudgeResultCode int         `json:"judgeResultCode"` // first failed resultCode if some testcase failed
+	Run             []RunResult `json:"runResult"`
 }
 
 type RunResult struct {
-	ResultCode Code `json:"resultCode"` // int for prod
-	CpuTime    int  `json:"cpuTime"`
-	RealTime   int  `json:"realTime"`
-	Memory     int  `json:"memory"`
-	Signal     int  `json:"signal"`
-	ErrorCode  int  `json:"exitCode"`
-	ExitCode   int  `json:"errorCode"`
+	TestcaseId string `json:"testcaseId"`
+	ResultCode int    `json:"resultCode"` // int for prod
+	CpuTime    int    `json:"cpuTime"`
+	RealTime   int    `json:"realTime"`
+	Memory     int    `json:"memory"`
+	Signal     int    `json:"signal"`
+	ErrorCode  int    `json:"exitCode"`
+	ExitCode   int    `json:"errorCode"`
 }
 
-// RunResult Result Code
+// RunResult ResultCode
 const (
 	ACCEPTED = 0 + iota
 	WRONG_ANSWER
@@ -96,36 +98,47 @@ func (t *JudgeTask) CompileError(output string) {
 
 func (t *JudgeTask) MakeRunResult(testcaseNum int) {
 	t.Result.Run = make([]RunResult, testcaseNum)
+	t.Result.TotalTestcase = testcaseNum
+	t.Result.AcceptedNum = 0
 }
 
-func (t *JudgeTask) SetRunResultCode(order int, stateCode Code) {
-	t.Result.Run[order].ResultCode = stateCode
+func (t *JudgeTask) SetJudgeResultCode(idx int) {
+	result := t.Result.Run[idx].ResultCode
+	t.Result.JudgeResultCode = result
+	if result == ACCEPTED {
+		t.Result.AcceptedNum += 1
+	}
 }
 
-func (t *JudgeTask) SetRunResult(order int, runResult sandbox.RunResult) {
+func (t *JudgeTask) SetResultCode(idx int, stateCode int) {
+	t.Result.Run[idx].ResultCode = stateCode
+}
+
+func (t *JudgeTask) SetResult(idx int, testcaseId string, runResult sandbox.RunResult) {
 	systemErr := false
 	if runResult.ResultCode != sandbox.RUN_SUCCESS {
 		switch runResult.ResultCode {
 		case sandbox.CPU_TIME_LIMIT_EXCEEDED:
-			t.SetRunResultCode(order, CPU_TIME_LIMIT_EXCEEDED)
+			t.SetResultCode(idx, CPU_TIME_LIMIT_EXCEEDED)
 		case sandbox.REAL_TIME_LIMIT_EXCEEDED:
-			t.SetRunResultCode(order, REAL_TIME_LIMIT_EXCEEDED)
+			t.SetResultCode(idx, REAL_TIME_LIMIT_EXCEEDED)
 		case sandbox.MEMORY_LIMIT_EXCEEDED:
-			t.SetRunResultCode(order, MEMORY_LIMIT_EXCEEDED)
+			t.SetResultCode(idx, MEMORY_LIMIT_EXCEEDED)
 		case sandbox.RUNTIME_ERROR:
-			t.SetRunResultCode(order, RUNTIME_ERROR)
+			t.SetResultCode(idx, RUNTIME_ERROR)
 		default:
-			t.SetRunResultCode(order, SYSTEM_ERROR)
+			t.SetResultCode(idx, SYSTEM_ERROR)
 			systemErr = true
 		}
 	}
 	if !systemErr {
-		t.Result.Run[order].CpuTime = runResult.CpuTime
-		t.Result.Run[order].RealTime = runResult.RealTime
-		t.Result.Run[order].Memory = runResult.Memory
-		t.Result.Run[order].Signal = runResult.Signal
-		t.Result.Run[order].ErrorCode = runResult.ErrorCode
-		t.Result.Run[order].ExitCode = runResult.ExitCode
+		t.Result.Run[idx].TestcaseId = testcaseId
+		t.Result.Run[idx].CpuTime = runResult.CpuTime
+		t.Result.Run[idx].RealTime = runResult.RealTime
+		t.Result.Run[idx].Memory = runResult.Memory
+		t.Result.Run[idx].Signal = runResult.Signal
+		t.Result.Run[idx].ErrorCode = runResult.ErrorCode
+		t.Result.Run[idx].ExitCode = runResult.ExitCode
 	}
 	// system error가 아니면 run result task에 반영(Resource usage)
 }
