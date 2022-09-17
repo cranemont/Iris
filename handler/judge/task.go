@@ -20,6 +20,7 @@ import (
 // )
 
 type JudgeTaskResult struct {
+	SubmissionId    int         `json:"submissionId"`
 	CompileErr      string      `json:"compileError"`
 	TotalTestcase   int         `json:"totalTestcase"`
 	AcceptedNum     int         `json:"acceptedNum"`
@@ -96,7 +97,8 @@ func (t *JudgeTask) CompileError(output string) {
 	t.Result.CompileErr = output
 }
 
-func (t *JudgeTask) MakeRunResult(testcaseNum int) {
+func (t *JudgeTask) InitResult(submissionId int, testcaseNum int) {
+	t.Result.SubmissionId = submissionId
 	t.Result.Run = make([]RunResult, testcaseNum)
 	t.Result.TotalTestcase = testcaseNum
 	t.Result.AcceptedNum = 0

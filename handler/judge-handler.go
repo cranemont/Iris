@@ -21,11 +21,12 @@ type JudgeResposne struct {
 }
 
 type JudgeRequest struct {
-	Code        string `json:"code"`
-	Language    string `json:"language"`
-	ProblemId   int    `json:"problemId"`
-	TimeLimit   int    `json:"timeLimit"`
-	MemoryLimit int    `json:"memoryLimit"`
+	SubmissionId int    `json:"submissionId"`
+	Code         string `json:"code"`
+	Language     string `json:"language"`
+	ProblemId    int    `json:"problemId"`
+	TimeLimit    int    `json:"timeLimit"`
+	MemoryLimit  int    `json:"memoryLimit"`
 }
 
 type JudgeHandler struct {
@@ -70,7 +71,7 @@ func (j *JudgeHandler) Handle(req JudgeRequest) (result JudgeResposne, err error
 		return res, fmt.Errorf("handler: %s: failed to create src file: %w", handler, err)
 	}
 
-	err = j.judger.Judge(task)
+	err = j.judger.Judge(req.SubmissionId, task)
 	if err != nil {
 		if errors.Is(err, judge.ErrTestcaseGet) {
 			res.ServerStatusCode = TESTCASE_GET_FAILED

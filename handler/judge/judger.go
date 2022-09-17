@@ -36,7 +36,7 @@ func NewJudger(
 	}
 }
 
-func (j *Judger) Judge(task *JudgeTask) error {
+func (j *Judger) Judge(submissionId int, task *JudgeTask) error {
 	j.logging.Debug("hander/judge: Judge - compile and get testcase")
 	testcaseOutCh := make(chan result.ChResult)
 	go j.getTestcase(testcaseOutCh, task.problemId)
@@ -76,7 +76,7 @@ func (j *Judger) Judge(task *JudgeTask) error {
 	}
 
 	tcNum := len(tc.Data)
-	task.MakeRunResult(tcNum)
+	task.InitResult(submissionId, tcNum)
 
 	j.logging.Debug("hander/judge: Judge - run and grade")
 	for i := 0; i < tcNum; i++ {
