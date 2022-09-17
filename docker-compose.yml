@@ -1,7 +1,7 @@
 version: "3"
 services:
   judge-manager:
-    container_name: judge-manager
+    container_name: judge-manager-test
     image: coc0a25/judge-manager:dev
     stdin_open: true
     tty: true
@@ -10,24 +10,24 @@ services:
     environment:
       - TESTCASE_SERVER_URL=http://host.docker.internal:3000/testcase/problem/
       - TESTCASE_SERVER_AUTH_TOKEN=AUTH_TOKEN
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-test
       - REDIS_PORT=6379
       - RABBITMQ_DEFAULT_USER=skku
       - RABBITMQ_DEFAULT_PASS=1234
-      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_HOST=rabbitmq-test
       - RABBITMQ_PORT=5672
       - APP_ENV=dev
     cpuset: "0,1,2"
 
   redis:
-    container_name: redis
+    container_name: redis-test
     image: redis:alpine
     ports: 
       - 11000:6379
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-test
     ports:
       - 12000:5672
       - 13000:15672
