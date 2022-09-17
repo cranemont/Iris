@@ -5,6 +5,7 @@ import (
 )
 
 type Element struct {
+	Id  string `json:"id"`
 	In  string `json:"input"`
 	Out string `json:"output"`
 }

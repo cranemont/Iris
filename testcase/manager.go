@@ -44,8 +44,8 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 		// temp data
 		// testcase := Testcase{
 		// 	[]Element{
-		// 		{In: "1\n", Out: "1\n"},
-		// 		{In: "22\n", Out: "22\n"},
+		// 		{Id: "problem:1:1", In: "1\n", Out: "1\n"},
+		// 		{Id: "problem:1:2", In: "22\n", Out: "222\n"},
 		// 	},
 		// }
 		err = m.cache.Set(problemId, testcase)

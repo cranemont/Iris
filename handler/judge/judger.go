@@ -88,10 +88,10 @@ func (j *Judger) Judge(task *JudgeTask) error {
 			MemoryLimit: task.memoryLimit,
 		}, []byte(tc.Data[i].In))
 		if err != nil {
-			task.SetRunResultCode(i, SYSTEM_ERROR)
+			task.SetResultCode(i, SYSTEM_ERROR)
 			continue
 		}
-		task.SetRunResult(i, res)
+		task.SetResult(i, tc.Data[i].Id, res)
 		if res.ResultCode != sandbox.RUN_SUCCESS {
 			continue
 		}
@@ -101,10 +101,13 @@ func (j *Judger) Judge(task *JudgeTask) error {
 		// st := time.Now()
 		accepted := grade.Grade([]byte(tc.Data[i].Out), res.Output)
 		if accepted {
-			task.SetRunResultCode(i, ACCEPTED)
+			task.SetResultCode(i, ACCEPTED)
 		} else {
-			task.SetRunResultCode(i, WRONG_ANSWER)
+			task.SetResultCode(i, WRONG_ANSWER)
 		}
+
+		// update RunResultCode on every iteration
+		task.SetJudgeResultCode(i)
 	}
 	return nil
 }
