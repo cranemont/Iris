@@ -9,12 +9,10 @@ import (
 )
 
 type Consumer interface {
-	ChannelOpen(name string) error
-	ExchangeDeclare(channelName, name string, typeStr string) error
-	QueueDeclare(channelName, name string) error
-	QueueBind(channelName, queueName string, bindingKey string, exchangeName string) error
+	OpenChannel(name string) error
 	Subscribe(channelName string, queueName string) (<-chan amqp.Delivery, error)
 	CleanUp() error
+	// Ack(channelName string, tag uint64) error
 }
 
 type consumer struct {
@@ -42,7 +40,7 @@ func NewConsumer(amqpURI string, ctag string, connectionName string) (*consumer,
 	}, nil
 }
 
-func (c *consumer) ChannelOpen(name string) error {
+func (c *consumer) OpenChannel(name string) error {
 	if _, exist := c.channels[name]; exist {
 		return fmt.Errorf("consumer: channel open failed: channel name already exists")
 	}
@@ -51,65 +49,15 @@ func (c *consumer) ChannelOpen(name string) error {
 	if err != nil {
 		return fmt.Errorf("consumer: channel open failed: %w", err)
 	}
+	// Set prefetchCount for consume channel
+	if err = channel.Qos(
+		1,     // prefetchCount
+		0,     // prefetchSize
+		false, // global
+	); err != nil {
+		return fmt.Errorf("qos set: %s", err)
+	}
 	c.channels[name] = channel
-	return nil
-}
-
-func (c *consumer) ExchangeDeclare(channelName string, exchangeName string, typeName string) error {
-	channel, exist := c.channels[channelName]
-	if !exist {
-		return fmt.Errorf("consumer: ExchangeDeclare: channel does not exist")
-	}
-
-	if err := channel.ExchangeDeclare(
-		exchangeName, // name of the exchange
-		typeName,     // type
-		true,         // durable
-		false,        // delete when complete
-		false,        // internal(deprecated)
-		false,        // noWait
-		nil,          // arguments
-	); err != nil {
-		return fmt.Errorf("Exchange Declare: %s", err)
-	}
-	return nil
-}
-
-func (c *consumer) QueueDeclare(channelName string, queueName string) error {
-	channel, exist := c.channels[channelName]
-	if !exist {
-		return fmt.Errorf("consumer: QueueDeclare: channel does not exist")
-	}
-
-	_, err := channel.QueueDeclare(
-		queueName, // name of the queue
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // noWait
-		nil,       // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("Queue Declare: %s", err)
-	}
-	return nil
-}
-
-func (c *consumer) QueueBind(channelName string, queueName string, bindingKey string, exchangeName string) error {
-	channel, exist := c.channels[channelName]
-	if !exist {
-		return fmt.Errorf("consumer: QueueBind: channel does not exist")
-	}
-
-	if err := channel.QueueBind(
-		queueName,    // name of the queue
-		bindingKey,   // bindingKey
-		exchangeName, // sourceExchange
-		false,        // noWait
-		nil,          // arguments
-	); err != nil {
-		return fmt.Errorf("Queue Bind: %s", err)
-	}
 	return nil
 }
 
@@ -131,7 +79,7 @@ func (c *consumer) Subscribe(channelName string, queueName string) (<-chan amqp.
 		nil,       // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Queue Consume: %s", err)
+		return nil, fmt.Errorf("queue consume: %s", err)
 	}
 	return messages, nil
 }
@@ -151,6 +99,14 @@ func (c *consumer) CleanUp() error {
 	defer log.Print("RabbitMQ connection clear done")
 
 	// wait for handle() to exit
-	// FIXME: memory leak
 	return <-c.Done
 }
+
+// func (c *consumer) Ack(channelName string, tag uint64) error {
+// 	channel, exist := c.channels[channelName]
+// 	if !exist {
+// 		return fmt.Errorf("consumer: Ack: channel does not exist")
+// 	}
+// 	err := channel.Ack(tag, false)
+// 	return err
+// }
