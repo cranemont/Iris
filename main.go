@@ -71,7 +71,10 @@ func main() {
 		panic(err)
 	}
 
-	producer := rabbitmq.NewProducer()
+	producer, err := rabbitmq.NewProducer(uri, "judge-server", zapLogger)
+	if err != nil {
+		panic(err)
+	}
 
 	zapLogger.Info("Server started")
 	mq.NewIngress(consumer, producer, rmqController, zapLogger).Activate()
