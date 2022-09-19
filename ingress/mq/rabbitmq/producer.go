@@ -104,7 +104,7 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 			ContentType:     "text/plain",
 			ContentEncoding: "",
 			Body:            result,
-			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
+			DeliveryMode:    amqp.Persistent, // 1=non-persistent, 2=persistent
 			Priority:        0,              // 0-9
 		},
 	); err != nil {
