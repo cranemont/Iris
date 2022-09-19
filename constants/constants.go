@@ -43,3 +43,8 @@ const MAX_MQ_CHANNEL = 10
 
 const TESTCASE_GET_TIMEOUT = 10
 const TOKEN_HEADER = "judge-server-token"
+
+const (
+	EXCHANGE = "judger-exchange"
+	RESULT_KEY = "result"
+)
