@@ -66,12 +66,12 @@ func main() {
 		os.Getenv("RABBITMQ_DEFAULT_PASS") + "@" +
 		os.Getenv("RABBITMQ_HOST") + ":" +
 		os.Getenv("RABBITMQ_PORT") + "/"
-	consumer, err := rabbitmq.NewConsumer(uri, "ctag", "judge-server")
+	consumer, err := rabbitmq.NewConsumer(uri, "ctag", "go-consumer")
 	if err != nil {
 		panic(err)
 	}
 
-	producer, err := rabbitmq.NewProducer(uri, "judge-server", zapLogger)
+	producer, err := rabbitmq.NewProducer(uri, "go-producer", zapLogger)
 	if err != nil {
 		panic(err)
 	}
