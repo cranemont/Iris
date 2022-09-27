@@ -19,25 +19,25 @@ type Judger struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
 	testcaseManager testcase.Manager
-	logging         *logger.Logger
+	logger          *logger.Logger
 }
 
 func NewJudger(
 	compiler sandbox.Compiler,
 	runner sandbox.Runner,
 	testcaseManager testcase.Manager,
-	logging *logger.Logger,
+	logger *logger.Logger,
 ) *Judger {
 	return &Judger{
 		compiler,
 		runner,
 		testcaseManager,
-		logging,
+		logger,
 	}
 }
 
 func (j *Judger) Judge(submissionId int, task *JudgeTask) error {
-	j.logging.Debug("hander/judge: Judge - compile and get testcase")
+	j.logger.Debug("hander/judge: Judge - compile and get testcase")
 	testcaseOutCh := make(chan result.ChResult)
 	go j.getTestcase(testcaseOutCh, task.problemId)
 	compileOutCh := make(chan result.ChResult)
@@ -78,7 +78,7 @@ func (j *Judger) Judge(submissionId int, task *JudgeTask) error {
 	tcNum := len(tc.Data)
 	task.InitResult(submissionId, tcNum)
 
-	j.logging.Debug("hander/judge: Judge - run and grade")
+	j.logger.Debug("hander/judge: Judge - run and grade")
 	for i := 0; i < tcNum; i++ {
 		res, err := j.runner.Run(sandbox.RunRequest{
 			Order:       i,

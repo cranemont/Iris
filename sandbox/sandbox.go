@@ -18,11 +18,11 @@ type Sandbox interface {
 
 type sandbox struct {
 	binaryPath string
-	logging    *logger.Logger
+	logger     *logger.Logger
 }
 
-func NewSandbox(logging *logger.Logger) *sandbox {
-	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV, logging: logging}
+func NewSandbox(logger *logger.Logger) *sandbox {
+	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV, logger: logger}
 	if os.Getenv("APP_ENV") == "production" {
 		sandbox.binaryPath = constants.LIBJUDGER_PATH_PROD
 	}
@@ -56,7 +56,7 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	if err != nil {
 		return SandboxResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
 	}
-	s.logging.Debug(fmt.Sprintf("sandbox result: %s", stdout.String()))
+	s.logger.Debug(fmt.Sprintf("sandbox result: %s", stdout.String()))
 	// fmt.Printf("sandbox result: %s", stdout.String())
 
 	return res, nil

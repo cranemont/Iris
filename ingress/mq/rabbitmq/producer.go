@@ -21,10 +21,10 @@ type producer struct {
 	channel    *amqp.Channel
 	Done       chan error
 	publishes  chan uint64
-	logging    *logger.Logger
+	logger     *logger.Logger
 }
 
-func NewProducer(amqpURI string, connectionName string, logging *logger.Logger) (*producer, error) {
+func NewProducer(amqpURI string, connectionName string, logger *logger.Logger) (*producer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
 	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
@@ -39,7 +39,7 @@ func NewProducer(amqpURI string, connectionName string, logging *logger.Logger) 
 		channel:    nil,
 		Done:       make(chan error),
 		publishes:  make(chan uint64, 8),
-		logging:    logging,
+		logger:     logger,
 	}, nil
 }
 
@@ -68,7 +68,7 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 	for {
 		select {
 		case <-p.Done:
-			p.logging.Info("confirmHandler is stopping")
+			p.logger.Info("confirmHandler is stopping")
 			return
 		case publishSeqNo := <-p.publishes:
 			// log.Printf("waiting for confirmation of %d", publishSeqNo)
@@ -76,9 +76,9 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 		case confirmed := <-confirms:
 			if confirmed.DeliveryTag > 0 {
 				if confirmed.Ack {
-					p.logging.Debug(fmt.Sprintf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag))
+					p.logger.Debug(fmt.Sprintf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag))
 				} else {
-					p.logging.Error(fmt.Sprintf("failed delivery of delivery tag: %d", confirmed.DeliveryTag))
+					p.logger.Error(fmt.Sprintf("failed delivery of delivery tag: %d", confirmed.DeliveryTag))
 				}
 				delete(m, confirmed.DeliveryTag)
 			}
@@ -105,13 +105,13 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 			ContentEncoding: "",
 			Body:            result,
 			DeliveryMode:    amqp.Persistent, // 1=non-persistent, 2=persistent
-			Priority:        0,              // 0-9
+			Priority:        0,               // 0-9
 		},
 	); err != nil {
 		return fmt.Errorf("exchange publish: %s", err)
 	}
 
-	p.logging.Debug(fmt.Sprintf("published %dB OK", len(result)))
+	p.logger.Debug(fmt.Sprintf("published %dB OK", len(result)))
 	p.publishes <- seqNo
 
 	return nil

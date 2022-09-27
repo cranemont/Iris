@@ -20,14 +20,14 @@ type RmqController interface {
 
 type rmqController struct {
 	judgeHandler *handler.JudgeHandler
-	logging      *logger.Logger
+	logger       *logger.Logger
 }
 
 func NewRmqController(
 	judgeHandler *handler.JudgeHandler,
-	logging *logger.Logger,
+	logger *logger.Logger,
 ) *rmqController {
-	return &rmqController{judgeHandler, logging}
+	return &rmqController{judgeHandler, logger}
 }
 
 // 요청을 받고 최종 response를 내보내는 책임
@@ -38,13 +38,13 @@ func (r *rmqController) Call(handle string, data interface{}) []byte {
 		req := handler.JudgeRequest{}
 		err := json.Unmarshal(data.([]byte), &req)
 		if err != nil {
-			r.logging.Error(fmt.Sprintf("judge: invalid request data: %s, %s", string(data.([]byte)), err))
+			r.logger.Error(fmt.Sprintf("judge: invalid request data: %s, %s", string(data.([]byte)), err))
 			break
 		}
 
 		res, err := r.judgeHandler.Handle(req)
 		if err != nil {
-			r.logging.Error(fmt.Sprintf("judge: failed to handle request: %s", err))
+			r.logger.Error(fmt.Sprintf("judge: failed to handle request: %s", err))
 			break
 		}
 		result = r.judgeHandler.ResultToJson(res)
@@ -53,7 +53,7 @@ func (r *rmqController) Call(handle string, data interface{}) []byte {
 	case CustomTestcase:
 		// custom-testcase handler
 	default:
-		r.logging.Error("unregistered handler")
+		r.logger.Error("unregistered handler")
 	}
 
 	return result

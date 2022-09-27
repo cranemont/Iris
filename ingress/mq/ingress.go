@@ -19,16 +19,16 @@ type ingress struct {
 	producer   rabbitmq.Producer
 	controller RmqController
 	Done       chan error
-	logging    *logger.Logger
+	logger     *logger.Logger
 }
 
 func NewIngress(
 	consumer rabbitmq.Consumer,
 	producer rabbitmq.Producer,
 	controller RmqController,
-	logging *logger.Logger,
+	logger *logger.Logger,
 ) *ingress {
-	return &ingress{consumer, producer, controller, make(chan error), logging}
+	return &ingress{consumer, producer, controller, make(chan error), logger}
 }
 
 func (i *ingress) Activate() {
@@ -46,7 +46,7 @@ func (i *ingress) Activate() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	err = i.producer.OpenChannel()
 	if err != nil {
 		panic(err)
@@ -68,7 +68,7 @@ func (i *ingress) Activate() {
 	// <-i.Done
 
 	// if err := i.consumer.CleanUp(); err != nil {
-	// 	i.logging.Error(fmt.Sprintf("failed to clean up the consumer: %s", err))
+	// 	i.logger.Error(fmt.Sprintf("failed to clean up the consumer: %s", err))
 	// }
 }
 
@@ -76,10 +76,10 @@ func (i *ingress) handle(message amqp.Delivery, ctx context.Context) {
 	result := i.controller.Call(Judge, message.Body)
 
 	if err := i.producer.Publish(result, ctx); err != nil {
-		i.logging.Error(fmt.Sprintf("failed to publish result: %s: %s", string(result), err))
+		i.logger.Error(fmt.Sprintf("failed to publish result: %s: %s", string(result), err))
 	}
 
 	if err := message.Ack(false); err != nil {
-		i.logging.Error(fmt.Sprintf("failed to ack message: %s: %s", string(message.Body), err))
+		i.logger.Error(fmt.Sprintf("failed to ack message: %s: %s", string(message.Body), err))
 	}
 }

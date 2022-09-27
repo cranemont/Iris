@@ -33,16 +33,16 @@ type JudgeHandler struct {
 	langConfig sandbox.LangConfig
 	file       file.FileManager
 	judger     *judge.Judger
-	logging    *logger.Logger
+	logger     *logger.Logger
 }
 
 func NewJudgeHandler(
 	langConfig sandbox.LangConfig,
 	file file.FileManager,
 	judger *judge.Judger,
-	logging *logger.Logger,
+	logger *logger.Logger,
 ) *JudgeHandler {
-	return &JudgeHandler{langConfig, file, judger, logging}
+	return &JudgeHandler{langConfig, file, judger, logger}
 }
 
 // handle top layer logical flow
@@ -55,7 +55,7 @@ func (j *JudgeHandler) Handle(req JudgeRequest) (result JudgeResposne, err error
 
 	defer func() {
 		j.file.RemoveDir(dir)
-		j.logging.Debug(fmt.Sprintf("task %s done: total time: %s", dir, time.Since(task.StartedAt)))
+		j.logger.Debug(fmt.Sprintf("task %s done: total time: %s", dir, time.Since(task.StartedAt)))
 	}()
 
 	if err := j.file.CreateDir(dir); err != nil {
