@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/cranemont/judge-manager/common/exception"
-	"github.com/cranemont/judge-manager/common/grade"
 	"github.com/cranemont/judge-manager/common/result"
 	"github.com/cranemont/judge-manager/service/logger"
 	"github.com/cranemont/judge-manager/service/sandbox"
 	"github.com/cranemont/judge-manager/service/testcase"
+	"github.com/cranemont/judge-manager/utils/grader"
 )
 
 var ErrCompile = errors.New("compile failed")
@@ -99,7 +99,7 @@ func (j *Judger) Judge(submissionId int, task *JudgeTask) error {
 		// 하나당 약 50microsec 10개 채점시 500microsec.
 		// output이 커지면 더 길어짐 -> FIXME: 최적화 과정에서 goroutine으로 수정
 		// st := time.Now()
-		accepted := grade.Grade([]byte(tc.Data[i].Out), res.Output)
+		accepted := grader.Grade([]byte(tc.Data[i].Out), res.Output)
 		if accepted {
 			task.SetResultCode(i, ACCEPTED)
 		} else {
