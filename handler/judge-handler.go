@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler/judge"
+	"github.com/cranemont/judge-manager/service/file"
 	"github.com/cranemont/judge-manager/service/logger"
 	"github.com/cranemont/judge-manager/service/sandbox"
 )

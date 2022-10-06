@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/file"
+	"github.com/cranemont/judge-manager/service/file"
 )
 
 const (

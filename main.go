@@ -6,12 +6,12 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/ingress/mq"
 	"github.com/cranemont/judge-manager/ingress/mq/rabbitmq"
 	"github.com/cranemont/judge-manager/service/cache"
+	"github.com/cranemont/judge-manager/service/file"
 	"github.com/cranemont/judge-manager/service/logger"
 	"github.com/cranemont/judge-manager/service/sandbox"
 	"github.com/cranemont/judge-manager/service/testcase"

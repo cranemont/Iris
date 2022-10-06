@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cranemont/judge-manager/file"
+	"github.com/cranemont/judge-manager/service/file"
 )
 
 type RunResult struct {
