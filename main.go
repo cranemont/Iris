@@ -6,10 +6,11 @@ import (
 	_ "net/http/pprof"
 	"os"
 
+	"github.com/cranemont/judge-manager/connector"
+	"github.com/cranemont/judge-manager/connector/rabbitmq"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/handler/judge"
-	"github.com/cranemont/judge-manager/ingress/mq"
-	"github.com/cranemont/judge-manager/ingress/mq/rabbitmq"
+	"github.com/cranemont/judge-manager/router"
 	"github.com/cranemont/judge-manager/service/cache"
 	"github.com/cranemont/judge-manager/service/file"
 	"github.com/cranemont/judge-manager/service/logger"
@@ -59,7 +60,7 @@ func main() {
 	// specialJudger
 	// customTestcaseRunner 만들어서 같이 넣어주기
 
-	rmqController := mq.NewRmqController(judgeHandler, zapLogger)
+	route := router.NewRouter(judgeHandler, zapLogger)
 
 	uri := "amqp://" +
 		os.Getenv("RABBITMQ_DEFAULT_USER") + ":" +
@@ -77,7 +78,7 @@ func main() {
 	}
 
 	zapLogger.Info("Server started")
-	mq.NewIngress(consumer, producer, rmqController, zapLogger).Activate()
+	connector.NewRabbitmqConnector(consumer, producer, route, zapLogger).Activate()
 	select {}
 
 	// for debug

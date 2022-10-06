@@ -1,67 +1,59 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 
-	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/handler"
+	"github.com/cranemont/judge-manager/service/logger"
 )
 
-// Judge Handler
 const (
-	JUDGE           = "Judge"
-	SPECIAL_JUDGE   = "SpecialJudge"
-	CUSTOM_TESTCASE = "CustomTestcase"
+	Judge          = "Judge"
+	SpecialJudge   = "SpecialJudge"
+	CustomTestcase = "CustomTestcase"
 )
 
 type Router interface {
-	Route(handle string, data interface{})
+	Route(handle string, data interface{}) []byte
 }
 
-// controller의 역할. OnJudge, OnRun, OnOutput등으로 여러 상황 구분
 type router struct {
 	judgeHandler *handler.JudgeHandler
+	logger       *logger.Logger
 }
 
 func NewRouter(
 	judgeHandler *handler.JudgeHandler,
+	logger *logger.Logger,
 ) *router {
-	return &router{
-		judgeHandler: judgeHandler,
-	}
+	return &router{judgeHandler, logger}
 }
 
-// 요청을 받고 최종 response를 내보내는 책임
-// logging, publish
-// router, controller?
-func (r *router) Route(handle string, data interface{}) {
-	fmt.Println("From Router: ", handle)
-	var result []byte
-	switch handle {
-	case JUDGE:
-		judgeRequest, ok := data.(handler.JudgeRequest)
-		if !ok {
-			log.Printf("JUDGE: %s", exception.ErrTypeAssertionFail)
-			panic(nil)
+func (r *router) Route(mode string, data interface{}) []byte {
+	result := handler.DefaultResult()
+	switch mode {
+	case Judge:
+		req := handler.JudgeRequest{}
+		err := json.Unmarshal(data.([]byte), &req)
+		if err != nil {
+			r.logger.Error(fmt.Sprintf("judge: invalid request data: %s, %s", string(data.([]byte)), err))
+			break
 		}
 
-		res, err := r.judgeHandler.Handle(judgeRequest)
+		res, err := r.judgeHandler.Handle(req)
 		if err != nil {
-			log.Printf("JUDGE: handler error: %s", err)
+			r.logger.Error(fmt.Sprintf("judge: failed to handle request: %s", err))
+			break
 		}
 		result = r.judgeHandler.ResultToJson(res)
-	case SPECIAL_JUDGE:
-	case CUSTOM_TESTCASE:
+	case SpecialJudge:
+		// special-judge handler
+	case CustomTestcase:
+		// custom-testcase handler
 	default:
-		log.Printf("unregistered handler: %s", handle)
-		panic(nil) // 컴파일시 잡아낼 수 없지만 어딘가 코드가 잘못되었기 때문에 panic
-		// FIXME: string 말고 바로 호출할수있게 라우터에 해당 caller 만들기
-		// 그리고 공통 response middleware를 만들고
-		// result = handler.DefaultResult()
+		r.logger.Error("unregistered handler")
 	}
 
-	// publish result
-	log.Printf("done!: %s", string(result))
-	// goroutine으로 하는게 성능향상이 있나?
+	return result
 }
