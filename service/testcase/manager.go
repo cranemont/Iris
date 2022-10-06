@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/cranemont/judge-manager/cache"
 	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/service/cache"
 )
 
 type Manager interface {

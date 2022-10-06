@@ -9,8 +9,8 @@ import (
 
 	"github.com/cranemont/judge-manager/file"
 	"github.com/cranemont/judge-manager/handler/judge"
-	"github.com/cranemont/judge-manager/logger"
-	"github.com/cranemont/judge-manager/sandbox"
+	"github.com/cranemont/judge-manager/service/logger"
+	"github.com/cranemont/judge-manager/service/sandbox"
 )
 
 var handler = "JudgeHandler"

@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/logger"
+	"github.com/cranemont/judge-manager/service/logger"
 )
 
 type Sandbox interface {

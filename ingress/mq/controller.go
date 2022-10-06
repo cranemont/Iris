@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cranemont/judge-manager/handler"
-	"github.com/cranemont/judge-manager/logger"
+	"github.com/cranemont/judge-manager/service/logger"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/logger"
+	"github.com/cranemont/judge-manager/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

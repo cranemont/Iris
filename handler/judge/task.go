@@ -6,7 +6,7 @@ import (
 
 	"github.com/cranemont/judge-manager/common/utils"
 	"github.com/cranemont/judge-manager/constants"
-	"github.com/cranemont/judge-manager/sandbox"
+	"github.com/cranemont/judge-manager/service/sandbox"
 )
 
 // const ( // for debug

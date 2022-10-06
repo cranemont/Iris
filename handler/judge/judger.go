@@ -7,9 +7,9 @@ import (
 	"github.com/cranemont/judge-manager/common/exception"
 	"github.com/cranemont/judge-manager/common/grade"
 	"github.com/cranemont/judge-manager/common/result"
-	"github.com/cranemont/judge-manager/logger"
-	"github.com/cranemont/judge-manager/sandbox"
-	"github.com/cranemont/judge-manager/testcase"
+	"github.com/cranemont/judge-manager/service/logger"
+	"github.com/cranemont/judge-manager/service/sandbox"
+	"github.com/cranemont/judge-manager/service/testcase"
 )
 
 var ErrCompile = errors.New("compile failed")
