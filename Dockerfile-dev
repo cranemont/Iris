@@ -46,16 +46,18 @@ RUN buildDeps='software-properties-common curl' \
 
 COPY --from=build-judger /build/output/libjudger.so ./sandbox/
 
-RUN apt-get update && apt-get install -y wget git vim
-RUN wget -P /tmp https://go.dev/dl/go1.19.linux-amd64.tar.gz
+RUN apt-get update && apt-get install -y wget vim git
+RUN wget -P /tmp https://go.dev/dl/go1.19.linux-amd64.tar.gz && \
+  tar -C /usr/local -xzf /tmp/go1.19.linux-amd64.tar.gz && \
+  rm /tmp/go1.19.linux-amd64.tar.gz
 
-RUN tar -C /usr/local -xzf /tmp/go1.19.linux-amd64.tar.gz
-RUN rm /tmp/go1.19.linux-amd64.tar.gz
-
-ENV GOPATH /go
+ENV GOPATH /app/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-RUN mkdir -p "$GOPATH/src/github.com/cranemont" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+#"$GOPATH/src/github.com/cranemont"
 
-WORKDIR $GOPATH/src/github.com/cranemont
-# RUN git clone https://github.com/cranemont/judge-manager
+WORKDIR $GOPATH/src
+
+RUN echo 'alias dev="cd $GOPATH/src"'
+RUN echo 'alias sandbox="cd /app/sandbox"'
 ENV APP_ENV=dev
