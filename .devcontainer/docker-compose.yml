@@ -17,12 +17,11 @@ services:
       - RABBITMQ_HOST=rabbitmq-test
       - RABBITMQ_PORT=5672
       - APP_ENV=dev
-    cpuset: "0,1,2"
 
   redis:
     container_name: redis-test
     image: redis:alpine
-    ports: 
+    ports:
       - 11000:6379
 
   rabbitmq:
