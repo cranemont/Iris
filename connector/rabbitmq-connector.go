@@ -59,7 +59,7 @@ func (c *connector) Activate() {
 	// [handler]													  | handler -> |
 	// i.consume(messageCh, i.Done)
 	for message := range messageCh {
-		go c.route(message, ctx)
+		go c.handle(message, ctx)
 	}
 	// running until Consumer is done
 	// <-i.Done
@@ -71,8 +71,8 @@ func (c *connector) Activate() {
 
 func (c *connector) Deactivate() {}
 
-func (c *connector) route(message amqp.Delivery, ctx context.Context) {
-	result := c.router.Route("Judge", message.Body)
+func (c *connector) handle(message amqp.Delivery, ctx context.Context) {
+	result := c.router.Route(message.Type, message.MessageId, message.Body)
 
 	if err := c.producer.Publish(result, ctx); err != nil {
 		c.logger.Error(fmt.Sprintf("failed to publish result: %s: %s", string(result), err))
