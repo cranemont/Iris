@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/cranemont/judge-manager/constants"
@@ -16,10 +15,10 @@ type server struct {
 	token string
 }
 
-func NewServer() *server {
+func NewServer(url, token string) *server {
 	return &server{
-		url:   os.Getenv("TESTCASE_SERVER_URL"),
-		token: os.Getenv("TESTCASE_SERVER_AUTH_TOKEN"),
+		url:   url,
+		token: token,
 	}
 }
 
