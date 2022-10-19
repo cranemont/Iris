@@ -15,8 +15,11 @@ const ( // ErrorCode
 	SPJ_ERROR
 )
 
+type ResultCode int8
+
+// libjudger의 정의값
 const ( // ResultCode
-	RUN_SUCCESS = 0 + iota // this only means the process exited normally
+	RUN_SUCCESS ResultCode = 0 + iota // this only means the process exited normally
 	CPU_TIME_LIMIT_EXCEEDED
 	REAL_TIME_LIMIT_EXCEEDED
 	MEMORY_LIMIT_EXCEEDED

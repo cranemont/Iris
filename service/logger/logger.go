@@ -10,6 +10,14 @@ import (
 
 type Mode int
 type Env string
+type Level string
+
+const (
+	DEBUG Level = "Debug"
+	INFO  Level = "Info"
+	WARN  Level = "Warn"
+	ERROR Level = "Error"
+)
 
 const (
 	File Mode = 1 + iota
@@ -64,6 +72,19 @@ func setMode(cfg *zap.Config, mode Mode, logPath string) *zap.Config {
 		log.Fatalf("invalid logger mode: %d", mode)
 	}
 	return cfg
+}
+
+func (l *Logger) Log(level Level, msg string, fields ...zapcore.Field) {
+	switch level {
+	case DEBUG:
+		l.Debug(msg, fields...)
+	case INFO:
+		l.Info(msg, fields...)
+	case WARN:
+		l.Warn(msg, fields...)
+	case ERROR:
+		l.Error(msg, fields...)
+	}
 }
 
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {

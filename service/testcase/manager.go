@@ -37,17 +37,17 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 		return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
 	}
 	if !isExist {
-		testcase, err := m.GetTestcaseFromServer(problemId)
-		if err != nil {
-			return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
-		}
-		// temp data
-		// testcase := Testcase{
-		// 	[]Element{
-		// 		{Id: "problem:1:1", In: "1\n", Out: "1\n"},
-		// 		{Id: "problem:1:2", In: "22\n", Out: "222\n"},
-		// 	},
+		// testcase, err := m.GetTestcaseFromServer(problemId)
+		// if err != nil {
+		// 	return Testcase{}, fmt.Errorf("failed to get testcase from server: %w", err)
 		// }
+		// temp data
+		testcase := Testcase{
+			[]Element{
+				{Id: "problem:1:1", In: "1\n", Out: "1\n"},
+				{Id: "problem:1:2", In: "22\n", Out: "222\n"},
+			},
+		}
 		err = m.cache.Set(problemId, testcase)
 		if err != nil {
 			return Testcase{}, fmt.Errorf("GetTestcase: %w", err)

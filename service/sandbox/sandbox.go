@@ -13,7 +13,7 @@ import (
 )
 
 type Sandbox interface {
-	Exec(args ExecArgs, input []byte) (SandboxResult, error)
+	Exec(args ExecArgs, input []byte) (ExecResult, error)
 }
 
 type sandbox struct {
@@ -29,7 +29,7 @@ func NewSandbox(logger *logger.Logger) *sandbox {
 	return &sandbox
 }
 
-func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
+func (s *sandbox) Exec(args ExecArgs, input []byte) (ExecResult, error) {
 	// fmt.Println("input: ", args)
 	argSlice := makeExecArgs(args)
 	env := "--env=PATH=" + os.Getenv("PATH")
@@ -48,13 +48,13 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return SandboxResult{}, fmt.Errorf("sandbox execution failed: %w: %s", err, stderr.String())
+		return ExecResult{}, fmt.Errorf("sandbox execution failed: %w: %s", err, stderr.String())
 	}
 
-	res := SandboxResult{}
+	res := ExecResult{}
 	err = json.Unmarshal(stdout.Bytes(), &res)
 	if err != nil {
-		return SandboxResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
+		return ExecResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
 	}
 	s.logger.Debug(fmt.Sprintf("sandbox result: %s", stdout.String()))
 	// fmt.Printf("sandbox result: %s", stdout.String())
@@ -62,14 +62,14 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (SandboxResult, error) {
 	return res, nil
 }
 
-type SandboxResult struct {
-	CpuTime    int `json:"cpuTime"`
-	RealTime   int `json:"realTime"`
-	Memory     int `json:"memory"`
-	Signal     int `json:"signal"`
-	ErrorCode  int `json:"exitCode"`
-	ExitCode   int `json:"errorCode"`
-	ResultCode int `json:"resultCode"`
+type ExecResult struct {
+	CpuTime    int        `json:"cpuTime"`
+	RealTime   int        `json:"realTime"`
+	Memory     int        `json:"memory"`
+	Signal     int        `json:"signal"`
+	ErrorCode  int        `json:"exitCode"`
+	ExitCode   int        `json:"errorCode"`
+	ResultCode ResultCode `json:"resultCode"`
 }
 
 type ExecArgs struct {
@@ -90,25 +90,6 @@ type ExecArgs struct {
 	Uid                  int
 	Gid                  int
 }
-
-// type formatString struct {
-// 	MaxCpuTime           string
-// 	MaxRealTime          string
-// 	MaxMemory            string
-// 	MaxStackSize         string
-// 	MaxOutputSize        string
-// 	ExePath              string
-// 	InputPath            string
-// 	OutputPath           string
-// 	ErrorPath            string
-// 	LogPath              string
-// 	Args                 string
-// 	Env                  string
-// 	SeccompRuleName      string
-// 	MemoryLimitCheckOnly string
-// 	Uid                  string
-// 	Gid                  string
-// }
 
 const (
 	MaxCpuTime           = "--max_cpu_time="

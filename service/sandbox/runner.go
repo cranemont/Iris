@@ -9,15 +9,9 @@ import (
 
 type RunResult struct {
 	Order      int
-	ResultCode int
-	ErrOutput  string // []byte?
-	CpuTime    int
-	RealTime   int
-	Memory     int
-	Signal     int
-	ErrorCode  int
-	ExitCode   int
+	ErrOutput  []byte
 	Output     []byte
+	ExecResult ExecResult
 }
 
 type RunRequest struct {
@@ -42,21 +36,16 @@ func NewRunner(sandbox Sandbox, langConfig LangConfig, file file.FileManager) *r
 	return &runner{sandbox, langConfig, file}
 }
 
-func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
-	dir := dto.Dir
-	order := dto.Order
-	language := dto.Language
-	timeLimit := dto.TimeLimit
-	memoryLimit := dto.MemoryLimit
+func (r *runner) Run(req RunRequest, input []byte) (RunResult, error) {
 
 	execArgs, err := r.langConfig.ToRunExecArgs(
-		dir,
-		language,
-		order,
+		req.Dir,
+		req.Language,
+		req.Order,
 		Limit{
-			CpuTime:  timeLimit,
-			RealTime: timeLimit * 3,
-			Memory:   memoryLimit,
+			CpuTime:  req.TimeLimit,
+			RealTime: req.TimeLimit * 3,
+			Memory:   req.MemoryLimit,
 		},
 		false,
 	)
@@ -64,39 +53,30 @@ func (r *runner) Run(dto RunRequest, input []byte) (RunResult, error) {
 		return RunResult{}, err
 	}
 
-	res, err := r.sandbox.Exec(execArgs, input)
+	execResult, err := r.sandbox.Exec(execArgs, input)
 	if err != nil {
-		return RunResult{}, fmt.Errorf("runner: Run failed: %w", err)
+		return RunResult{}, fmt.Errorf("execution failed: %w", err)
 	}
 
 	runResult := RunResult{
-		Order:      order,
-		ResultCode: SUCCESS,
-		CpuTime:    res.CpuTime,
-		RealTime:   res.RealTime,
-		Memory:     res.Memory,
-		Signal:     res.Signal,
-		ErrorCode:  res.ErrorCode,
-		ExitCode:   res.ExitCode,
+		Order:      req.Order,
+		ExecResult: execResult,
 	}
 
-	outputPath := r.file.MakeFilePath(dir, strconv.Itoa(order)+".out").String()
-	errorPath := r.file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
-
-	if res.ResultCode != SUCCESS {
-		data, err := r.file.ReadFile(errorPath)
+	orderStr := strconv.Itoa(req.Order)
+	if execResult.ResultCode != RUN_SUCCESS {
+		errorPath := r.file.MakeFilePath(req.Dir, orderStr+".error").String()
+		errData, err := r.file.ReadFile(errorPath)
 		if err != nil {
-			return RunResult{}, fmt.Errorf("runner: failed to read error file: %w", err)
+			return RunResult{}, fmt.Errorf("reading error output file: %w", err)
 		}
-		runResult.ResultCode = res.ResultCode
-		runResult.ErrOutput = string(data)
+		runResult.ErrOutput = errData
 	}
-
-	data, err := r.file.ReadFile(outputPath)
+	outputPath := r.file.MakeFilePath(req.Dir, orderStr+".out").String()
+	outputData, err := r.file.ReadFile(outputPath)
 	if err != nil {
-		return RunResult{}, fmt.Errorf("runner: failed to read output file: %w", err)
+		return RunResult{}, fmt.Errorf("reading output file: %w", err)
 	}
-	runResult.Output = data
-
+	runResult.Output = outputData
 	return runResult, nil
 }

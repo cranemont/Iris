@@ -1,7 +1,6 @@
 package sandbox
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cranemont/judge-manager/constants"
@@ -9,9 +8,8 @@ import (
 )
 
 type CompileResult struct {
-	ResultCode int    // ?
-	ErrOutput  string // compile error message
-	ExecResult string // resource usage and metadata from sandbox
+	ErrOutput  string     // compile error message
+	ExecResult ExecResult // resource usage and metadata from sandbox
 }
 
 type CompileRequest struct {
@@ -41,27 +39,22 @@ func (c *compiler) Compile(dto CompileRequest) (CompileResult, error) {
 		return CompileResult{}, err
 	}
 
-	res, err := c.sandbox.Exec(execArgs, nil)
+	execResult, err := c.sandbox.Exec(execArgs, nil)
 	if err != nil {
 		return CompileResult{}, err
 	}
 
-	compileResult := CompileResult{ResultCode: SUCCESS}
-	if res.ResultCode != SUCCESS {
-		sandboxResult, err := json.Marshal(res)
-		if err != nil {
-			return CompileResult{}, fmt.Errorf("invalid result format: %w", err)
-		}
+	compileResult := CompileResult{}
+	if execResult.ResultCode != SUCCESS {
 
 		compileOutputPath := c.file.MakeFilePath(dir, constants.COMPILE_OUT_FILE).String()
 		data, err := c.file.ReadFile(compileOutputPath)
 		if err != nil {
 			return CompileResult{}, fmt.Errorf("failed to read output file: %w", err)
 		}
-		compileResult.ResultCode = res.ResultCode
-		compileResult.ExecResult = string(sandboxResult)
+		compileResult.ExecResult = execResult
 		compileResult.ErrOutput = string(data)
-		if res.ResultCode == SYSTEM_ERROR {
+		if execResult.ResultCode == SYSTEM_ERROR {
 			return CompileResult{}, fmt.Errorf("system error: %v", compileResult)
 		}
 	}
