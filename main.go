@@ -9,7 +9,6 @@ import (
 	"github.com/cranemont/judge-manager/connector"
 	"github.com/cranemont/judge-manager/connector/rabbitmq"
 	"github.com/cranemont/judge-manager/handler"
-	"github.com/cranemont/judge-manager/handler/judge"
 	"github.com/cranemont/judge-manager/router"
 	"github.com/cranemont/judge-manager/service/cache"
 	"github.com/cranemont/judge-manager/service/file"
@@ -49,18 +48,18 @@ func main() {
 	compiler := sandbox.NewCompiler(sb, langConfig, fileManager)
 	runner := sandbox.NewRunner(sb, langConfig, fileManager)
 
-	judger := judge.NewJudger(
+	judgeHandler := handler.NewJudgeHandler(
 		compiler,
 		runner,
 		testcaseManager,
+		langConfig,
+		fileManager,
 		zapLogger,
 	)
-
-	judgeHandler := handler.NewJudgeHandler(langConfig, fileManager, judger, zapLogger)
 	// specialJudger
 	// customTestcaseRunner 만들어서 같이 넣어주기
 
-	route := router.NewRouter(judgeHandler, zapLogger)
+	routing := router.NewRouter(judgeHandler, zapLogger)
 
 	uri := "amqp://" +
 		os.Getenv("RABBITMQ_DEFAULT_USER") + ":" +
@@ -78,7 +77,7 @@ func main() {
 	}
 
 	zapLogger.Info("Server started")
-	connector.NewRabbitmqConnector(consumer, producer, route, zapLogger).Activate()
+	connector.NewRabbitmqConnector(consumer, producer, routing, zapLogger).Activate()
 	select {}
 
 	// for debug
