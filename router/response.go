@@ -1,0 +1,94 @@
+package router
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+
+	"github.com/cranemont/judge-manager/handler"
+)
+
+type ResultCode int8
+
+// FIXME: egress에 정의되어 있어야 함
+type response struct {
+	SubmissionId string          `json:"submissionResultId"`
+	ResultCode   ResultCode      `json:"resultCode"`
+	Data         json.RawMessage `json:"data"`
+	Error        string          `json:"error"`
+}
+
+const (
+	ACCEPTED ResultCode = 0 + iota
+	WRONG_ANSWER
+	CPU_TIME_LIMIT_EXCEEDED
+	REAL_TIME_LIMIT_EXCEEDED
+	MEMORY_LIMIT_EXCEEDED
+	RUNTIME_ERROR
+	COMPILE_ERROR
+	SERVER_ERROR
+)
+
+func NewResponse(id string, data json.RawMessage, err error) *response {
+	resultCode := ACCEPTED
+	errMessage := ""
+	// var errMessage json.RawMessage
+
+	if err != nil {
+		if handlerErr, ok := err.(*handler.HandlerError); ok {
+			errMessage = handlerErr.Message
+		}
+		resultCode = ErrorToResultCode(err)
+	}
+
+	return &response{
+		SubmissionId: id,
+		ResultCode:   resultCode,
+		Data:         data,
+		Error:        errMessage,
+	}
+}
+
+func JSONMarshal(t interface{}) ([]byte, error) {
+	// source: https://stackoverflow.com/questions/28595664/how-to-stop-json-marshal-from-escaping-and
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
+func (r *response) Marshal() []byte {
+
+	if res, err := JSONMarshal(r); err != nil {
+		// Error on marshaling router response means that
+		// the process cannot send valid response data
+		// because some logic is incorrect.
+		// So, panic without recover because debugging is needed
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+func ErrorToResultCode(err error) ResultCode {
+	if errors.Is(err, handler.ErrWrongAnswer) {
+		return WRONG_ANSWER
+	}
+	if errors.Is(err, handler.ErrCpuTimeLimitExceed) {
+		return CPU_TIME_LIMIT_EXCEEDED
+	}
+	if errors.Is(err, handler.ErrRealTimeLimitExceed) {
+		return REAL_TIME_LIMIT_EXCEEDED
+	}
+	if errors.Is(err, handler.ErrMemoryLimitExceed) {
+		return MEMORY_LIMIT_EXCEEDED
+	}
+	if errors.Is(err, handler.ErrRuntime) {
+		return RUNTIME_ERROR
+	}
+	if errors.Is(err, handler.ErrCompile) {
+		return COMPILE_ERROR
+	}
+	return SERVER_ERROR
+}

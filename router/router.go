@@ -15,7 +15,7 @@ const (
 )
 
 type Router interface {
-	Route(handle string, data interface{}) []byte
+	Route(mode string, id string, data []byte) []byte
 }
 
 type router struct {
@@ -30,30 +30,27 @@ func NewRouter(
 	return &router{judgeHandler, logger}
 }
 
-func (r *router) Route(mode string, data interface{}) []byte {
-	result := handler.DefaultResult()
+func (r *router) Route(mode string, id string, data []byte) []byte {
+	var handlerResult json.RawMessage
+	var err error
+
 	switch mode {
 	case Judge:
-		req := handler.JudgeRequest{}
-		err := json.Unmarshal(data.([]byte), &req)
-		if err != nil {
-			r.logger.Error(fmt.Sprintf("judge: invalid request data: %s, %s", string(data.([]byte)), err))
-			break
-		}
-
-		res, err := r.judgeHandler.Handle(req)
-		if err != nil {
-			r.logger.Error(fmt.Sprintf("judge: failed to handle request: %s", err))
-			break
-		}
-		result = r.judgeHandler.ResultToJson(res)
+		handlerResult, err = r.judgeHandler.Handle(id, data)
 	case SpecialJudge:
 		// special-judge handler
 	case CustomTestcase:
 		// custom-testcase handler
 	default:
-		r.logger.Error("unregistered handler")
+		err = fmt.Errorf("invalid mode: %s", mode)
 	}
 
-	return result
+	if err != nil {
+		if u, ok := err.(*handler.HandlerError); ok {
+			r.logger.Log(u.Level(), err.Error())
+		} else {
+			r.logger.Error(fmt.Sprintf("router: %s", err.Error()))
+		}
+	}
+	return NewResponse(id, handlerResult, err).Marshal()
 }
