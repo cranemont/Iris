@@ -18,6 +18,15 @@ func (h *HandlerError) Error() string {
 	return fmt.Sprintf("%s: %s", h.caller, h.err.Error())
 }
 
+func (h *HandlerError) Wrap(err error) *HandlerError {
+	if h.err != nil {
+		h.err = fmt.Errorf("%w: %s", err, h.err.Error())
+	} else {
+		h.err = err
+	}
+	return h
+}
+
 func (h *HandlerError) Unwrap() error {
 	return h.err
 }
