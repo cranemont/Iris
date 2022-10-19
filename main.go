@@ -6,7 +6,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"github.com/cranemont/judge-manager/connector"
 	"github.com/cranemont/judge-manager/connector/rabbitmq"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/router"
@@ -39,7 +38,9 @@ func main() {
 
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
-	testcaseManager := testcase.NewManager(cache)
+
+	source := testcase.NewPreset()
+	testcaseManager := testcase.NewManager(source, cache)
 
 	fileManager := file.NewFileManager()
 	langConfig := sandbox.NewLangConfig(fileManager)
@@ -77,7 +78,7 @@ func main() {
 	}
 
 	zapLogger.Info("Server started")
-	connector.NewRabbitmqConnector(consumer, producer, routing, zapLogger).Activate()
+	rabbitmq.NewConnector(consumer, producer, routing, zapLogger).Activate()
 	select {}
 
 	// for debug
