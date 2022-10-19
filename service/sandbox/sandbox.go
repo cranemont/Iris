@@ -22,9 +22,9 @@ type sandbox struct {
 }
 
 func NewSandbox(logger *logger.Logger) *sandbox {
-	sandbox := sandbox{binaryPath: constants.LIBJUDGER_PATH_DEV, logger: logger}
-	if os.Getenv("APP_ENV") == "production" {
-		sandbox.binaryPath = constants.LIBJUDGER_PATH_PROD
+	sandbox := sandbox{
+		binaryPath: constants.LIBJUDGER_PATH,
+		logger:     logger,
 	}
 	return &sandbox
 }

@@ -2,7 +2,6 @@ package sandbox
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -90,12 +89,6 @@ func NewLangConfig(file file.FileManager) *langConfig {
 		env:                   defaultEnv,
 	}
 
-	var javaPolicyPath string
-	if os.Getenv("APP_ENV") == "production" {
-		javaPolicyPath = constants.JAVA_POLICY_PATH_PROD
-	} else {
-		javaPolicyPath = constants.JAVA_POLICY_PATH_DEV
-	}
 	var javaConfig = config{
 		Language:           JAVA,
 		SrcName:            "Main.java",
@@ -111,7 +104,7 @@ func NewLangConfig(file file.FileManager) *langConfig {
 			"-Djava.security.manager " +
 			"-Dfile.encoding=UTF-8 " +
 			"-Djava.security.policy==" +
-			javaPolicyPath + " " +
+			constants.JAVA_POLICY_PATH + " " +
 			"-Djava.awt.headless=true " +
 			"Main",
 		SeccompRule:           "",
