@@ -1,27 +1,26 @@
-package connector
+package rabbitmq
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/cranemont/judge-manager/connector/rabbitmq"
 	"github.com/cranemont/judge-manager/router"
 	"github.com/cranemont/judge-manager/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type connector struct {
-	consumer rabbitmq.Consumer
-	producer rabbitmq.Producer
+	consumer Consumer
+	producer Producer
 	router   router.Router
 	Done     chan error
 	logger   *logger.Logger
 }
 
-func NewRabbitmqConnector(
-	consumer rabbitmq.Consumer,
-	producer rabbitmq.Producer,
+func NewConnector(
+	consumer Consumer,
+	producer Producer,
 	router router.Router,
 	logger *logger.Logger,
 ) *connector {
