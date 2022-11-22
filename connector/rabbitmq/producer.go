@@ -83,9 +83,6 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 				delete(m, confirmed.DeliveryTag)
 			}
 		}
-		// if len(m) > 1 {
-		// 	log.Printf("outstanding confirmations: %d", len(m))
-		// }
 	}
 }
 

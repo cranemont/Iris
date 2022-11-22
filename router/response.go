@@ -9,10 +9,8 @@ import (
 )
 
 type ResultCode int8
-
-// FIXME: egress에 정의되어 있어야 함
 type response struct {
-	SubmissionId string          `json:"submissionResultId"`
+	SubmissionId string          `json:"submissionId"`
 	ResultCode   ResultCode      `json:"resultCode"`
 	Data         json.RawMessage `json:"data"`
 	Error        string          `json:"error"`

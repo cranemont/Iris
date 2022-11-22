@@ -200,7 +200,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 	res.TotalTestcase = tcNum
 
 	for i := 0; i < tcNum; i++ {
-		// order 필요없음. Run객체에 고정데이터를 넣어두고 execute하는 방식으로 수정
+		time.Sleep(time.Millisecond)
 		runResult, err := j.runner.Run(sandbox.RunRequest{
 			Order:       i,
 			Dir:         dir,
@@ -208,9 +208,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 			TimeLimit:   req.TimeLimit,
 			MemoryLimit: req.MemoryLimit,
 		}, []byte(tc.Data[i].In))
-		// fmt.Println(string(runResult.ErrOutput))
 
-		// 위에걸 매번 만들이유는 없음. 얘는 sandbox error
 		if err != nil {
 			res.JudgeResult[i].ResultCode = SYSTEM_ERROR
 			continue
