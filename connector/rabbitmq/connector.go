@@ -27,7 +27,7 @@ func NewConnector(
 	return &connector{consumer, producer, router, make(chan error), logger}
 }
 
-func (c *connector) Activate() {
+func (c *connector) Connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
 		cancel()
@@ -68,16 +68,18 @@ func (c *connector) Activate() {
 	// }
 }
 
-func (c *connector) Deactivate() {}
+func (c *connector) Disconnect() {}
 
 func (c *connector) handle(message amqp.Delivery, ctx context.Context) {
-	result := c.router.Route(message.Type, message.MessageId, message.Body)
+	result := c.router.Route(router.To(message.Type), message.MessageId, message.Body)
 
 	if err := c.producer.Publish(result, ctx); err != nil {
 		c.logger.Error(fmt.Sprintf("failed to publish result: %s: %s", string(result), err))
+		// nack
 	}
 
 	if err := message.Ack(false); err != nil {
 		c.logger.Error(fmt.Sprintf("failed to ack message: %s: %s", string(message.Body), err))
+		// retry
 	}
 }

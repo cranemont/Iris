@@ -8,14 +8,17 @@ import (
 	"github.com/cranemont/judge-manager/service/logger"
 )
 
+type To string
+
 const (
-	Judge          = "Judge"
-	SpecialJudge   = "SpecialJudge"
-	CustomTestcase = "CustomTestcase"
+	Judge        To = "Judge"
+	SpecialJudge To = "SpecialJudge"
+	Run          To = "Run"
+	Interactive  To = "Interactive"
 )
 
 type Router interface {
-	Route(mode string, id string, data []byte) []byte
+	Route(path To, id string, data []byte) []byte
 }
 
 type router struct {
@@ -30,19 +33,19 @@ func NewRouter(
 	return &router{judgeHandler, logger}
 }
 
-func (r *router) Route(mode string, id string, data []byte) []byte {
+func (r *router) Route(path To, id string, data []byte) []byte {
 	var handlerResult json.RawMessage
 	var err error
 
-	switch mode {
+	switch path {
 	case Judge:
 		handlerResult, err = r.judgeHandler.Handle(id, data)
 	case SpecialJudge:
 		// special-judge handler
-	case CustomTestcase:
+	case Run:
 		// custom-testcase handler
 	default:
-		err = fmt.Errorf("invalid mode: %s", mode)
+		err = fmt.Errorf("handler does not exist: %s", path)
 	}
 
 	if err != nil {
