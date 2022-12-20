@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/constants"
 )
 
 type FileManager interface {

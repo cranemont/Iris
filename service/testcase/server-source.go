@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/constants"
 )
 
 type server struct {

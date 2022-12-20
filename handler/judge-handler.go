@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cranemont/judge-manager/common/constants"
 	"github.com/cranemont/judge-manager/common/result"
-	"github.com/cranemont/judge-manager/constants"
 	"github.com/cranemont/judge-manager/service/file"
 	"github.com/cranemont/judge-manager/service/grader"
 	"github.com/cranemont/judge-manager/service/logger"

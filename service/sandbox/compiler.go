@@ -3,7 +3,7 @@ package sandbox
 import (
 	"fmt"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/constants"
 	"github.com/cranemont/judge-manager/service/file"
 )
 

@@ -3,7 +3,7 @@ package logger
 import (
 	"log"
 
-	"github.com/cranemont/judge-manager/constants"
+	"github.com/cranemont/judge-manager/common/constants"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
