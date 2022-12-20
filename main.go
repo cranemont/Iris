@@ -7,7 +7,8 @@ import (
 	// _ "net/http/pprof"
 	"os"
 
-	"github.com/cranemont/judge-manager/connector/rabbitmq"
+	"github.com/cranemont/judge-manager/common/constants"
+	"github.com/cranemont/judge-manager/connector"
 	"github.com/cranemont/judge-manager/handler"
 	"github.com/cranemont/judge-manager/router"
 	"github.com/cranemont/judge-manager/service/cache"
@@ -31,7 +32,7 @@ func profile() {
 
 func main() {
 	// profile()
-	zapLogger := logger.NewLogger(logger.Console, logger.Env(os.Getenv("APP_ENV")))
+	logProvider := logger.NewLogger(logger.Console, constants.Env((os.Getenv("APP_ENV"))))
 
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
@@ -46,7 +47,7 @@ func main() {
 	fileManager := file.NewFileManager()
 	langConfig := sandbox.NewLangConfig(fileManager)
 
-	sb := sandbox.NewSandbox(zapLogger)
+	sb := sandbox.NewSandbox(logProvider)
 	compiler := sandbox.NewCompiler(sb, langConfig, fileManager)
 	runner := sandbox.NewRunner(sb, langConfig, fileManager)
 
@@ -56,27 +57,18 @@ func main() {
 		testcaseManager,
 		langConfig,
 		fileManager,
-		zapLogger,
+		logProvider,
 	)
 
-	routing := router.NewRouter(judgeHandler, zapLogger)
+	routeProvider := router.NewRouter(judgeHandler, logProvider)
 
-	uri := "amqp://" +
-		os.Getenv("RABBITMQ_DEFAULT_USER") + ":" +
-		os.Getenv("RABBITMQ_DEFAULT_PASS") + "@" +
-		os.Getenv("RABBITMQ_HOST") + ":" +
-		os.Getenv("RABBITMQ_PORT") + "/"
-	consumer, err := rabbitmq.NewConsumer(uri, "ctag", "go-consumer")
-	if err != nil {
-		panic(err)
-	}
+	logProvider.Log(logger.INFO, "Server Started")
 
-	producer, err := rabbitmq.NewProducer(uri, "go-producer", zapLogger)
-	if err != nil {
-		panic(err)
-	}
+	// rabbitmq.NewConnector(consumer, producer, routeProvider, logProvider).Connect()
+	connector.Factory(
+		connector.RABBIT_MQ,
+		connector.Providers{Router: routeProvider, Logger: logProvider},
+	).Connect()
 
-	zapLogger.Info("Server started")
-	rabbitmq.NewConnector(consumer, producer, routing, zapLogger).Connect()
 	select {}
 }
