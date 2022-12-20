@@ -9,7 +9,6 @@ import (
 )
 
 type Mode int
-type Env string
 type Level string
 
 const (
@@ -24,26 +23,25 @@ const (
 	Console
 )
 
-const (
-	Production  Env = "production"
-	Development Env = "development"
-)
+type Logger interface {
+	Log(level Level, msg string)
+}
 
-type Logger struct {
+type logger struct {
 	zap *zap.Logger
 }
 
-func NewLogger(mode Mode, env Env) *Logger {
+func NewLogger(mode Mode, env constants.Env) *logger {
 	var zapLogger *zap.Logger
 	var cfg zap.Config
 	var err error
 
-	if env == Production {
+	if env == constants.Production {
 		cfg = zap.NewProductionConfig()
 		setMode(&cfg, mode, constants.LOG_PATH_PROD).
 			EncoderConfig = zap.NewProductionEncoderConfig()
 		cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		zapLogger, err = cfg.Build(zap.AddCallerSkip(1))
+		zapLogger, err = cfg.Build(zap.AddCallerSkip(2))
 		if err != nil {
 			log.Fatalf("can't initialize zap logger: %v", err)
 		}
@@ -53,12 +51,12 @@ func NewLogger(mode Mode, env Env) *Logger {
 			EncoderConfig = zap.NewDevelopmentEncoderConfig()
 		cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		// cfg.Encoding = "json"
-		zapLogger, err = cfg.Build(zap.AddCallerSkip(1))
+		zapLogger, err = cfg.Build(zap.AddCallerSkip(2))
 		if err != nil {
 			log.Fatalf("can't initialize zap logger: %v", err)
 		}
 	}
-	return &Logger{zap: zapLogger}
+	return &logger{zap: zapLogger}
 }
 
 func setMode(cfg *zap.Config, mode Mode, logPath string) *zap.Config {
@@ -74,35 +72,36 @@ func setMode(cfg *zap.Config, mode Mode, logPath string) *zap.Config {
 	return cfg
 }
 
-func (l *Logger) Log(level Level, msg string, fields ...zapcore.Field) {
+func (l *logger) Log(level Level, msg string) {
+	fields := zapcore.Field{}
 	switch level {
 	case DEBUG:
-		l.Debug(msg, fields...)
+		l.Debug(msg, fields)
 	case INFO:
-		l.Info(msg, fields...)
+		l.Info(msg, fields)
 	case WARN:
-		l.Warn(msg, fields...)
+		l.Warn(msg, fields)
 	case ERROR:
-		l.Error(msg, fields...)
+		l.Error(msg, fields)
 	}
 }
 
-func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
+func (l *logger) Debug(msg string, fields zapcore.Field) {
 	defer l.zap.Sync()
-	l.zap.Debug(msg, fields...)
+	l.zap.Debug(msg, fields)
 }
 
-func (l *Logger) Info(msg string, fields ...zapcore.Field) {
+func (l *logger) Info(msg string, fields zapcore.Field) {
 	defer l.zap.Sync()
-	l.zap.Info(msg, fields...)
+	l.zap.Info(msg, fields)
 }
 
-func (l *Logger) Warn(msg string, fields ...zapcore.Field) {
+func (l *logger) Warn(msg string, fields zapcore.Field) {
 	defer l.zap.Sync()
-	l.zap.Warn(msg, fields...)
+	l.zap.Warn(msg, fields)
 }
 
-func (l *Logger) Error(msg string, fields ...zapcore.Field) {
+func (l *logger) Error(msg string, fields zapcore.Field) {
 	defer l.zap.Sync()
-	l.zap.Error(msg, fields...)
+	l.zap.Error(msg, fields)
 }

@@ -21,10 +21,10 @@ type producer struct {
 	channel    *amqp.Channel
 	Done       chan error
 	publishes  chan uint64
-	logger     *logger.Logger
+	logger     logger.Logger
 }
 
-func NewProducer(amqpURI string, connectionName string, logger *logger.Logger) (*producer, error) {
+func NewProducer(amqpURI string, connectionName string, logger logger.Logger) (*producer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
 	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
@@ -68,7 +68,7 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 	for {
 		select {
 		case <-p.Done:
-			p.logger.Info("confirmHandler is stopping")
+			p.logger.Log(logger.INFO, "confirmHandler is stopping")
 			return
 		case publishSeqNo := <-p.publishes:
 			// log.Printf("waiting for confirmation of %d", publishSeqNo)
@@ -76,9 +76,9 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 		case confirmed := <-confirms:
 			if confirmed.DeliveryTag > 0 {
 				if confirmed.Ack {
-					p.logger.Debug(fmt.Sprintf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag))
+					p.logger.Log(logger.DEBUG, fmt.Sprintf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag))
 				} else {
-					p.logger.Error(fmt.Sprintf("failed delivery of delivery tag: %d", confirmed.DeliveryTag))
+					p.logger.Log(logger.ERROR, fmt.Sprintf("failed delivery of delivery tag: %d", confirmed.DeliveryTag))
 				}
 				delete(m, confirmed.DeliveryTag)
 			}
@@ -108,7 +108,7 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 		return fmt.Errorf("exchange publish: %s", err)
 	}
 
-	p.logger.Debug(fmt.Sprintf("published %dB OK", len(result)))
+	p.logger.Log(logger.DEBUG, fmt.Sprintf("published %dB OK", len(result)))
 	p.publishes <- seqNo
 
 	return nil

@@ -18,10 +18,10 @@ type Sandbox interface {
 
 type sandbox struct {
 	binaryPath string
-	logger     *logger.Logger
+	logger     logger.Logger
 }
 
-func NewSandbox(logger *logger.Logger) *sandbox {
+func NewSandbox(logger logger.Logger) *sandbox {
 	sandbox := sandbox{
 		binaryPath: constants.LIBJUDGER_PATH,
 		logger:     logger,
@@ -56,7 +56,7 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
 	}
-	s.logger.Debug(fmt.Sprintf("sandbox result: %s", stdout.String()))
+	s.logger.Log(logger.DEBUG, fmt.Sprintf("sandbox result: %s", stdout.String()))
 	// fmt.Printf("sandbox result: %s", stdout.String())
 
 	return res, nil

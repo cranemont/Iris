@@ -23,12 +23,12 @@ type Router interface {
 
 type router struct {
 	judgeHandler *handler.JudgeHandler
-	logger       *logger.Logger
+	logger       logger.Logger
 }
 
 func NewRouter(
 	judgeHandler *handler.JudgeHandler,
-	logger *logger.Logger,
+	logger logger.Logger,
 ) *router {
 	return &router{judgeHandler, logger}
 }
@@ -52,7 +52,7 @@ func (r *router) Route(path To, id string, data []byte) []byte {
 		if u, ok := err.(*handler.HandlerError); ok {
 			r.logger.Log(u.Level(), err.Error())
 		} else {
-			r.logger.Error(fmt.Sprintf("router: %s", err.Error()))
+			r.logger.Log(logger.ERROR, fmt.Sprintf("router: %s", err.Error()))
 		}
 	}
 	return NewResponse(id, handlerResult, err).Marshal()

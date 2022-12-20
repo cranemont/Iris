@@ -1,5 +1,12 @@
 package constants
 
+type Env string
+
+const (
+	Production  Env = "production"
+	Development Env = "development"
+)
+
 const (
 	Success = 1 + iota
 	Fail

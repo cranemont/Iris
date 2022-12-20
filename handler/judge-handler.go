@@ -88,7 +88,7 @@ type JudgeHandler struct {
 	testcaseManager testcase.Manager
 	langConfig      sandbox.LangConfig
 	file            file.FileManager
-	logger          *logger.Logger
+	logger          logger.Logger
 }
 
 func NewJudgeHandler(
@@ -97,7 +97,7 @@ func NewJudgeHandler(
 	testcaseManager testcase.Manager,
 	langConfig sandbox.LangConfig,
 	file file.FileManager,
-	logger *logger.Logger,
+	logger logger.Logger,
 ) *JudgeHandler {
 	return &JudgeHandler{
 		compiler,
@@ -125,7 +125,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 	dir := utils.RandString(constants.DIR_NAME_LEN) + id
 	defer func() {
 		j.file.RemoveDir(dir)
-		j.logger.Debug(fmt.Sprintf("task %s done: total time: %s", dir, time.Since(startedAt)))
+		j.logger.Log(logger.DEBUG, fmt.Sprintf("task %s done: total time: %s", dir, time.Since(startedAt)))
 	}()
 
 	if err := j.file.CreateDir(dir); err != nil {
