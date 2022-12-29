@@ -1,0 +1,5 @@
+{
+    "mode": "judge",
+    "policy": "temporal",
+    "dir": "./data"
+}
