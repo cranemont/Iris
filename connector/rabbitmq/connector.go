@@ -53,13 +53,13 @@ func (c *connector) Connect() {
 		panic(err)
 	}
 
+	go c.Handle(messageCh)
+
 	// [mq.ingress]     consume -> handle -> 														  produce
 	// [mq.controller]							| controller -> 	controller(result) -> |
 	// [handler]													  | handler -> |
 	// i.consume(messageCh, i.Done)
-	for message := range messageCh {
-		go c.handle(message, ctx)
-	}
+
 	// running until Consumer is done
 	// <-i.Done
 
@@ -69,6 +69,15 @@ func (c *connector) Connect() {
 }
 
 func (c *connector) Disconnect() {}
+
+func (c *connector) Handle(args ...any) {
+	messageCh, ok := args[0].(<-chan amqp.Delivery)
+	if ok {
+		for message := range messageCh {
+			go c.handle(message, ctx)
+		}
+	}
+}
 
 func (c *connector) handle(message amqp.Delivery, ctx context.Context) {
 	result := c.router.Route(router.To(message.Type), message.MessageId, message.Body)

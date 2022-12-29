@@ -11,6 +11,7 @@ import (
 type Connector interface {
 	Connect()
 	Disconnect()
+	Handle(args ...any)
 }
 
 type Providers struct {
