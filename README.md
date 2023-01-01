@@ -1,6 +1,9 @@
 # Iris
 
 > Online Judge 시스템을 위한 채점 서버
+> >개발이 진행중인 프로젝트로, 현재는 RabbitMQ에만 연결 가능합니다.
+
+Online Judge 시스템을 위한 채점 서버입니다. 사용자가 제출한 코드를 컴파일하고 주어진 테스트케이스에 대한 입/출력과 리소스 사용량 등을 확인하여 정답 여부를 반환합니다. 서버의 출력 결과는 connector(WIKI 참조 - [WIP](#)) 및 sandbox 바이너리에 따라 달라질 수 있습니다. 
 
 ---
 
@@ -38,13 +41,21 @@
 - [WIKI](#)
 
 ---
-
+# Tests
+- WIP
+---
+# Roadmap
+- WIP
+---
 # Authors and acknowledgment
 
+### Authors
 @cranemont, @mixxeo
 
-## [Judger](https://github.com/QingdaoU/Judger)
+### Sandbox 정보
+- [Judger](https://github.com/QingdaoU/Judger)
 
+---
 # License
 
 MIT License
