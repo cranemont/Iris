@@ -3,19 +3,25 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strings"
-)
 
-func parseId(path string) string {
-	return strings.Split(path, "/")[2]
-}
+	"github.com/cranemont/judge-manager/test/testcase_server/router"
+	"github.com/cranemont/judge-manager/test/testcase_server/router/method"
+)
 
 func testcaseHandler(w http.ResponseWriter, req *http.Request) {
 	p := req.URL.Path
-	fmt.Println(parseId(p))
+	fmt.Println(p)
+	params, ok := req.Context().Value("params").(map[string]string)
+	if ok {
+		for k, v := range params {
+			fmt.Println(k, v)
+		}
+	}
+	w.Write([]byte{'d', 'e', 'f'})
 }
 
 func main() {
-	http.HandleFunc("/problem/", testcaseHandler)
-	http.ListenAndServe(":30000", nil)
+	r := router.NewRouter()
+	r.HandleFunc(method.GET, "/problem/:id/testcase", testcaseHandler)
+	http.ListenAndServe(":30000", r)
 }
