@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -14,5 +15,7 @@ func TestcaseHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println(k, v)
 		}
 	}
-	w.Write([]byte{'d', 'e', 'f'})
+
+	ctx := context.WithValue(req.Context(), "testcase", &Response{Msg: "message", Data: "data"})
+	*req = *req.WithContext(ctx)
 }

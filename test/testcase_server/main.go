@@ -14,9 +14,8 @@ func main() {
 	r.Handle(method.GET, "/problem/:id/testcase",
 		middleware.Adapt(
 			http.HandlerFunc(handler.TestcaseHandler),
-			middleware.Example(1),
-			middleware.Example(2),
-			middleware.Example(3),
+			middleware.SetContentType(),
+			middleware.Response(),
 		),
 	)
 	http.ListenAndServe(":30000", r)
