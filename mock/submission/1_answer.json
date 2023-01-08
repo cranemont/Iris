@@ -1,0 +1,5 @@
+{
+    "problemId": 1,
+    "code": "#include <stdio.h>\n\nint main (void) {\n int a; scanf(\"%d\\n\", &a); printf(\"%d\\n\", a); \nreturn 0;\n}\n",
+    "language": "C"
+}
