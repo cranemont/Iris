@@ -22,5 +22,7 @@ func (r *responser) Ok(w http.ResponseWriter, data Data, code int) {
 }
 
 func (r *responser) Error(w http.ResponseWriter, error string, code int) {
-	http.Error(w, error, code)
+	w.WriteHeader(code)
+	d := Data{Message: error}
+	d.Encode(w)
 }
