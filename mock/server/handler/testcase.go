@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/cranemont/judge-manager/mock/testcase/server/handler/response"
+	"github.com/cranemont/judge-manager/mock/server/handler/response"
 )
 
 type testcase struct {
