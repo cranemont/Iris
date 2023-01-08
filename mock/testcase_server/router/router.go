@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	hm "github.com/cranemont/judge-manager/test/testcase_server/router/method"
+	hm "github.com/cranemont/judge-manager/mock/testcase_server/router/method"
 )
 
 type router struct {

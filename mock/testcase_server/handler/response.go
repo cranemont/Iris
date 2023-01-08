@@ -8,6 +8,7 @@ import (
 type Response struct {
 	Message string `json:"message"`
 	Data    string `json:"data"`
+	Error   string `json:"error"`
 }
 
 func (r *Response) Encode(w http.ResponseWriter) {
