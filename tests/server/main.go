@@ -3,11 +3,11 @@ package main
 import (
 	"net/http"
 
-	"github.com/cranemont/judge-manager/mock/server/handler"
-	"github.com/cranemont/judge-manager/mock/server/handler/response"
-	"github.com/cranemont/judge-manager/mock/server/middleware"
-	"github.com/cranemont/judge-manager/mock/server/router"
-	"github.com/cranemont/judge-manager/mock/server/router/method"
+	"github.com/cranemont/judge-manager/tests/server/handler"
+	"github.com/cranemont/judge-manager/tests/server/handler/response"
+	"github.com/cranemont/judge-manager/tests/server/middleware"
+	"github.com/cranemont/judge-manager/tests/server/router"
+	"github.com/cranemont/judge-manager/tests/server/router/method"
 )
 
 func main() {
