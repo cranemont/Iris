@@ -73,35 +73,15 @@ func setMode(cfg *zap.Config, mode Mode, logPath string) *zap.Config {
 }
 
 func (l *logger) Log(level Level, msg string) {
-	fields := zapcore.Field{}
+	defer l.zap.Sync()
 	switch level {
 	case DEBUG:
-		l.Debug(msg, fields)
+		l.zap.Debug(msg)
 	case INFO:
-		l.Info(msg, fields)
+		l.zap.Info(msg)
 	case WARN:
-		l.Warn(msg, fields)
+		l.zap.Warn(msg)
 	case ERROR:
-		l.Error(msg, fields)
+		l.zap.Error(msg)
 	}
-}
-
-func (l *logger) Debug(msg string, fields zapcore.Field) {
-	defer l.zap.Sync()
-	l.zap.Debug(msg, fields)
-}
-
-func (l *logger) Info(msg string, fields zapcore.Field) {
-	defer l.zap.Sync()
-	l.zap.Info(msg, fields)
-}
-
-func (l *logger) Warn(msg string, fields zapcore.Field) {
-	defer l.zap.Sync()
-	l.zap.Warn(msg, fields)
-}
-
-func (l *logger) Error(msg string, fields zapcore.Field) {
-	defer l.zap.Sync()
-	l.zap.Error(msg, fields)
 }
