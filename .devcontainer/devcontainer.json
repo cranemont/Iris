@@ -1,9 +1,17 @@
 {
-  "forwardPorts": [3000],
-  "name": "judge-manager-devcontainer",
-  "dockerComposeFile": ["docker-compose.yml"],
-  "service": "judge-manager",
-  "runServices": ["judge-manager", "redis", "rabbitmq"],
+  "forwardPorts": [
+    3000
+  ],
+  "name": "iris-devcontainer",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "iris",
+  "runServices": [
+    "iris",
+    "redis",
+    "rabbitmq"
+  ],
   "workspaceFolder": "/app/go/src",
   "initializeCommand": "go install -v golang.org/x/tools/gopls@latest; go install -v github.com/ramya-rao-a/go-outline@latest",
   "postCreateCommand": "git config --global --add safe.directory /app/go/src",

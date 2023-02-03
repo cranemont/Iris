@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/iris/src/common/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

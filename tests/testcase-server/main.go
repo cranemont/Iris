@@ -3,11 +3,11 @@ package main
 import (
 	"net/http"
 
-	"github.com/cranemont/judge-manager/tests/testcase-server/handler"
-	"github.com/cranemont/judge-manager/tests/testcase-server/handler/response"
-	"github.com/cranemont/judge-manager/tests/testcase-server/middleware"
-	"github.com/cranemont/judge-manager/tests/testcase-server/router"
-	"github.com/cranemont/judge-manager/tests/testcase-server/router/method"
+	"github.com/cranemont/iris/tests/testcase-server/handler"
+	"github.com/cranemont/iris/tests/testcase-server/handler/response"
+	"github.com/cranemont/iris/tests/testcase-server/middleware"
+	"github.com/cranemont/iris/tests/testcase-server/router"
+	"github.com/cranemont/iris/tests/testcase-server/router/method"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/iris/src/common/constants"
 )
 
 type FileManager interface {

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/cranemont/judge-manager/src/handler"
+	"github.com/cranemont/iris/src/handler"
 )
 
 type ResultCode int8

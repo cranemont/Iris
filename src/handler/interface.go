@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 
-	"github.com/cranemont/judge-manager/src/service/logger"
-	"github.com/cranemont/judge-manager/src/service/sandbox"
+	"github.com/cranemont/iris/src/service/logger"
+	"github.com/cranemont/iris/src/service/sandbox"
 )
 
 type Handler interface {

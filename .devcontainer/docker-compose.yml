@@ -1,8 +1,8 @@
 version: "3"
 services:
-  judge-manager:
-    container_name: judge-manager-test
-    image: coc0a25/judge-manager:dev
+  iris:
+    container_name: iris-test
+    image: coc0a25/iris:dev
     stdin_open: true
     tty: true
     volumes:

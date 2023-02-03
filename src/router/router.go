@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cranemont/judge-manager/src/handler"
-	"github.com/cranemont/judge-manager/src/service/logger"
+	"github.com/cranemont/iris/src/handler"
+	"github.com/cranemont/iris/src/service/logger"
 )
 
 type To string

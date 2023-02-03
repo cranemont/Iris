@@ -3,9 +3,9 @@ package connector
 import (
 	"os"
 
-	"github.com/cranemont/judge-manager/src/connector/rabbitmq"
-	"github.com/cranemont/judge-manager/src/router"
-	"github.com/cranemont/judge-manager/src/service/logger"
+	"github.com/cranemont/iris/src/connector/rabbitmq"
+	"github.com/cranemont/iris/src/router"
+	"github.com/cranemont/iris/src/service/logger"
 )
 
 type Connector interface {

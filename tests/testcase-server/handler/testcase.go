@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cranemont/judge-manager/tests/testcase-server/handler/response"
+	"github.com/cranemont/iris/tests/testcase-server/handler/response"
 )
 
 type testcase struct {

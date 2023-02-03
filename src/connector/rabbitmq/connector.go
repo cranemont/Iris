@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cranemont/judge-manager/src/router"
-	"github.com/cranemont/judge-manager/src/service/logger"
+	"github.com/cranemont/iris/src/router"
+	"github.com/cranemont/iris/src/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

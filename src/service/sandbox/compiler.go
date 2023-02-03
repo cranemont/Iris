@@ -3,8 +3,8 @@ package sandbox
 import (
 	"fmt"
 
-	"github.com/cranemont/judge-manager/src/common/constants"
-	"github.com/cranemont/judge-manager/src/service/file"
+	"github.com/cranemont/iris/src/common/constants"
+	"github.com/cranemont/iris/src/service/file"
 )
 
 type CompileResult struct {

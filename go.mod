@@ -1,4 +1,4 @@
-module github.com/cranemont/judge-manager
+module github.com/cranemont/iris
 
 go 1.19
 

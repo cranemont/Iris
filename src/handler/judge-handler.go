@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cranemont/judge-manager/src/common/constants"
-	"github.com/cranemont/judge-manager/src/common/result"
-	"github.com/cranemont/judge-manager/src/service/file"
-	"github.com/cranemont/judge-manager/src/service/grader"
-	"github.com/cranemont/judge-manager/src/service/logger"
-	"github.com/cranemont/judge-manager/src/service/sandbox"
-	"github.com/cranemont/judge-manager/src/service/testcase"
-	"github.com/cranemont/judge-manager/src/utils"
+	"github.com/cranemont/iris/src/common/constants"
+	"github.com/cranemont/iris/src/common/result"
+	"github.com/cranemont/iris/src/service/file"
+	"github.com/cranemont/iris/src/service/grader"
+	"github.com/cranemont/iris/src/service/logger"
+	"github.com/cranemont/iris/src/service/sandbox"
+	"github.com/cranemont/iris/src/service/testcase"
+	"github.com/cranemont/iris/src/utils"
 )
 
 type Request struct {
