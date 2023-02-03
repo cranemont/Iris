@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/cranemont/judge-manager/common/constants"
-	"github.com/cranemont/judge-manager/service/logger"
+	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/judge-manager/src/service/logger"
 )
 
 type Sandbox interface {

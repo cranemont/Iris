@@ -3,7 +3,7 @@ package testcase
 import (
 	"fmt"
 
-	"github.com/cranemont/judge-manager/service/cache"
+	"github.com/cranemont/judge-manager/src/service/cache"
 )
 
 type Manager interface {

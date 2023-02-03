@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cranemont/judge-manager/common/constants"
-	"github.com/cranemont/judge-manager/service/logger"
+	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/judge-manager/src/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

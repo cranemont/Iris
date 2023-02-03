@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/cranemont/judge-manager/handler"
+	"github.com/cranemont/judge-manager/src/handler"
 )
 
 type ResultCode int8
-type response struct {
+type Response struct {
 	SubmissionId string          `json:"submissionId"`
 	ResultCode   ResultCode      `json:"resultCode"`
 	Data         json.RawMessage `json:"data"`
@@ -27,7 +27,7 @@ const (
 	SERVER_ERROR
 )
 
-func NewResponse(id string, data json.RawMessage, err error) *response {
+func NewResponse(id string, data json.RawMessage, err error) *Response {
 	resultCode := ACCEPTED
 	errMessage := ""
 	// var errMessage json.RawMessage
@@ -39,7 +39,7 @@ func NewResponse(id string, data json.RawMessage, err error) *response {
 		resultCode = ErrorToResultCode(err)
 	}
 
-	return &response{
+	return &Response{
 		SubmissionId: id,
 		ResultCode:   resultCode,
 		Data:         data,
@@ -56,7 +56,7 @@ func JSONMarshal(t interface{}) ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-func (r *response) Marshal() []byte {
+func (r *Response) Marshal() []byte {
 
 	if res, err := JSONMarshal(r); err != nil {
 		// Error on marshaling router response means that

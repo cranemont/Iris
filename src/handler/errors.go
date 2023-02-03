@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cranemont/judge-manager/service/logger"
+	"github.com/cranemont/judge-manager/src/service/logger"
 )
 
 type HandlerError struct {

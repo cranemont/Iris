@@ -7,15 +7,15 @@ import (
 	// _ "net/http/pprof"
 	"os"
 
-	"github.com/cranemont/judge-manager/common/constants"
-	"github.com/cranemont/judge-manager/connector"
-	"github.com/cranemont/judge-manager/handler"
-	"github.com/cranemont/judge-manager/router"
-	"github.com/cranemont/judge-manager/service/cache"
-	"github.com/cranemont/judge-manager/service/file"
-	"github.com/cranemont/judge-manager/service/logger"
-	"github.com/cranemont/judge-manager/service/sandbox"
-	"github.com/cranemont/judge-manager/service/testcase"
+	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/judge-manager/src/connector"
+	"github.com/cranemont/judge-manager/src/handler"
+	"github.com/cranemont/judge-manager/src/router"
+	"github.com/cranemont/judge-manager/src/service/cache"
+	"github.com/cranemont/judge-manager/src/service/file"
+	"github.com/cranemont/judge-manager/src/service/logger"
+	"github.com/cranemont/judge-manager/src/service/sandbox"
+	"github.com/cranemont/judge-manager/src/service/testcase"
 )
 
 func profile() {

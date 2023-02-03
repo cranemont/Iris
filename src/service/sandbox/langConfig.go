@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cranemont/judge-manager/common/constants"
-	"github.com/cranemont/judge-manager/service/file"
+	"github.com/cranemont/judge-manager/src/common/constants"
+	"github.com/cranemont/judge-manager/src/service/file"
 )
 
 const (
