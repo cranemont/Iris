@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/cranemont/iris/tests/testcase-server/handler/response"
+	"github.com/cranemont/iris/tests/testcase-server/utils"
 )
 
 type testcase struct {
@@ -19,9 +19,8 @@ func NewTestcaseHandler(r response.Responser) *testcase {
 func (t *testcase) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	params, _ := req.Context().Value("params").(map[string]string)
 
-	// FIXME: 경로 환경변수로 설정 가능하도록 수정
 	// FIXME: 테스트 가능한 구조로 분리
-	path, _ := filepath.Abs("../../mock/testcase")
+	path := utils.Getenv("TESTCASE_PATH", "./data")
 	data, err := os.ReadFile(path + "/" + params["id"] + ".json")
 	if err != nil {
 		t.r.Error(w, "failed to read testcase file", http.StatusNotFound)

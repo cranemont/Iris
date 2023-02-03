@@ -8,6 +8,7 @@ import (
 	"github.com/cranemont/iris/tests/testcase-server/middleware"
 	"github.com/cranemont/iris/tests/testcase-server/router"
 	"github.com/cranemont/iris/tests/testcase-server/router/method"
+	"github.com/cranemont/iris/tests/testcase-server/utils"
 )
 
 func main() {
@@ -18,9 +19,12 @@ func main() {
 	r.Handle(method.GET, "/problem/:id/testcase",
 		middleware.Adapt(
 			testcaseHandler,
-			middleware.SetContentType(),
+			middleware.SetJsonContentType(),
 		),
 	)
 
-	http.ListenAndServe(":30000", r)
+	port := utils.Getenv("PORT", "30000")
+	host := utils.Getenv("HOST", "")
+
+	http.ListenAndServe(host+":"+port, r)
 }
