@@ -28,5 +28,5 @@ func (t *testcase) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	t.r.Ok(w, response.Data{Message: "ok", Result: data}, http.StatusOK)
+	t.r.Ok(w, data, http.StatusOK)
 }

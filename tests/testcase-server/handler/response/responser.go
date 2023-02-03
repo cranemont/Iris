@@ -1,11 +1,12 @@
 package response
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
 type Responser interface {
-	Ok(w http.ResponseWriter, data Data, code int)
+	Ok(w http.ResponseWriter, data json.RawMessage, code int)
 	Error(w http.ResponseWriter, error string, code int)
 }
 
@@ -16,13 +17,13 @@ func NewResponser() *responser {
 	return &responser{}
 }
 
-func (r *responser) Ok(w http.ResponseWriter, data Data, code int) {
+func (r *responser) Ok(w http.ResponseWriter, data json.RawMessage, code int) {
 	w.WriteHeader(code)
-	data.Encode(w)
+	w.Write(data)
 }
 
 func (r *responser) Error(w http.ResponseWriter, error string, code int) {
 	w.WriteHeader(code)
-	d := Data{Message: error}
+	d := ErrorResponse{StatusCode: code, Message: error}
 	d.Encode(w)
 }
