@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"os"
 
@@ -22,6 +23,9 @@ func (t *testcase) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// FIXME: 테스트 가능한 구조로 분리
 	path := utils.Getenv("TESTCASE_PATH", "./data")
 	data, err := os.ReadFile(path + "/" + params["id"] + ".json")
+	if err != nil {
+		log.Println("TestcaseHandler: ServeHttp:", err)
+	}
 	if err != nil {
 		t.r.Error(w, "failed to read testcase file", http.StatusNotFound)
 		return
