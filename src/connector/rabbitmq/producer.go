@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cranemont/iris/src/common/constants"
 	"github.com/cranemont/iris/src/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -17,14 +16,16 @@ type Producer interface {
 }
 
 type producer struct {
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	Done       chan error
-	publishes  chan uint64
-	logger     logger.Logger
+	connection   *amqp.Connection
+	channel      *amqp.Channel
+	exchangeName string
+	routingKey   string
+	Done         chan error
+	publishes    chan uint64
+	logger       logger.Logger
 }
 
-func NewProducer(amqpURI string, connectionName string, logger logger.Logger) (*producer, error) {
+func NewProducer(amqpURI, connectionName, exchangeName, routingKey string, logger logger.Logger) (*producer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
 	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
@@ -35,11 +36,13 @@ func NewProducer(amqpURI string, connectionName string, logger logger.Logger) (*
 	}
 
 	return &producer{
-		connection: connection,
-		channel:    nil,
-		Done:       make(chan error),
-		publishes:  make(chan uint64, 8),
-		logger:     logger,
+		connection:   connection,
+		channel:      nil,
+		exchangeName: exchangeName,
+		routingKey:   routingKey,
+		Done:         make(chan error),
+		publishes:    make(chan uint64, 8),
+		logger:       logger,
 	}, nil
 }
 
@@ -96,10 +99,10 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 
 	// https://www.rabbitmq.com/publishers.html
 	if err := p.channel.PublishWithContext(ctx,
-		constants.EXCHANGE,   // publish to an exchange
-		constants.RESULT_KEY, // routing to 0 or more queues
-		false,                // mandatory
-		false,                // immediate
+		p.exchangeName, // publish to an exchange
+		p.routingKey,   // routing to 0 or more queues
+		false,          // mandatory
+		false,          // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "application/json",
