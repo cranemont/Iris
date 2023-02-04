@@ -94,6 +94,7 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 	seqNo := p.channel.GetNextPublishSeqNo()
 	log.Printf("publishing %dB body (%q)", len(result), result)
 
+	// https://www.rabbitmq.com/publishers.html
 	if err := p.channel.PublishWithContext(ctx,
 		constants.EXCHANGE,   // publish to an exchange
 		constants.RESULT_KEY, // routing to 0 or more queues
@@ -101,7 +102,7 @@ func (p *producer) Publish(result []byte, ctx context.Context) error {
 		false,                // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
+			ContentType:     "application/json",
 			ContentEncoding: "",
 			Body:            result,
 			DeliveryMode:    amqp.Persistent, // 1=non-persistent, 2=persistent
