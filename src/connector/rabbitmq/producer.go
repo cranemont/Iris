@@ -56,7 +56,7 @@ func (p *producer) OpenChannel() error {
 		return fmt.Errorf("channel could not be put into confirm mode: %s", err)
 	}
 	// add listner for confirmation
-	confirms := p.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	confirms := p.channel.NotifyPublish(make(chan amqp.Confirmation, 10))
 
 	go p.confirmHandler(confirms)
 
@@ -81,6 +81,9 @@ func (p *producer) confirmHandler(confirms chan amqp.Confirmation) {
 					p.logger.Log(logger.ERROR, fmt.Sprintf("failed delivery of delivery tag: %d", confirmed.DeliveryTag))
 				}
 				delete(m, confirmed.DeliveryTag)
+			} else {
+				p.logger.Log(logger.ERROR, fmt.Sprintf("delivery tag must be a positive integer value: received: %d", confirmed.DeliveryTag))
+				panic("Invalid Delivery Tag: There might be an issue with the connection to the RabbitMQ broker")
 			}
 		}
 	}
