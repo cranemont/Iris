@@ -27,18 +27,15 @@ func NewConnector(
 	return &connector{consumer, producer, router, make(chan error), logger}
 }
 
-func (c *connector) Connect() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (c *connector) Connect(ctx context.Context) {
+	connectorCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer func() {
 		cancel()
 		c.consumer.CleanUp()
 		c.producer.CleanUp()
 	}()
 
-	channelName := "submission"
-	queueName := "submission-queue"
-
-	err := c.consumer.OpenChannel(channelName)
+	err := c.consumer.OpenChannel()
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +45,7 @@ func (c *connector) Connect() {
 		panic(err)
 	}
 
-	messageCh, err := c.consumer.Subscribe(channelName, queueName)
+	messageCh, err := c.consumer.Subscribe()
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +55,7 @@ func (c *connector) Connect() {
 	// [handler]													  | handler -> |
 	// i.consume(messageCh, i.Done)
 	for message := range messageCh {
-		go c.handle(message, ctx)
+		go c.handle(message, connectorCtx)
 	}
 	// running until Consumer is done
 	// <-i.Done
