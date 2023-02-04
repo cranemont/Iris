@@ -9,7 +9,7 @@ import (
 
 type Consumer interface {
 	OpenChannel() error
-	Subscribe(queueName string) (<-chan amqp.Delivery, error)
+	Subscribe() (<-chan amqp.Delivery, error)
 	CleanUp() error
 	// Ack(channelName string, tag uint64) error
 }
@@ -17,11 +17,12 @@ type Consumer interface {
 type consumer struct {
 	connection *amqp.Connection
 	channel    *amqp.Channel
+	queueName  string
 	tag        string
 	Done       chan error
 }
 
-func NewConsumer(amqpURI string, ctag string, connectionName string) (*consumer, error) {
+func NewConsumer(amqpURI, connectionName, queueName, ctag string) (*consumer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
 	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
@@ -34,6 +35,7 @@ func NewConsumer(amqpURI string, ctag string, connectionName string) (*consumer,
 	return &consumer{
 		connection: connection,
 		channel:    nil,
+		queueName:  queueName,
 		tag:        ctag,
 		Done:       make(chan error),
 	}, nil
@@ -56,18 +58,18 @@ func (c *consumer) OpenChannel() error {
 	return nil
 }
 
-func (c *consumer) Subscribe(queueName string) (<-chan amqp.Delivery, error) {
+func (c *consumer) Subscribe() (<-chan amqp.Delivery, error) {
 
 	// Subscribe queue for consume messages
 	// Return `<- chan Delivery`
 	messages, err := c.channel.Consume(
-		queueName, // queue name
-		c.tag,     // consumer
-		false,     // autoAck
-		false,     // exclusive
-		false,     // noLocal
-		false,     // noWait
-		nil,       // arguments
+		c.queueName, // queue name
+		c.tag,       // consumer
+		false,       // autoAck
+		false,       // exclusive
+		false,       // noLocal
+		false,       // noWait
+		nil,         // arguments
 	)
 	if err != nil {
 		return nil, fmt.Errorf("queue consume: %s", err)
