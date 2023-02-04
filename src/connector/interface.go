@@ -1,6 +1,8 @@
 package connector
 
+import "context"
+
 type Connector interface {
-	Connect()
+	Connect(ctx context.Context)
 	Disconnect()
 }
