@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cranemont/iris/src/common/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Consumer interface {
-	OpenChannel(name string) error
-	Subscribe(channelName string, queueName string) (<-chan amqp.Delivery, error)
+	OpenChannel() error
+	Subscribe(queueName string) (<-chan amqp.Delivery, error)
 	CleanUp() error
 	// Ack(channelName string, tag uint64) error
 }
 
 type consumer struct {
 	connection *amqp.Connection
-	channels   map[string](*amqp.Channel)
+	channel    *amqp.Channel
 	tag        string
 	Done       chan error
 }
@@ -34,42 +33,34 @@ func NewConsumer(amqpURI string, ctag string, connectionName string) (*consumer,
 
 	return &consumer{
 		connection: connection,
-		channels:   make(map[string](*amqp.Channel), constants.MAX_MQ_CHANNEL),
+		channel:    nil,
 		tag:        ctag,
 		Done:       make(chan error),
 	}, nil
 }
 
-func (c *consumer) OpenChannel(name string) error {
-	if _, exist := c.channels[name]; exist {
-		return fmt.Errorf("consumer: channel open failed: channel name already exists")
-	}
+func (c *consumer) OpenChannel() error {
+	var err error
 
-	channel, err := c.connection.Channel()
-	if err != nil {
-		return fmt.Errorf("consumer: channel open failed: %w", err)
+	if c.channel, err = c.connection.Channel(); err != nil {
+		return fmt.Errorf("channel: %s", err)
 	}
 	// Set prefetchCount for consume channel
-	if err = channel.Qos(
+	if err = c.channel.Qos(
 		1,     // prefetchCount
 		0,     // prefetchSize
 		false, // global
 	); err != nil {
 		return fmt.Errorf("qos set: %s", err)
 	}
-	c.channels[name] = channel
 	return nil
 }
 
-func (c *consumer) Subscribe(channelName string, queueName string) (<-chan amqp.Delivery, error) {
-	channel, exist := c.channels[channelName]
-	if !exist {
-		return nil, fmt.Errorf("consumer: Consume: channel does not exist")
-	}
+func (c *consumer) Subscribe(queueName string) (<-chan amqp.Delivery, error) {
 
 	// Subscribe queue for consume messages
 	// Return `<- chan Delivery`
-	messages, err := channel.Consume(
+	messages, err := c.channel.Consume(
 		queueName, // queue name
 		c.tag,     // consumer
 		false,     // autoAck
@@ -86,10 +77,8 @@ func (c *consumer) Subscribe(channelName string, queueName string) (<-chan amqp.
 
 func (c *consumer) CleanUp() error {
 	// Close channel
-	for name, channel := range c.channels {
-		if err := channel.Cancel(c.tag, true); err != nil {
-			return fmt.Errorf("Consumer cancel failed: %s: %w", name, err)
-		}
+	if err := c.channel.Cancel(c.tag, true); err != nil {
+		return fmt.Errorf("Consumer cancel failed: %w", err)
 	}
 
 	// Close Connection
