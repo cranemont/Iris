@@ -29,7 +29,7 @@ func Factory(c Module, p Providers, args ...any) Connector {
 		if !ok {
 			panic(fmt.Sprintf("Invalid consumer config: %v", consumerConfig))
 		}
-		consumer, err := rabbitmq.NewConsumer(consumerConfig)
+		consumer, err := rabbitmq.NewConsumer(consumerConfig, p.Logger)
 		if err != nil {
 			panic(err)
 		}

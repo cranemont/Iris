@@ -2,8 +2,8 @@ package rabbitmq
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/cranemont/iris/src/service/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -20,6 +20,7 @@ type consumer struct {
 	queueName  string
 	tag        string
 	Done       chan error
+	logger     logger.Logger
 }
 
 type ConsumerConfig struct {
@@ -29,7 +30,7 @@ type ConsumerConfig struct {
 	Ctag           string
 }
 
-func NewConsumer(config ConsumerConfig) (*consumer, error) {
+func NewConsumer(config ConsumerConfig, logger logger.Logger) (*consumer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
 	amqpConfig := amqp.Config{Properties: amqp.NewConnectionProperties()}
@@ -45,6 +46,7 @@ func NewConsumer(config ConsumerConfig) (*consumer, error) {
 		queueName:  config.QueueName,
 		tag:        config.Ctag,
 		Done:       make(chan error),
+		logger:     logger,
 	}, nil
 }
 
@@ -94,7 +96,7 @@ func (c *consumer) CleanUp() error {
 	if err := c.connection.Close(); err != nil {
 		return fmt.Errorf("AMQP connection close error: %s", err)
 	}
-	defer log.Print("RabbitMQ connection clear done")
+	defer c.logger.Log(logger.INFO, "RabbitMQ connection clear done")
 
 	// wait for handle() to exit
 	return <-c.Done
