@@ -1,17 +1,11 @@
 package connector
 
 import (
-	"os"
-
 	"github.com/cranemont/iris/src/connector/rabbitmq"
 	"github.com/cranemont/iris/src/router"
 	"github.com/cranemont/iris/src/service/logger"
+	"github.com/cranemont/iris/src/utils"
 )
-
-type Connector interface {
-	Connect()
-	Disconnect()
-}
 
 type Providers struct {
 	Router router.Router
@@ -31,10 +25,10 @@ func Factory(c Module, p Providers) Connector {
 	switch c {
 	case RABBIT_MQ:
 		uri := "amqp://" +
-			os.Getenv("RABBITMQ_DEFAULT_USER") + ":" +
-			os.Getenv("RABBITMQ_DEFAULT_PASS") + "@" +
-			os.Getenv("RABBITMQ_HOST") + ":" +
-			os.Getenv("RABBITMQ_PORT") + "/"
+			utils.Getenv("RABBITMQ_DEFAULT_USER", "skku") + ":" +
+			utils.Getenv("RABBITMQ_DEFAULT_PASS", "1234") + "@" +
+			utils.Getenv("RABBITMQ_HOST", "localhost") + ":" +
+			utils.Getenv("RABBITMQ_PORT", "5672") + "/"
 		consumer, err := rabbitmq.NewConsumer(uri, "ctag", "go-consumer")
 		if err != nil {
 			panic(err)
