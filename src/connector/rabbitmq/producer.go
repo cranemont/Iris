@@ -25,12 +25,19 @@ type producer struct {
 	logger       logger.Logger
 }
 
-func NewProducer(amqpURI, connectionName, exchangeName, routingKey string, logger logger.Logger) (*producer, error) {
+type ProducerConfig struct {
+	AmqpURI        string
+	ConnectionName string
+	ExchangeName   string
+	RoutingKey     string
+}
+
+func NewProducer(config ProducerConfig, logger logger.Logger) (*producer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
-	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
-	config.Properties.SetClientConnectionName(connectionName)
-	connection, err := amqp.DialConfig(amqpURI, config)
+	amqpConfig := amqp.Config{Properties: amqp.NewConnectionProperties()}
+	amqpConfig.Properties.SetClientConnectionName(config.ConnectionName)
+	connection, err := amqp.DialConfig(config.AmqpURI, amqpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("consumer: dial failed: %w", err)
 	}
@@ -38,8 +45,8 @@ func NewProducer(amqpURI, connectionName, exchangeName, routingKey string, logge
 	return &producer{
 		connection:   connection,
 		channel:      nil,
-		exchangeName: exchangeName,
-		routingKey:   routingKey,
+		exchangeName: config.ExchangeName,
+		routingKey:   config.RoutingKey,
 		Done:         make(chan error),
 		publishes:    make(chan uint64, 8),
 		logger:       logger,

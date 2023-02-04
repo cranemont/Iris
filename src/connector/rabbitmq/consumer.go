@@ -22,12 +22,19 @@ type consumer struct {
 	Done       chan error
 }
 
-func NewConsumer(amqpURI, connectionName, queueName, ctag string) (*consumer, error) {
+type ConsumerConfig struct {
+	AmqpURI        string
+	ConnectionName string
+	QueueName      string
+	Ctag           string
+}
+
+func NewConsumer(config ConsumerConfig) (*consumer, error) {
 
 	// Create New RabbitMQ Connection (go <-> RabbitMQ)
-	config := amqp.Config{Properties: amqp.NewConnectionProperties()}
-	config.Properties.SetClientConnectionName(connectionName)
-	connection, err := amqp.DialConfig(amqpURI, config)
+	amqpConfig := amqp.Config{Properties: amqp.NewConnectionProperties()}
+	amqpConfig.Properties.SetClientConnectionName(config.ConnectionName)
+	connection, err := amqp.DialConfig(config.AmqpURI, amqpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("consumer: dial failed: %w", err)
 	}
@@ -35,8 +42,8 @@ func NewConsumer(amqpURI, connectionName, queueName, ctag string) (*consumer, er
 	return &consumer{
 		connection: connection,
 		channel:    nil,
-		queueName:  queueName,
-		tag:        ctag,
+		queueName:  config.QueueName,
+		tag:        config.Ctag,
 		Done:       make(chan error),
 	}, nil
 }

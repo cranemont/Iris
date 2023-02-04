@@ -1,10 +1,11 @@
 package connector
 
 import (
+	"fmt"
+
 	"github.com/cranemont/iris/src/connector/rabbitmq"
 	"github.com/cranemont/iris/src/router"
 	"github.com/cranemont/iris/src/service/logger"
-	"github.com/cranemont/iris/src/utils"
 )
 
 type Providers struct {
@@ -21,22 +22,27 @@ const (
 	CONSOLE   Module = "Console"
 )
 
-func Factory(c Module, p Providers) Connector {
+func Factory(c Module, p Providers, args ...any) Connector {
 	switch c {
 	case RABBIT_MQ:
-		uri := "amqp://" +
-			utils.Getenv("RABBITMQ_DEFAULT_USER", "skku") + ":" +
-			utils.Getenv("RABBITMQ_DEFAULT_PASS", "1234") + "@" +
-			utils.Getenv("RABBITMQ_HOST", "localhost") + ":" +
-			utils.Getenv("RABBITMQ_PORT", "5672") + "/"
-		consumer, err := rabbitmq.NewConsumer(uri, "ctag", "go-consumer")
+		consumerConfig, ok := args[0].(rabbitmq.ConsumerConfig)
+		if !ok {
+			panic(fmt.Sprintf("Invalid consumer config: %v", consumerConfig))
+		}
+		consumer, err := rabbitmq.NewConsumer(consumerConfig)
 		if err != nil {
 			panic(err)
 		}
-		producer, err := rabbitmq.NewProducer(uri, "go-producer", p.Logger)
+
+		producerConfig, ok := args[0].(rabbitmq.ProducerConfig)
+		if !ok {
+			panic(fmt.Sprintf("Invalid producer config: %v", producerConfig))
+		}
+		producer, err := rabbitmq.NewProducer(producerConfig, p.Logger)
 		if err != nil {
 			panic(err)
 		}
+
 		return rabbitmq.NewConnector(consumer, producer, p.Router, p.Logger)
 	case HTTP:
 		panic("Need to be implemented")

@@ -9,6 +9,7 @@ import (
 
 	"github.com/cranemont/iris/src/common/constants"
 	"github.com/cranemont/iris/src/connector"
+	"github.com/cranemont/iris/src/connector/rabbitmq"
 	"github.com/cranemont/iris/src/handler"
 	"github.com/cranemont/iris/src/router"
 	"github.com/cranemont/iris/src/service/cache"
@@ -16,6 +17,7 @@ import (
 	"github.com/cranemont/iris/src/service/logger"
 	"github.com/cranemont/iris/src/service/sandbox"
 	"github.com/cranemont/iris/src/service/testcase"
+	"github.com/cranemont/iris/src/utils"
 )
 
 func profile() {
@@ -64,11 +66,28 @@ func main() {
 
 	logProvider.Log(logger.INFO, "Server Started")
 
-	// rabbitmq.NewConnector(consumer, producer, routeProvider, logProvider).Connect()
+	uri := "amqp://" +
+		utils.Getenv("RABBITMQ_DEFAULT_USER", "skku") + ":" +
+		utils.Getenv("RABBITMQ_DEFAULT_PASS", "1234") + "@" +
+		utils.Getenv("RABBITMQ_HOST", "localhost") + ":" +
+		utils.Getenv("RABBITMQ_PORT", "5672") + "/"
+
 	connector.Factory(
 		connector.RABBIT_MQ,
 		connector.Providers{Router: routeProvider, Logger: logProvider},
-	).Connect()
+		rabbitmq.ConsumerConfig{
+			AmqpURI:        uri,
+			ConnectionName: utils.Getenv("RABBITMQ_CONSUMER_CONNECTION_NAME", "go-consumer"),
+			QueueName:      utils.Getenv("RABBITMQ_CONSUMER_QUEUE_NAME", "iris.q.judge.submission"),
+			Ctag:           utils.Getenv("RABBITMQ_CONSUMER_TAG", "consumer-tag"),
+		},
+		rabbitmq.ProducerConfig{
+			AmqpURI:        uri,
+			ConnectionName: utils.Getenv("RABBITMQ_PRODUCER_CONNECTION_NAME", "go-producer"),
+			ExchangeName:   utils.Getenv("RABBITMQ_PRODUCER_QUEUE_NAME", "iris.e.direct.judge.result"),
+			RoutingKey:     utils.Getenv("RABBITMQ_PRODUCER_ROUTING_KEY", "judge.result"),
+		},
+	).Connect(context.Background())
 
 	select {}
 }
