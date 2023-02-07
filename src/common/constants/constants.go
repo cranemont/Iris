@@ -20,7 +20,9 @@ const TASK_EXITED = "Exited"
 const PUBLISH_RESULT = "Publish"
 
 // const BASE_DIR = "./results"
-const SANDBOX_BASE = "/app/sandbox"
+// const SANDBOX_BASE = "/app/sandbox" // for docker, FIXME: 환경변수로 설정
+
+const SANDBOX_BASE = "./lib/judger" // for local
 const RESULT_PATH = SANDBOX_BASE + "/results"
 const LIBJUDGER_PATH = SANDBOX_BASE + "/libjudger.so"
 const JAVA_POLICY_PATH = SANDBOX_BASE + "/policy/java_policy"

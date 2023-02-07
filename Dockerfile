@@ -35,8 +35,8 @@ RUN mkdir -p sandbox/policy \
   && mkdir -p sandbox/logs/run \
   && mkdir -p sandbox/logs/compile
 
-COPY lib/java_policy sandbox/policy/
-COPY lib/libjudger.so ./sandbox/
+COPY lib/judger/java_policy sandbox/policy/
+COPY lib/judger/libjudger.so ./sandbox/
 COPY --from=build /build/main .
 
 ENV APP_ENV=production
