@@ -27,9 +27,13 @@ func (m *manager) GetTestcase(problemId string) (Testcase, error) {
 	}
 	if !isExist {
 		testcase, err := m.source.GetTestcase(problemId)
+		if err != nil {
+			return Testcase{}, fmt.Errorf("get testcase: %w", err)
+		}
+
 		err = m.cache.Set(problemId, testcase)
 		if err != nil {
-			return Testcase{}, fmt.Errorf("testcase: %w", err)
+			return Testcase{}, fmt.Errorf("cache set: %w", err)
 		}
 		return testcase, nil
 	}
