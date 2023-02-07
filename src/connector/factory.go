@@ -34,7 +34,7 @@ func Factory(c Module, p Providers, args ...any) Connector {
 			panic(err)
 		}
 
-		producerConfig, ok := args[0].(rabbitmq.ProducerConfig)
+		producerConfig, ok := args[1].(rabbitmq.ProducerConfig)
 		if !ok {
 			panic(fmt.Sprintf("Invalid producer config: %v", producerConfig))
 		}
