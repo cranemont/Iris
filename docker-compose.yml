@@ -1,0 +1,70 @@
+version: "3"
+services:
+  app:
+    container_name: iris
+    image: iris:test
+    profiles:
+      - e2e-test
+    depends_on:
+      - rabbitmq
+    stdin_open: true
+    tty: true
+    environment:
+      TESTCASE_SERVER_URL: http://testcase-server:30000/testcase/problem
+      TESTCASE_SERVER_AUTH_TOKEN: AUTH_TOKEN
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_CONSUMER_CONNECTION_NAME: ${RABBITMQ_CONSUMER_CONNECTION_NAME}
+      RABBITMQ_CONSUMER_QUEUE_NAME: ${JUDGE_SUBMISSION_QUEUE_NAME}
+      RABBITMQ_CONSUMER_TAG: ${RABBITMQ_CONSUMER_TAG}
+      RABBITMQ_PRODUCER_CONNECTION_NAME: ${RABBITMQ_PRODUCER_CONNECTION_NAME}
+      RABBITMQ_PRODUCER_EXCHANGE_NAME: ${JUDGE_EXCHANGE_NAME}
+      RABBITMQ_PRODUCER_ROUTING_KEY: ${JUDGE_RESULT_ROUTING_KEY}
+
+  testcase-server:
+    container_name: testcase-server
+    image: testcase-server:test
+    stdin_open: true
+    tty: true
+    ports:
+      - 20000:30000
+
+  redis:
+    container_name: ${REDIS_HOST}
+    image: redis:alpine
+    ports: 
+      - 6379:6379
+
+  setup:
+    image: python:3.8-alpine
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./scripts/rabbitmq-setup.sh:/setup.sh
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      JUDGE_EXCHANGE_NAME: ${JUDGE_EXCHANGE_NAME}
+      JUDGE_SUBMISSION_QUEUE_NAME: ${JUDGE_SUBMISSION_QUEUE_NAME}
+      JUDGE_SUBMISSION_ROUTING_KEY: ${JUDGE_SUBMISSION_ROUTING_KEY}
+      JUDGE_RESULT_QUEUE_NAME: ${JUDGE_RESULT_QUEUE_NAME}
+      JUDGE_RESULT_ROUTING_KEY: ${JUDGE_RESULT_ROUTING_KEY}
+    entrypoint:
+      - /setup.sh
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ${RABBITMQ_HOST}
+    expose: 
+      - ${RABBITMQ_PORT}
+    ports:
+      - 5672:5672
+      - ${RABBITMQ_ADMIN_PORT}:15672
+    environment:
+      RABBITMQ_ERLANG_COOKIE: RabbitMQ-My-Cookies
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}

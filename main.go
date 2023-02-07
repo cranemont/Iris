@@ -77,14 +77,14 @@ func main() {
 		connector.Providers{Router: routeProvider, Logger: logProvider},
 		rabbitmq.ConsumerConfig{
 			AmqpURI:        uri,
-			ConnectionName: utils.Getenv("RABBITMQ_CONSUMER_CONNECTION_NAME", "go-consumer"),
-			QueueName:      utils.Getenv("RABBITMQ_CONSUMER_QUEUE_NAME", "iris.q.judge.submission"),
+			ConnectionName: utils.Getenv("RABBITMQ_CONSUMER_CONNECTION_NAME", "iris-consumer"),
+			QueueName:      utils.Getenv("RABBITMQ_CONSUMER_QUEUE_NAME", "client.q.judge.submission"),
 			Ctag:           utils.Getenv("RABBITMQ_CONSUMER_TAG", "consumer-tag"),
 		},
 		rabbitmq.ProducerConfig{
 			AmqpURI:        uri,
-			ConnectionName: utils.Getenv("RABBITMQ_PRODUCER_CONNECTION_NAME", "go-producer"),
-			ExchangeName:   utils.Getenv("RABBITMQ_PRODUCER_QUEUE_NAME", "iris.e.direct.judge.result"),
+			ConnectionName: utils.Getenv("RABBITMQ_PRODUCER_CONNECTION_NAME", "iris-producer"),
+			ExchangeName:   utils.Getenv("RABBITMQ_PRODUCER_EXCHANGE_NAME", "iris.e.direct.judge"),
 			RoutingKey:     utils.Getenv("RABBITMQ_PRODUCER_ROUTING_KEY", "judge.result"),
 		},
 	).Connect(context.Background())

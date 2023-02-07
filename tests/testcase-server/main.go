@@ -16,7 +16,7 @@ func main() {
 	responser := response.NewResponser()
 	testcaseHandler := handler.NewTestcaseHandler(responser)
 
-	r.Handle(method.GET, "/problem/:id/testcase",
+	r.Handle(method.GET, "/testcase/problem/:id",
 		middleware.Adapt(
 			testcaseHandler,
 			middleware.SetJsonContentType(),
