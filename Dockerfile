@@ -35,7 +35,7 @@ RUN mkdir -p sandbox/policy \
   && mkdir -p sandbox/logs/run \
   && mkdir -p sandbox/logs/compile
 
-COPY lib/judger/java_policy sandbox/policy/
+COPY lib/judger/policy/java_policy sandbox/policy/
 COPY lib/judger/libjudger.so ./sandbox/
 COPY --from=build /build/main .
 
