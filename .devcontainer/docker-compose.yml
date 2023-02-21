@@ -1,36 +1,72 @@
 version: "3"
 services:
-  iris:
-    container_name: iris-test
-    image: coc0a25/iris:dev
+  iris-dev:
+    container_name: iris-dev
+    build:
+      context: ..
+      dockerfile: Dockerfile-dev
+    depends_on:
+      - rabbitmq-dev
     stdin_open: true
     tty: true
     volumes:
-      - ..:/app/go/src:cached
+      - ..:/app/src:cached
     environment:
-      - TESTCASE_SERVER_URL=http://host.docker.internal:3000/testcase/problem/
-      - TESTCASE_SERVER_AUTH_TOKEN=AUTH_TOKEN
-      - REDIS_HOST=redis-test
-      - REDIS_PORT=6379
-      - RABBITMQ_DEFAULT_USER=skku
-      - RABBITMQ_DEFAULT_PASS=1234
-      - RABBITMQ_HOST=rabbitmq-test
-      - RABBITMQ_PORT=5672
-      - APP_ENV=dev
+      TESTCASE_SERVER_URL: http://testcase-server-dev:30000/testcase/problem
+      TESTCASE_SERVER_AUTH_TOKEN: AUTH_TOKEN
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_CONSUMER_CONNECTION_NAME: ${RABBITMQ_CONSUMER_CONNECTION_NAME}
+      RABBITMQ_CONSUMER_QUEUE_NAME: ${JUDGE_SUBMISSION_QUEUE_NAME}
+      RABBITMQ_CONSUMER_TAG: ${RABBITMQ_CONSUMER_TAG}
+      RABBITMQ_PRODUCER_CONNECTION_NAME: ${RABBITMQ_PRODUCER_CONNECTION_NAME}
+      RABBITMQ_PRODUCER_EXCHANGE_NAME: ${JUDGE_EXCHANGE_NAME}
+      RABBITMQ_PRODUCER_ROUTING_KEY: ${JUDGE_RESULT_ROUTING_KEY}
 
-  redis:
-    container_name: redis-test
+  testcase-server-dev:
+    container_name: testcase-server-dev
+    build:
+      context: ../tests/testcase-server
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+
+  redis-dev:
+    container_name: ${REDIS_HOST}
     image: redis:alpine
-    ports:
-      - 11000:6379
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: rabbitmq-test
-    ports:
-      - 12000:5672
-      - 13000:15672
+  setup-dev:
+    image: python:3.8-alpine
+    depends_on:
+      - rabbitmq-dev
+    volumes:
+      - ../scripts/rabbitmq-setup.sh:/setup.sh
     environment:
-      - RABBITMQ_ERLANG_COOKIE=RabbitMQ-My-Cookies
-      - RABBITMQ_DEFAULT_USER=skku
-      - RABBITMQ_DEFAULT_PASS=1234
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      JUDGE_EXCHANGE_NAME: ${JUDGE_EXCHANGE_NAME}
+      JUDGE_SUBMISSION_QUEUE_NAME: ${JUDGE_SUBMISSION_QUEUE_NAME}
+      JUDGE_SUBMISSION_ROUTING_KEY: ${JUDGE_SUBMISSION_ROUTING_KEY}
+      JUDGE_RESULT_QUEUE_NAME: ${JUDGE_RESULT_QUEUE_NAME}
+      JUDGE_RESULT_ROUTING_KEY: ${JUDGE_RESULT_ROUTING_KEY}
+    entrypoint:
+      - /setup.sh
+
+  rabbitmq-dev:
+    image: rabbitmq:3-management-alpine
+    container_name: ${RABBITMQ_HOST}-dev
+    expose: 
+      - ${RABBITMQ_PORT}
+    ports:
+      - 5672:5672
+      - ${RABBITMQ_ADMIN_PORT}:15672
+    environment:
+      RABBITMQ_ERLANG_COOKIE: RabbitMQ-My-Cookies
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}

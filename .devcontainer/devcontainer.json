@@ -1,20 +1,10 @@
 {
-  "forwardPorts": [
-    3000
-  ],
   "name": "iris-devcontainer",
-  "dockerComposeFile": [
-    "docker-compose.yml"
-  ],
-  "service": "iris",
-  "runServices": [
-    "iris",
-    "redis",
-    "rabbitmq"
-  ],
-  "workspaceFolder": "/app/go/src",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "iris-dev",
+  "workspaceFolder": "/app/src",
   "initializeCommand": "go install -v golang.org/x/tools/gopls@latest; go install -v github.com/ramya-rao-a/go-outline@latest",
-  "postCreateCommand": "git config --global --add safe.directory /app/go/src",
+  "postCreateCommand": "git config --global --add safe.directory /app/src",
   "customizations": {
     // Configure properties specific to VS Code.
     "vscode": {
