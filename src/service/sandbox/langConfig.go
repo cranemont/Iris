@@ -49,7 +49,7 @@ type langConfig struct {
 	file       file.FileManager
 }
 
-func NewLangConfig(file file.FileManager) *langConfig {
+func NewLangConfig(file file.FileManager, javaPolicyPath string) *langConfig {
 	defaultEnv := []string{"LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"}
 	var cConfig = config{
 		Language:           C,
@@ -104,7 +104,7 @@ func NewLangConfig(file file.FileManager) *langConfig {
 			"-Djava.security.manager " +
 			"-Dfile.encoding=UTF-8 " +
 			"-Djava.security.policy==" +
-			constants.JAVA_POLICY_PATH + " " +
+			javaPolicyPath + " " +
 			"-Djava.awt.headless=true " +
 			"Main",
 		SeccompRule:           "",

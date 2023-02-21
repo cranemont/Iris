@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/cranemont/iris/src/common/constants"
 	"github.com/cranemont/iris/src/service/logger"
 )
 
@@ -21,9 +20,9 @@ type sandbox struct {
 	logger     logger.Logger
 }
 
-func NewSandbox(logger logger.Logger) *sandbox {
+func NewSandbox(binaryPath string, logger logger.Logger) *sandbox {
 	sandbox := sandbox{
-		binaryPath: constants.LIBJUDGER_PATH,
+		binaryPath: binaryPath,
 		logger:     logger,
 	}
 	return &sandbox

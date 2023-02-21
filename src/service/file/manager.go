@@ -20,9 +20,9 @@ type fileManager struct {
 	baseDir string
 }
 
-func NewFileManager() *fileManager {
+func NewFileManager(baseDir string) *fileManager {
 	fileManager := fileManager{}
-	fileManager.baseDir = constants.RESULT_PATH
+	fileManager.baseDir = baseDir
 	return &fileManager
 }
 

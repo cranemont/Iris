@@ -7,7 +7,6 @@ import (
 	// _ "net/http/pprof"
 	"os"
 
-	"github.com/cranemont/iris/src/common/constants"
 	"github.com/cranemont/iris/src/connector"
 	"github.com/cranemont/iris/src/connector/rabbitmq"
 	"github.com/cranemont/iris/src/handler"
@@ -21,20 +20,23 @@ import (
 )
 
 func profile() {
-	// http.HandleFunc("/debug/pprof/", Index) // Profile Endpoint for Heap, Block, ThreadCreate, Goroutine, Mutex
-	// http.HandleFunc("/debug/pprof/cmdline", Cmdline)
-	// http.HandleFunc("/debug/pprof/profile", Profile) // Profile Endpoint for CPU
-	// http.HandleFunc("/debug/pprof/symbol", Symbol)
-	// http.HandleFunc("/debug/pprof/trace", Trace)
 	go func() {
 		http.ListenAndServe("localhost:6060", nil)
 		// use <go tool pprof -http :8080 http://localhost:6060/debug/pprof/profile\?seconds\=30> to profile
 	}()
 }
 
+type Env string
+
+const (
+	Production  Env = "production"
+	Development Env = "development"
+)
+
 func main() {
 	// profile()
-	logProvider := logger.NewLogger(logger.Console, constants.Env((os.Getenv("APP_ENV"))))
+	env := Env(utils.Getenv("APP_ENV", "development"))
+	logProvider := logger.NewLogger(logger.Console, env == Production)
 
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
@@ -46,10 +48,10 @@ func main() {
 	)
 	testcaseManager := testcase.NewManager(source, cache)
 
-	fileManager := file.NewFileManager()
-	langConfig := sandbox.NewLangConfig(fileManager)
+	fileManager := file.NewFileManager("/app/sandbox/results")
+	langConfig := sandbox.NewLangConfig(fileManager, "/app/sandbox/policy/java_policy")
 
-	sb := sandbox.NewSandbox(logProvider)
+	sb := sandbox.NewSandbox("/app/sandbox/libjudger.so", logProvider)
 	compiler := sandbox.NewCompiler(sb, langConfig, fileManager)
 	runner := sandbox.NewRunner(sb, langConfig, fileManager)
 

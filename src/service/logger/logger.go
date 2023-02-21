@@ -31,12 +31,12 @@ type logger struct {
 	zap *zap.Logger
 }
 
-func NewLogger(mode Mode, env constants.Env) *logger {
+func NewLogger(mode Mode, isProduction bool) *logger {
 	var zapLogger *zap.Logger
 	var cfg zap.Config
 	var err error
 
-	if env == constants.Production {
+	if isProduction {
 		cfg = zap.NewProductionConfig()
 		setMode(&cfg, mode, constants.LOG_PATH_PROD).
 			EncoderConfig = zap.NewProductionEncoderConfig()
