@@ -1,10 +1,11 @@
 {
   "name": "iris-devcontainer",
-  "dockerComposeFile": ["docker-compose.yml"],
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
   "service": "iris-dev",
   "workspaceFolder": "/app/src",
-  "initializeCommand": "go install -v golang.org/x/tools/gopls@latest; go install -v github.com/ramya-rao-a/go-outline@latest",
-  "postCreateCommand": "git config --global --add safe.directory /app/src",
+  "onCreateCommand": "go get -d && go install -v golang.org/x/tools/gopls@latest && go install -v github.com/ramya-rao-a/go-outline@latest && git config --global --add safe.directory /app/src",
   "customizations": {
     // Configure properties specific to VS Code.
     "vscode": {
