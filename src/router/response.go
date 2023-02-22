@@ -36,6 +36,8 @@ func NewResponse(id string, data json.RawMessage, err error) *Response {
 	if err != nil {
 		if handlerErr, ok := err.(*handler.HandlerError); ok {
 			errMessage = handlerErr.Message
+		} else {
+			errMessage = err.Error()
 		}
 		resultCode = ErrorToResultCode(err)
 	}
