@@ -24,6 +24,7 @@ const (
 	MEMORY_LIMIT_EXCEEDED
 	RUNTIME_ERROR
 	COMPILE_ERROR
+	TESTCASE_ERROR
 	SERVER_ERROR
 )
 
@@ -87,6 +88,9 @@ func ErrorToResultCode(err error) ResultCode {
 	}
 	if errors.Is(err, handler.ErrCompile) {
 		return COMPILE_ERROR
+	}
+	if errors.Is(err, handler.ErrTestcaseGet) {
+		return TESTCASE_ERROR
 	}
 	return SERVER_ERROR
 }
