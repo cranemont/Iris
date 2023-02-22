@@ -24,6 +24,28 @@ type Request struct {
 	MemoryLimit int    `json:"memoryLimit"`
 }
 
+func (r Request) Validate() (*Request, error) {
+	if r.Code == "" {
+		return nil, fmt.Errorf("code must not be empty")
+	}
+	if r.Language == "" {
+		return nil, fmt.Errorf("language must not be empty")
+	}
+	if !sandbox.Language(r.Language).IsValid() {
+		return nil, fmt.Errorf("unsupported language: %s", r.Language)
+	}
+	if r.ProblemId == 0 {
+		return nil, fmt.Errorf("problemId must not be empty or zero")
+	}
+	if r.TimeLimit < 1000 {
+		return nil, fmt.Errorf("timeLimit must be greater than or equal to 1000")
+	}
+	if r.MemoryLimit <= 0{
+		return nil, fmt.Errorf("memoryLimit must not be empty and be greater than 0")
+	}
+	return &r, nil
+}
+
 type Result struct {
 	TotalTestcase int           `json:"totalTestcase"`
 	AcceptedNum   int           `json:"acceptedNum"`
@@ -119,7 +141,21 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 
 	err := json.Unmarshal(data, &req)
 	if err != nil {
-		return nil, &HandlerError{caller: "handle", err: fmt.Errorf("%w: %s", ErrValidate, err), level: logger.ERROR} //fmt.Errorf("%w: %s", ErrValidate, err)
+		return nil, &HandlerError{
+			caller: "handle", 
+			err: fmt.Errorf("%w: %s", ErrValidate, err), 
+			level: logger.ERROR,
+			Message: err.Error(),
+		}
+	}
+	validReq, err := req.Validate()
+	if err != nil {
+		return nil, &HandlerError{
+			caller: "request validate", 
+			err: fmt.Errorf("%w: %s", ErrValidate, err), 
+			level: logger.ERROR,
+			Message: err.Error(),
+		}
 	}
 
 	dir := utils.RandString(constants.DIR_NAME_LEN) + id
@@ -137,7 +173,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 		}
 	}
 
-	srcPath, err := j.langConfig.MakeSrcPath(dir, req.Language)
+	srcPath, err := j.langConfig.MakeSrcPath(dir, sandbox.Language(validReq.Language))
 	if err != nil {
 		return nil, &HandlerError{
 			caller:  "handle",
@@ -147,7 +183,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 		}
 	}
 
-	if err := j.file.CreateFile(srcPath, req.Code); err != nil {
+	if err := j.file.CreateFile(srcPath, validReq.Code); err != nil {
 		return nil, &HandlerError{
 			caller:  "handle",
 			err:     fmt.Errorf("creating src file: %w", err),
@@ -158,28 +194,45 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 
 	// err = j.judger.Judge(task)
 	testcaseOutCh := make(chan result.ChResult)
-	go j.getTestcase(testcaseOutCh, strconv.Itoa(req.ProblemId))
+	go j.getTestcase(testcaseOutCh, strconv.Itoa(validReq.ProblemId))
 	compileOutCh := make(chan result.ChResult)
-	go j.compile(compileOutCh, sandbox.CompileRequest{Dir: dir, Language: req.Language})
+	go j.compile(compileOutCh, sandbox.CompileRequest{Dir: dir, Language: sandbox.Language(validReq.Language)})
 
 	testcaseOut := <-testcaseOutCh
 	compileOut := <-compileOutCh
 
 	if testcaseOut.Err != nil {
-		return nil, &HandlerError{caller: "handle", err: fmt.Errorf("%w: %s", ErrTestcaseGet, testcaseOut.Err), level: logger.ERROR}
+		return nil, &HandlerError{
+			caller: "handle", 
+			err: fmt.Errorf("%w: %s", ErrTestcaseGet, testcaseOut.Err), 
+			level: logger.ERROR,
+			Message: testcaseOut.Err.Error(),
+		}
 	}
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
 	if !ok {
-		return nil, &HandlerError{caller: "handle", err: fmt.Errorf("%w: Testcase", ErrTypeAssertionFail), level: logger.ERROR}
+		return nil, &HandlerError{
+			caller: "handle", 
+			err: fmt.Errorf("%w: Testcase", ErrTypeAssertionFail), 
+			level: logger.ERROR,
+		}
 	}
 
 	if compileOut.Err != nil {
 		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
-		return nil, &HandlerError{caller: "handle", err: fmt.Errorf("%w: %s", ErrSandbox, compileOut.Err), level: logger.ERROR}
+		return nil, &HandlerError{
+			caller: "handle", 
+			err: fmt.Errorf("%w: %s", ErrSandbox, compileOut.Err), 
+			level: logger.ERROR,
+		}
 	}
 	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
-		return nil, &HandlerError{caller: "handle", err: fmt.Errorf("%w: CompileResult", ErrTypeAssertionFail), level: logger.INFO}
+		return nil, &HandlerError{
+			caller: "handle", 
+			err: fmt.Errorf("%w: CompileResult", ErrTypeAssertionFail), 
+			level: logger.INFO,
+		}
 	}
 	if compileResult.ExecResult.ResultCode != sandbox.SUCCESS {
 		// 컴파일러를 실행했으나 컴파일에 실패한 경우
@@ -204,9 +257,9 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 		runResult, err := j.runner.Run(sandbox.RunRequest{
 			Order:       i,
 			Dir:         dir,
-			Language:    req.Language,
-			TimeLimit:   req.TimeLimit,
-			MemoryLimit: req.MemoryLimit,
+			Language:    sandbox.Language(validReq.Language),
+			TimeLimit:   validReq.TimeLimit,
+			MemoryLimit: validReq.MemoryLimit,
 		}, []byte(tc.Data[i].In))
 
 		if err != nil {
