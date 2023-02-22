@@ -8,17 +8,15 @@ import (
 	"github.com/cranemont/iris/src/service/logger"
 )
 
-type To string
-
 const (
-	Judge        To = "Judge"
-	SpecialJudge To = "SpecialJudge"
-	Run          To = "Run"
-	Interactive  To = "Interactive"
+	Judge        = "judge"
+	SpecialJudge = "specialJudge"
+	Run          = "run"
+	Interactive  = "interactive"
 )
 
 type Router interface {
-	Route(path To, id string, data []byte) []byte
+	Route(path string, id string, data []byte) []byte
 }
 
 type router struct {
@@ -33,7 +31,7 @@ func NewRouter(
 	return &router{judgeHandler, logger}
 }
 
-func (r *router) Route(path To, id string, data []byte) []byte {
+func (r *router) Route(path string, id string, data []byte) []byte {
 	var handlerResult json.RawMessage
 	var err error
 
@@ -45,7 +43,7 @@ func (r *router) Route(path To, id string, data []byte) []byte {
 	case Run:
 		// custom-testcase handler
 	default:
-		err = fmt.Errorf("handler does not exist: %s", path)
+		err = fmt.Errorf("invalid request type: %s", path)
 	}
 
 	if err != nil {
