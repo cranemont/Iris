@@ -9,16 +9,25 @@ import (
 	"github.com/cranemont/iris/src/service/file"
 )
 
+type Language string
+
+func (l Language) IsValid() bool {
+	switch l{
+	case "C", "Cpp", "Java", "Python3":
+		return true
+	}
+	return false
+}
+
 const (
-	C    = "C"
-	CPP  = "Cpp"
-	JAVA = "Java"
-	// PYTHON2 = "py2"
-	PYTHON = "Python3"
+	C  Language  = "C"
+	CPP  Language = "Cpp"
+	JAVA Language = "Java"
+	PYTHON Language = "Python3"
 )
 
 type config struct {
-	Language              string
+	Language              Language
 	SrcName               string
 	ExeName               string
 	MaxCompileCpuTime     int
@@ -35,10 +44,10 @@ type config struct {
 }
 
 type LangConfig interface {
-	GetConfig(language string) (config, error)
-	MakeSrcPath(dir string, language string) (string, error)
-	ToCompileExecArgs(dir string, language string) (ExecArgs, error)
-	ToRunExecArgs(dir string, language string, order int, limit Limit, fileIo bool) (ExecArgs, error)
+	GetConfig(language Language) (config, error)
+	MakeSrcPath(dir string, language Language) (string, error)
+	ToCompileExecArgs(dir string, language Language) (ExecArgs, error)
+	ToRunExecArgs(dir string, language Language, order int, limit Limit, fileIo bool) (ExecArgs, error)
 }
 
 type langConfig struct {
@@ -137,7 +146,7 @@ func NewLangConfig(file file.FileManager, javaPolicyPath string) *langConfig {
 	}
 }
 
-func (l *langConfig) GetConfig(language string) (config, error) {
+func (l *langConfig) GetConfig(language Language) (config, error) {
 	switch language {
 	case C:
 		return l.cConfig, nil
@@ -153,7 +162,7 @@ func (l *langConfig) GetConfig(language string) (config, error) {
 	return config{}, fmt.Errorf("unsupported language: %s", language)
 }
 
-func (l *langConfig) MakeSrcPath(dir string, language string) (string, error) {
+func (l *langConfig) MakeSrcPath(dir string, language Language) (string, error) {
 	c, err := l.GetConfig(language)
 	if err != nil {
 		return "", err
@@ -177,7 +186,7 @@ func (l *langConfig) MakeSrcPath(dir string, language string) (string, error) {
 // 	return file.MakeFilePath(dir, strconv.Itoa(order)+".error").String()
 // }
 
-func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, error) {
+func (l *langConfig) ToCompileExecArgs(dir string, language Language) (ExecArgs, error) {
 	c, err := l.GetConfig(language)
 	if err != nil {
 		return ExecArgs{}, err
@@ -212,7 +221,7 @@ func (l *langConfig) ToCompileExecArgs(dir string, language string) (ExecArgs, e
 	}, nil
 }
 
-func (l *langConfig) ToRunExecArgs(dir string, language string, order int, limit Limit, fileIo bool) (ExecArgs, error) {
+func (l *langConfig) ToRunExecArgs(dir string, language Language, order int, limit Limit, fileIo bool) (ExecArgs, error) {
 	c, err := l.GetConfig(language)
 	if err != nil {
 		return ExecArgs{}, err

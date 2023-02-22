@@ -17,7 +17,7 @@ type RunResult struct {
 type RunRequest struct {
 	Order       int
 	Dir         string
-	Language    string
+	Language    Language
 	TimeLimit   int
 	MemoryLimit int
 }

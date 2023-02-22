@@ -14,7 +14,7 @@ type CompileResult struct {
 
 type CompileRequest struct {
 	Dir      string
-	Language string
+	Language Language
 }
 
 type Compiler interface {
