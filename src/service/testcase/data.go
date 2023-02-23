@@ -12,11 +12,11 @@ type Element struct {
 
 type Testcase struct {
 	// metadata should be here
-	Data []Element
+	Elements []Element
 }
 
 func (t *Testcase) Count() int {
-	return len(t.Data)
+	return len(t.Elements)
 }
 
 func (t Testcase) MarshalBinary() ([]byte, error) {

@@ -107,7 +107,7 @@ const (
 type JudgeHandler struct {
 	compiler        sandbox.Compiler
 	runner          sandbox.Runner
-	testcaseManager testcase.Manager
+	testcaseManager testcase.TestcaseManager
 	langConfig      sandbox.LangConfig
 	file            file.FileManager
 	logger          logger.Logger
@@ -116,7 +116,7 @@ type JudgeHandler struct {
 func NewJudgeHandler(
 	compiler sandbox.Compiler,
 	runner sandbox.Runner,
-	testcaseManager testcase.Manager,
+	testcaseManager testcase.TestcaseManager,
 	langConfig sandbox.LangConfig,
 	file file.FileManager,
 	logger logger.Logger,
@@ -209,6 +209,8 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 			Message: testcaseOut.Err.Error(),
 		}
 	}
+	// elements, ok := testcaseOut.Data.([]testcase.Element)
+	// tc := testcase.Testcase{Elements: elements}
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
 	if !ok {
 		return nil, &HandlerError{
@@ -247,7 +249,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 		}
 	}
 
-	tcNum := len(tc.Data)
+	tcNum := tc.Count()
 	// FIXME: res.Init으로 분리
 	res.JudgeResult = make([]JudgeResult, tcNum)
 	res.TotalTestcase = tcNum
@@ -260,13 +262,13 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 			Language:    sandbox.Language(validReq.Language),
 			TimeLimit:   validReq.TimeLimit,
 			MemoryLimit: validReq.MemoryLimit,
-		}, []byte(tc.Data[i].In))
+		}, []byte(tc.Elements[i].In))
 
 		if err != nil {
 			res.JudgeResult[i].ResultCode = SYSTEM_ERROR
 			continue
 		}
-		res.SetJudgeResult(i, tc.Data[i].Id, runResult.ExecResult)
+		res.SetJudgeResult(i, tc.Elements[i].Id, runResult.ExecResult)
 		if runResult.ExecResult.ResultCode != sandbox.RUN_SUCCESS {
 			continue
 		}
@@ -274,7 +276,7 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 		// 하나당 약 50microsec 10개 채점시 500microsec.
 		// output이 커지면 더 길어짐 -> FIXME: 최적화 과정에서 goroutine으로 수정
 		// st := time.Now()
-		accepted := grader.Grade([]byte(tc.Data[i].Out), runResult.Output)
+		accepted := grader.Grade([]byte(tc.Elements[i].Out), runResult.Output)
 		if accepted {
 			res.Accepted()
 			res.SetJudgeResultCode(i, ACCEPTED)
