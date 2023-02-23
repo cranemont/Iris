@@ -8,12 +8,6 @@ import (
 	"github.com/go-redis/redis/v9"
 )
 
-type Cache interface {
-	Get(key string) ([]byte, error)
-	Set(key string, value interface{}) error
-	IsExist(key string) (bool, error)
-}
-
 type cache struct {
 	ctx    context.Context
 	client redis.Client
