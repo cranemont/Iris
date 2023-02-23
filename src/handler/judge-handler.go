@@ -37,11 +37,11 @@ func (r Request) Validate() (*Request, error) {
 	if r.ProblemId == 0 {
 		return nil, fmt.Errorf("problemId must not be empty or zero")
 	}
-	if r.TimeLimit < 1000 {
-		return nil, fmt.Errorf("timeLimit must be greater than or equal to 1000")
+	if r.TimeLimit <= 0 {
+		return nil, fmt.Errorf("timeLimit must not be empty or less than 0")
 	}
-	if r.MemoryLimit <= 0{
-		return nil, fmt.Errorf("memoryLimit must not be empty and be greater than 0")
+	if r.MemoryLimit <= 0 {
+		return nil, fmt.Errorf("memoryLimit must not be empty or less than 0")
 	}
 	return &r, nil
 }
@@ -142,18 +142,18 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 	err := json.Unmarshal(data, &req)
 	if err != nil {
 		return nil, &HandlerError{
-			caller: "handle", 
-			err: fmt.Errorf("%w: %s", ErrValidate, err), 
-			level: logger.ERROR,
+			caller:  "handle",
+			err:     fmt.Errorf("%w: %s", ErrValidate, err),
+			level:   logger.ERROR,
 			Message: err.Error(),
 		}
 	}
 	validReq, err := req.Validate()
 	if err != nil {
 		return nil, &HandlerError{
-			caller: "request validate", 
-			err: fmt.Errorf("%w: %s", ErrValidate, err), 
-			level: logger.ERROR,
+			caller:  "request validate",
+			err:     fmt.Errorf("%w: %s", ErrValidate, err),
+			level:   logger.ERROR,
 			Message: err.Error(),
 		}
 	}
@@ -203,9 +203,9 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 
 	if testcaseOut.Err != nil {
 		return nil, &HandlerError{
-			caller: "handle", 
-			err: fmt.Errorf("%w: %s", ErrTestcaseGet, testcaseOut.Err), 
-			level: logger.ERROR,
+			caller:  "handle",
+			err:     fmt.Errorf("%w: %s", ErrTestcaseGet, testcaseOut.Err),
+			level:   logger.ERROR,
 			Message: testcaseOut.Err.Error(),
 		}
 	}
@@ -214,26 +214,26 @@ func (j *JudgeHandler) Handle(id string, data []byte) (json.RawMessage, error) {
 	tc, ok := testcaseOut.Data.(testcase.Testcase)
 	if !ok {
 		return nil, &HandlerError{
-			caller: "handle", 
-			err: fmt.Errorf("%w: Testcase", ErrTypeAssertionFail), 
-			level: logger.ERROR,
+			caller: "handle",
+			err:    fmt.Errorf("%w: Testcase", ErrTypeAssertionFail),
+			level:  logger.ERROR,
 		}
 	}
 
 	if compileOut.Err != nil {
 		// 컴파일러 실행 과정이나 이후 처리 과정에서 오류가 생긴 경우
 		return nil, &HandlerError{
-			caller: "handle", 
-			err: fmt.Errorf("%w: %s", ErrSandbox, compileOut.Err), 
-			level: logger.ERROR,
+			caller: "handle",
+			err:    fmt.Errorf("%w: %s", ErrSandbox, compileOut.Err),
+			level:  logger.ERROR,
 		}
 	}
 	compileResult, ok := compileOut.Data.(sandbox.CompileResult)
 	if !ok {
 		return nil, &HandlerError{
-			caller: "handle", 
-			err: fmt.Errorf("%w: CompileResult", ErrTypeAssertionFail), 
-			level: logger.INFO,
+			caller: "handle",
+			err:    fmt.Errorf("%w: CompileResult", ErrTypeAssertionFail),
+			level:  logger.INFO,
 		}
 	}
 	if compileResult.ExecResult.ResultCode != sandbox.SUCCESS {
