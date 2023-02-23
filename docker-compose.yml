@@ -10,8 +10,10 @@ services:
     stdin_open: true
     tty: true
     environment:
-      TESTCASE_SERVER_URL: http://testcase-server:30000/testcase/problem
-      TESTCASE_SERVER_AUTH_TOKEN: AUTH_TOKEN
+      TESTCASE_SERVER_URL: http://testcase-server:30000/problem/:id/testcase
+      TESTCASE_SERVER_URL_PLACEHOLDER: :id
+      TESTCASE_SERVER_AUTH_HEADER: Authorization
+      TESTCASE_SERVER_AUTH_TOKEN: iris-token
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
