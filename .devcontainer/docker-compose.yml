@@ -36,6 +36,8 @@ services:
       dockerfile: Dockerfile
     stdin_open: true
     tty: true
+    volumes:
+      - ./data:/app/data
 
   redis-dev:
     container_name: ${REDIS_HOST}

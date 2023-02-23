@@ -2,11 +2,12 @@ version: "3"
 services:
   app:
     container_name: iris
-    image: iris:test
-    profiles:
-      - e2e-test
+    build:
+      dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - setup
+    restart: always
     stdin_open: true
     tty: true
     environment:
@@ -29,17 +30,19 @@ services:
 
   testcase-server:
     container_name: testcase-server
-    image: testcase-server:test
+    build:
+      context: ./tests/testcase-server
+      dockerfile: Dockerfile
     stdin_open: true
     tty: true
     ports:
       - 20000:30000
+    volumes:
+      - ./tests/testcase-server/data:/app/data
 
   redis:
     container_name: ${REDIS_HOST}
     image: redis:alpine
-    ports: 
-      - 6379:6379
 
   setup:
     image: python:3.8-alpine
@@ -64,6 +67,7 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: ${RABBITMQ_HOST}
     ports:
+      - ${RABBITMQ_PORT}:5672
       - ${RABBITMQ_ADMIN_PORT}:15672
     environment:
       RABBITMQ_ERLANG_COOKIE: RabbitMQ-My-Cookies
