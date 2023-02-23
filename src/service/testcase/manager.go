@@ -1,59 +1,62 @@
 package testcase
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/cranemont/iris/src/service/cache"
+	datasource "github.com/cranemont/iris/src/data_source"
+	"github.com/cranemont/iris/src/data_source/cache"
 )
 
-type Manager interface {
+type TestcaseManager interface {
 	GetTestcase(problemId string) (Testcase, error)
-	UnMarshal(data []byte) (Testcase, error)
 }
 
-type manager struct {
-	source Source
+type testcaseManager struct {
+	source datasource.Read
 	cache  cache.Cache
 }
 
-func NewManager(s Source, c cache.Cache) *manager {
-	return &manager{source: s, cache: c}
+func NewTestcaseManager(dataSource datasource.Read, cache cache.Cache) *testcaseManager {
+	return &testcaseManager{source: dataSource, cache: cache}
 }
 
-func (m *manager) GetTestcase(problemId string) (Testcase, error) {
-	isExist, err := m.cache.IsExist(problemId)
+func (t *testcaseManager) GetTestcase(problemId string) (Testcase, error) {
+	isExist, err := t.cache.IsExist(problemId)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("GetTestcase: %w", err)
 	}
+
 	if !isExist {
-		testcase, err := m.source.GetTestcase(problemId)
+		bytes, err := t.source.Get(problemId)
 		if err != nil {
 			return Testcase{}, fmt.Errorf("get testcase: %w", err)
 		}
 
-		err = m.cache.Set(problemId, testcase)
+		elements := []Element{}
+		err = json.Unmarshal(bytes, &elements) // validate
+		if err != nil {
+			return Testcase{}, fmt.Errorf("invalid testcase data: %w", err)
+		}
+
+		testcase := Testcase{Elements: elements}
+		err = t.cache.Set(problemId, testcase)
 		if err != nil {
 			return Testcase{}, fmt.Errorf("cache set: %w", err)
 		}
+		
 		return testcase, nil
 	}
-	data, err := m.cache.Get(problemId)
+
+	data, err := t.cache.Get(problemId)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("testcase: %s: %w", problemId, err)
 	}
-	testcase, err := m.UnMarshal(data)
+
+	testcase := Testcase{}
+	err = testcase.UnmarshalBinary(data)
 	if err != nil {
 		return Testcase{}, fmt.Errorf("testcase: %w", err)
-	}
-	return testcase, nil
-}
-
-func (m *manager) UnMarshal(data []byte) (Testcase, error) {
-	// validate testcase
-	testcase := Testcase{}
-	err := testcase.UnmarshalBinary(data)
-	if err != nil {
-		return Testcase{}, err
 	}
 	return testcase, nil
 }
