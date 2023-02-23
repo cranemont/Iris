@@ -62,11 +62,8 @@ services:
 
   rabbitmq-dev:
     image: rabbitmq:3-management-alpine
-    container_name: ${RABBITMQ_HOST}-dev
-    expose: 
-      - ${RABBITMQ_PORT}
+    container_name: ${RABBITMQ_HOST}
     ports:
-      - 5672:5672
       - ${RABBITMQ_ADMIN_PORT}:15672
     environment:
       RABBITMQ_ERLANG_COOKIE: RabbitMQ-My-Cookies
