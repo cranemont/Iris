@@ -33,8 +33,6 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (ExecResult, error) {
 	argSlice := makeExecArgs(args)
 	env := "--env=PATH=" + os.Getenv("PATH")
 	argSlice = append(argSlice, env)
-
-	// fmt.Println(argSlice)
 	cmd := exec.Command(s.binaryPath, argSlice...)
 
 	var stdin bytes.Buffer
@@ -55,7 +53,7 @@ func (s *sandbox) Exec(args ExecArgs, input []byte) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("failed to unmarshal sandbox result: %w", err)
 	}
-	s.logger.Log(logger.DEBUG, fmt.Sprintf("sandbox result: %s", stdout.String()))
+	// s.logger.Log(logger.DEBUG, fmt.Sprintf("sandbox result: %s", stdout.String()))
 	// fmt.Printf("sandbox result: %s", stdout.String())
 
 	return res, nil
