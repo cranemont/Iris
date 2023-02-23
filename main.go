@@ -3,15 +3,19 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 
 	// _ "net/http/pprof"
-	"os"
-
 	"github.com/cranemont/iris/src/connector"
 	"github.com/cranemont/iris/src/connector/rabbitmq"
+	datasource "github.com/cranemont/iris/src/data_source"
+	"github.com/cranemont/iris/src/data_source/cache"
+	fileDataSource "github.com/cranemont/iris/src/data_source/file"
+	httpserver "github.com/cranemont/iris/src/data_source/http_server"
 	"github.com/cranemont/iris/src/handler"
 	"github.com/cranemont/iris/src/router"
-	"github.com/cranemont/iris/src/service/cache"
 	"github.com/cranemont/iris/src/service/file"
 	"github.com/cranemont/iris/src/service/logger"
 	"github.com/cranemont/iris/src/service/sandbox"
@@ -41,12 +45,25 @@ func main() {
 	ctx := context.Background()
 	cache := cache.NewCache(ctx)
 
-	// source := testcase.NewPreset()
-	source := testcase.NewServer(
-		os.Getenv("TESTCASE_SERVER_URL"),
-		os.Getenv("TESTCASE_SERVER_AUTH_TOKEN"),
-	)
-	testcaseManager := testcase.NewManager(source, cache)
+	var dataSource datasource.Read
+	serverUrl := os.Getenv("TESTCASE_SERVER_URL")
+	if serverUrl == "" {
+		dataSource = fileDataSource.NewFileDataSource(os.DirFS("./testcase"))
+		logProvider.Log(logger.INFO, "Cannot find TESTCASE_SERVER_URL. It will read testcase from the \"./testcase\" directory")
+	} else {
+		timeout, err := strconv.Atoi(utils.Getenv("TESTCASE_SERVER_TIMEOUT", "5"))
+		if err != nil {
+			timeout = 5
+		}
+		dataSource = httpserver.NewHttpServerDataSource(
+			serverUrl,
+			utils.Getenv("TESTCASE_SERVER_URL_PLACEHOLDER", ":id"),
+			utils.Getenv("TESTCASE_SERVER_AUTH_TOKEN", "iris"),
+			utils.Getenv("TESTCASE_SERVER_AUTH_HEADER", "Authorization"),
+			time.Second * time.Duration(timeout),
+		)
+	}
+	testcaseManager := testcase.NewTestcaseManager(dataSource, cache)
 
 	fileManager := file.NewFileManager("/app/sandbox/results")
 	langConfig := sandbox.NewLangConfig(fileManager, "/app/sandbox/policy/java_policy")
